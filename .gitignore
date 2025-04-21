@@ -1,0 +1,12 @@
+.DS_Store
+.vs
+thirdparty
+build
+CMakeFiles
+include
+juce
+*.vcxproj
+*.filters
+CMakeCache.txt
+cmake_install.cmake
+readme_BOZZA.txt
