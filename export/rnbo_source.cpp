@@ -2579,7 +2579,7 @@ void process(
     );
 
     this->latch_tilde_01_perform(this->signals[4], this->latch_tilde_01_control, this->signals[2], n);
-    this->p_01_perform(this->signals[1], this->signals[2], this->signals[4], this->signals[5], n);
+    this->p_01_perform(this->signals[1], this->signals[2], this->signals[4], this->signals[5], n);          //!!!!
     this->dcblock_tilde_01_perform(this->signals[4], this->dcblock_tilde_01_gain, this->signals[2], n);
     this->feedbackwriter_01_perform(this->signals[2], n);
     this->limi_01_perform(this->signals[4], this->signals[5], this->signals[2], this->signals[1], n);
@@ -4218,7 +4218,7 @@ void processClockEvent(MillisecondTime time, ClockId index, bool hasValue, Param
         }
     case 1821745152:
         {
-        this->codebox_01_in1_bang();
+        this->setGrainProperties();
         break;
         }
     }
@@ -4465,7 +4465,7 @@ void param_01_value_set(number v) {
         this->param_01_lastValue = this->param_01_value;
     }
 
-    this->codebox_01_den_set(v);
+    //this->codebox_01_den_set(v);
     this->codebox_tilde_01_in3_set(v);
 }
 
@@ -4511,7 +4511,7 @@ void param_04_value_set(number v) {
 
     this->codebox_tilde_03_in2_set(v);
     this->codebox_tilde_02_in1_set(v);
-    this->codebox_01_len_set(v);
+    //this->codebox_01_len_set(v);
     this->codebox_tilde_01_in2_set(v);
 }
 
@@ -4520,9 +4520,9 @@ void param_05_value_set(number v) {
     this->param_05_value = v;
     this->sendParameter(4, false);
 
-    {
-        this->param_05_normalized_set(this->tonormalized(4, this->param_05_value));
-    }
+    //{
+    //    this->param_05_normalized_set(this->tonormalized(4, this->param_05_value));
+    //}
 
     if (this->param_05_value != this->param_05_lastValue) {
         this->getEngine()->presetTouched();
@@ -4540,7 +4540,7 @@ void param_06_value_set(number v) {
         this->param_06_lastValue = this->param_06_value;
     }
 
-    this->codebox_01_psh_set(v);
+    //this->codebox_01_psh_set(v);
 }
 
 void param_07_value_set(number v) {
@@ -4548,9 +4548,9 @@ void param_07_value_set(number v) {
     this->param_07_value = v;
     this->sendParameter(6, false);
 
-    {
-        this->param_07_normalized_set(this->tonormalized(6, this->param_07_value));
-    }
+    //{
+    //    this->param_07_normalized_set(this->tonormalized(6, this->param_07_value));
+    //}
 
     if (this->param_07_value != this->param_07_lastValue) {
         this->getEngine()->presetTouched();
@@ -4568,7 +4568,7 @@ void param_08_value_set(number v) {
         this->param_08_lastValue = this->param_08_value;
     }
 
-    this->codebox_01_env_set(v);
+    //this->codebox_01_env_set(v);
 }
 
 void param_09_value_set(number v) {
@@ -4576,9 +4576,9 @@ void param_09_value_set(number v) {
     this->param_09_value = v;
     this->sendParameter(8, false);
 
-    {
-        this->param_09_normalized_set(this->tonormalized(8, this->param_09_value));
-    }
+    //{
+    //    this->param_09_normalized_set(this->tonormalized(8, this->param_09_value));
+    //}
 
     if (this->param_09_value != this->param_09_lastValue) {
         this->getEngine()->presetTouched();
@@ -4596,7 +4596,7 @@ void param_10_value_set(number v) {
         this->param_10_lastValue = this->param_10_value;
     }
 
-    this->codebox_01_cpo_set(v);
+    //this->codebox_01_cpo_set(v);
 }
 
 void param_11_value_set(number v) {
@@ -4604,9 +4604,9 @@ void param_11_value_set(number v) {
     this->param_11_value = v;
     this->sendParameter(10, false);
 
-    {
-        this->param_11_normalized_set(this->tonormalized(10, this->param_11_value));
-    }
+    //{
+    //    this->param_11_normalized_set(this->tonormalized(10, this->param_11_value));
+    //}
 
     if (this->param_11_value != this->param_11_lastValue) {
         this->getEngine()->presetTouched();
@@ -4619,9 +4619,9 @@ void param_12_value_set(number v) {
     this->param_12_value = v;
     this->sendParameter(11, false);
 
-    {
-        this->param_12_normalized_set(this->tonormalized(11, this->param_12_value));
-    }
+    //{
+    //    this->param_12_normalized_set(this->tonormalized(11, this->param_12_value));
+    //}
 
     if (this->param_12_value != this->param_12_lastValue) {
         this->getEngine()->presetTouched();
@@ -4634,9 +4634,9 @@ void param_13_value_set(number v) {
     this->param_13_value = v;
     this->sendParameter(12, false);
 
-    {
-        this->param_13_normalized_set(this->tonormalized(12, this->param_13_value));
-    }
+    //{
+    //    this->param_13_normalized_set(this->tonormalized(12, this->param_13_value));
+    //}
 
     if (this->param_13_value != this->param_13_lastValue) {
         this->getEngine()->presetTouched();
@@ -4711,7 +4711,7 @@ void param_18_value_set(number v) {
 
     this->codebox_tilde_03_in1_set(v);
     this->expr_02_in1_set(v);
-    this->codebox_01_frz_set(v);
+    //this->codebox_01_frz_set(v);
 }
 
 void param_19_value_set(number v) {
@@ -4756,7 +4756,7 @@ void param_21_value_set(number v) {
 void edge_02_onout_bang() {}
 
 void edge_02_offout_bang() {
-    this->codebox_01_in1_bang();
+    this->setGrainProperties();
 }
 
 void dial_01_valin_set(number v) {
@@ -4947,15 +4947,14 @@ void sendOutlet(OutletIndex index, ParameterValue value) {
 
 void startup() {
     this->updateTime(this->getEngine()->getCurrentTime());
-    /*S-mod*/
     for (Index i = 0; i < 24; i++) {
         this->p_01[i]->startup();
 		codebox_02_voiceState[i][0] = 0;
 		codebox_02_voiceState[i][1] = 0;
     }
 
-    this->getEngine()->scheduleClockEvent(this, 1821745152, 0 + this->_currentTime);;   
-    //list lstout2 = {0, 1};    /*E-mod*/
+    this->getEngine()->scheduleClockEvent(this, 1821745152, 0 + this->_currentTime);
+
     this->timevalue_01_sendValue();
     this->timevalue_02_sendValue();
     this->timevalue_03_sendValue();
@@ -5062,10 +5061,10 @@ static number codebox_01_den_constrain(number v) {
     return v;
 }
 
-void codebox_01_den_set(number v) {
-    v = this->codebox_01_den_constrain(v);
-    this->codebox_01_den = v;
-}
+//void codebox_01_den_set(number v) {
+//    v = this->codebox_01_den_constrain(v);
+//    this->codebox_01_den = v;
+//}
 
 void codebox_tilde_01_in3_set(number v) {
     this->codebox_tilde_01_in3 = v;
@@ -5120,10 +5119,10 @@ static number codebox_01_len_constrain(number v) {
     return v;
 }
 
-void codebox_01_len_set(number v) {
-    v = this->codebox_01_len_constrain(v);
-    this->codebox_01_len = v;
-}
+//void codebox_01_len_set(number v) {
+//    v = this->codebox_01_len_constrain(v);
+//    this->codebox_01_len = v;
+//}
 
 void codebox_tilde_01_in2_set(number v) {
     this->codebox_tilde_01_in2 = v;
@@ -5144,14 +5143,14 @@ static number codebox_01_rle_constrain(number v) {
     return v;
 }
 
-void codebox_01_rle_set(number v) {
-    v = this->codebox_01_rle_constrain(v);
-    this->codebox_01_rle = v;
-}
+//void codebox_01_rle_set(number v) {
+//    v = this->codebox_01_rle_constrain(v);
+//    this->codebox_01_rle = v;
+//}
 
-void param_05_normalized_set(number v) {
-    this->codebox_01_rle_set(v);
-}
+//void param_05_normalized_set(number v) {
+//    this->codebox_01_rle_set(v);
+//}
 
 static number param_06_value_constrain(number v) {
     v = (v > 4 ? 4 : (v < 0.25 ? 0.25 : v));
@@ -5168,10 +5167,10 @@ static number codebox_01_psh_constrain(number v) {
     return v;
 }
 
-void codebox_01_psh_set(number v) {
-    v = this->codebox_01_psh_constrain(v);
-    this->codebox_01_psh = v;
-}
+//void codebox_01_psh_set(number v) {
+//    v = this->codebox_01_psh_constrain(v);
+//    this->codebox_01_psh = v;
+//}
 
 static number param_07_value_constrain(number v) {
     v = (v > 100 ? 100 : (v < 0 ? 0 : v));
@@ -5188,14 +5187,14 @@ static number codebox_01_rpt_constrain(number v) {
     return v;
 }
 
-void codebox_01_rpt_set(number v) {
-    v = this->codebox_01_rpt_constrain(v);
-    this->codebox_01_rpt = v;
-}
+//void codebox_01_rpt_set(number v) {
+//    v = this->codebox_01_rpt_constrain(v);
+//    this->codebox_01_rpt = v;
+//}
 
-void param_07_normalized_set(number v) {
-    this->codebox_01_rpt_set(v);
-}
+//void param_07_normalized_set(number v) {
+//    this->codebox_01_rpt_set(v);
+//}
 
 static number param_08_value_constrain(number v) {
     v = (v > 3 ? 3 : (v < 0 ? 0 : v));
@@ -5212,34 +5211,35 @@ static number codebox_01_env_constrain(number v) {
     return v;
 }
 
-void codebox_01_env_set(number v) {
-    v = this->codebox_01_env_constrain(v);
-    this->codebox_01_env = v;
-}
+//void codebox_01_env_set(number v) {
+//    v = this->codebox_01_env_constrain(v);
+//    this->codebox_01_env = v;
+//}
 
 static number param_09_value_constrain(number v) {
     v = (v > 100 ? 100 : (v < 0 ? 0 : v));
     return v;
 }
 
-static number codebox_01_frp_constrain(number v) {
-    if (v < 0)
-        v = 0;
+//static number codebox_01_frp_constrain(number v) {
+//    if (v < 0)
+//        v = 0;
+//
+//    if (v > 1)
+//        v = 1;
+//
+//    return v;
+//}
 
-    if (v > 1)
-        v = 1;
+//void codebox_01_frp_set(number v) {
+//    v = this->codebox_01_frp_constrain(v);
+//    this->codebox_01_frp = v;
+//}
 
-    return v;
-}
-
-void codebox_01_frp_set(number v) {
-    v = this->codebox_01_frp_constrain(v);
-    this->codebox_01_frp = v;
-}
-
-void param_09_normalized_set(number v) {
-    this->codebox_01_frp_set(v);
-}
+//void param_09_normalized_set(number v) {
+//    //this->codebox_01_frp_set(v);
+//    this->codebox_01_frp = v;
+//}
 
 static number param_10_value_constrain(number v) {
     v = (v > 1 ? 1 : (v < 0 ? 0 : v));
@@ -5256,10 +5256,10 @@ static number codebox_01_cpo_constrain(number v) {
     return v;
 }
 
-void codebox_01_cpo_set(number v) {
-    v = this->codebox_01_cpo_constrain(v);
-    this->codebox_01_cpo = v;
-}
+//void codebox_01_cpo_set(number v) {
+//    v = this->codebox_01_cpo_constrain(v);
+//    this->codebox_01_cpo = v;
+//}
 
 static number param_11_value_constrain(number v) {
     v = (v > 100 ? 100 : (v < 0 ? 0 : v));
@@ -5276,38 +5276,38 @@ static number codebox_01_drf_constrain(number v) {
     return v;
 }
 
-void codebox_01_drf_set(number v) {
-    v = this->codebox_01_drf_constrain(v);
-    this->codebox_01_drf = v;
-}
+//void codebox_01_drf_set(number v) {
+//    v = this->codebox_01_drf_constrain(v);
+//    this->codebox_01_drf = v;
+//}
 
-void param_11_normalized_set(number v) {
-    this->codebox_01_drf_set(v);
-}
+//void param_11_normalized_set(number v) {
+//    this->codebox_01_drf_set(v);
+//}
 
 static number param_12_value_constrain(number v) {
     v = (v > 100 ? 100 : (v < 0 ? 0 : v));
     return v;
 }
 
-static number codebox_01_pwi_constrain(number v) {
-    if (v < 0)
-        v = 0;
+//static number codebox_01_pwi_constrain(number v) {
+//    if (v < 0)
+//        v = 0;
+//
+//    if (v > 1)
+//        v = 1;
+//
+//    return v;
+//}
 
-    if (v > 1)
-        v = 1;
+//void codebox_01_pwi_set(number v) {
+//    v = this->codebox_01_pwi_constrain(v);
+//    this->codebox_01_pwi = v;
+//}
 
-    return v;
-}
-
-void codebox_01_pwi_set(number v) {
-    v = this->codebox_01_pwi_constrain(v);
-    this->codebox_01_pwi = v;
-}
-
-void param_12_normalized_set(number v) {
-    this->codebox_01_pwi_set(v);
-}
+//void param_12_normalized_set(number v) {
+//    this->codebox_01_pwi_set(v);
+//}
 
 static number param_13_value_constrain(number v) {
     v = (v > 100 ? 100 : (v < 0 ? 0 : v));
@@ -5324,14 +5324,14 @@ static number codebox_01_rvo_constrain(number v) {
     return v;
 }
 
-void codebox_01_rvo_set(number v) {
-    v = this->codebox_01_rvo_constrain(v);
-    this->codebox_01_rvo = v;
-}
+//void codebox_01_rvo_set(number v) {
+//    v = this->codebox_01_rvo_constrain(v);
+//    this->codebox_01_rvo = v;
+//}
 
-void param_13_normalized_set(number v) {
-    this->codebox_01_rvo_set(v);
-}
+//void param_13_normalized_set(number v) {
+//    this->codebox_01_rvo_set(v);
+//}
 
 static number param_14_value_constrain(number v) {
     v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
@@ -5482,10 +5482,10 @@ static number codebox_01_frz_constrain(number v) {
     return v;
 }
 
-void codebox_01_frz_set(number v) {
-    v = this->codebox_01_frz_constrain(v);
-    this->codebox_01_frz = v;
-}
+//void codebox_01_frz_set(number v) {
+//    v = this->codebox_01_frz_constrain(v);
+//    this->codebox_01_frz = v;
+//}
 
 static number param_19_value_constrain(number v) {
     v = (v > 1 ? 1 : (v < 0 ? 0 : v));
@@ -5638,23 +5638,34 @@ void codebox_01_out1_set(const list& v) {
     this->codebox_02_in1_set(this->codebox_01_out1);
 }
 
-void codebox_01_in1_bang() {
-	this->codebox_01_smp_cpo = rnbo_ceil(this->codebox_01_cpo * this->samplerate() * 10);//#map:codebox_obj-62:80   /*S-mod*/
-	this->codebox_01_smp_drf = rnbo_ceil(this->codebox_01_drf * this->codebox_01_drf * this->samplerate() * 10);//#map:codebox_obj-62:81   /*E-mod*/
-    this->codebox_01_smp_len = this->mstosamps(this->codebox_01_calc_len());//#map:codebox_obj-62:82
+void setGrainProperties() {
+    number len = getParameterValue(3);
+    number rle = getParameterNormalized(4);
+	number psh = getParameterValue(5);
+	number rpt = getParameterNormalized(6);
+    number frp = getParameterNormalized(8);
+    number cpo = getParameterValue(9);
+	number drf = getParameterNormalized(10);
+    number pwi = getParameterNormalized(11);
+    number rvo = getParameterNormalized(12);
+	number frz = getParameterValue(17);
 
-    if ((bool)(!(bool)(this->codebox_01_frz))) {
-        this->codebox_01_intelligent_offset = this->codebox_01_smp_len;//#map:_###_obj_###_:84
-    }//#map:codebox_obj-62:84
+	auto cpo_in_samps = rnbo_ceil(cpo * this->samplerate() * 10);
+	auto drf_in_samps = rnbo_ceil(drf*drf * this->samplerate() * 10);
+    auto len_in_samps = this->mstosamps(this->setGrainSize(len, rle));
+
+    if (!frz) {
+        this->codebox_01_intelligent_offset = len_in_samps;
+    }
 
     this->codebox_01_out1_set({
-        this->codebox_01_calc_pos(),
-        this->codebox_01_smp_len,
-        this->codebox_01_calc_fr(),
-        this->codebox_01_calc_ptc(),
-        this->codebox_01_calc_vol(),
-        this->codebox_01_calc_pan()
-    });//#map:codebox_obj-62:86
+        this->setGrainPosition(cpo_in_samps, drf_in_samps, len_in_samps, psh, rpt),
+        len_in_samps,
+        this->setGrainDirection(frp),
+        this->setGrainPshift(psh, rpt),
+        this->setGrainVol(rvo),
+        this->setGrainPan(pwi)
+    });
 }
 
 void dial_01_output_set(number v) {
@@ -6961,13 +6972,13 @@ void codebox_01_rdm_seed(number v) {
     xoshiro_reset(v, this->codebox_01_rdm_state);
 }
 
-number codebox_01_rdm_next() {
-    return xoshiro_next(this->codebox_01_rdm_state);
-}
+//number codebox_01_rdm_next() {
+//    return xoshiro_next(this->codebox_01_rdm_state);
+//}
 
-number codebox_01_calc_len() /*#map:_###_obj_###_:74*/
+number setGrainSize(number len, number rle)
 {
-    number newlen = (1 - (this->codebox_01_rdm_next() * 0.5 + 0.5) * this->codebox_01_rle) * this->codebox_01_len;
+    number newlen = (1 - (rand01() * 0.5 + 0.5) * rle) * len;
     return newlen;//#map:_###_obj_###_:77
 }
 
@@ -6981,17 +6992,17 @@ number codebox_01_clipper(number v, number inf, number sup) /*#map:_###_obj_###_
     return v;//#map:_###_obj_###_:31
 }
 
-number codebox_01_calc_pos() /*#map:_###_obj_###_:34*/
+number setGrainPosition(number posinsamps, number drfinsamps, number leninsamps, number psh, number rpt)
 {
     number r_marg = rnbo_ceil(this->codebox_01_clipper(
-        this->codebox_01_smp_len * (this->codebox_01_psh * (1 + this->codebox_01_rpt) - 1),
+        leninsamps * (psh * (1 + rpt) - 1),
         1,
-        3 * this->codebox_01_smp_len
+        3 * leninsamps
     ));
 
     number pos = rnbo_ceil(this->codebox_01_clipper(
-        this->codebox_01_smp_cpo + this->codebox_01_rdm_next() * this->codebox_01_smp_drf,
-        this->maximum(r_marg, this->codebox_01_smp_len - this->codebox_01_intelligent_offset),
+        posinsamps + rand01() * drfinsamps,
+        this->maximum(r_marg, leninsamps - this->codebox_01_intelligent_offset),
         this->samplerate() * 10
     ));
 
@@ -6999,35 +7010,34 @@ number codebox_01_calc_pos() /*#map:_###_obj_###_:34*/
     return pos;//#map:_###_obj_###_:41
 }
 
-number codebox_01_calc_fr() /*#map:_###_obj_###_:44*/
+number setGrainDirection(number frp) // return -1 or 1
 {
-    number f_r = 1;
-    number r = this->codebox_01_rdm_next() / (number)2 + 0.5;
+    number r = rand01();
 
-    if ((bool)(this->codebox_01_frp)) {
-        f_r = (r > this->codebox_01_frp) * 2 - 1;//#map:_###_obj_###_:49
-    }//#map:_###_obj_###_:48
+    number fr = 1;
+    if (frp)
+        fr = (r > frp) * 2 - 1;
 
-    return f_r;//#map:_###_obj_###_:52
+    return fr;
 }
 
-number codebox_01_calc_ptc() /*#map:_###_obj_###_:55*/
+number setGrainPshift(number psh, number rpt)
 {
-    number ptc = rnbo_pow(2, this->codebox_01_rdm_next() * this->codebox_01_rpt) * this->codebox_01_psh;
-    return ptc;//#map:_###_obj_###_:58
+    number ptc = rnbo_pow(2, rand01() * rpt) * psh;
+    return ptc;
 }
 
-number codebox_01_calc_vol() /*#map:_###_obj_###_:61*/
+number setGrainVol(number rvo)
 {
-    number r = this->codebox_01_rdm_next();
-    number vol = 1 - r * this->codebox_01_rvo;
-    return vol;//#map:_###_obj_###_:65
+    number r = rand01();
+    number vol = 1 - r * rvo;
+    return vol;
 }
 
-number codebox_01_calc_pan() /*#map:_###_obj_###_:68*/
+number setGrainPan(number pwi)
 {
-    number pan = 0.5 * (1 + this->codebox_01_rdm_next() * this->codebox_01_pwi);
-    return pan;//#map:_###_obj_###_:71
+    number pan = 0.5 * (1 + rand01() * pwi);
+    return pan;
 }
 
 number p_01_calcActiveVoices() {
@@ -8754,18 +8764,18 @@ void assign_defaults()
     limi_01_release = 1000;
     dspexpr_01_in1 = 0;
     dspexpr_01_in2 = 1;
-    codebox_01_len = 500;
-    codebox_01_den = 1;
-    codebox_01_cpo = 0.5;
-    codebox_01_drf = 0;
-    codebox_01_rvo = 0;
-    codebox_01_pwi = 0.5;
-    codebox_01_frp = 0;
-    codebox_01_psh = 1;
-    codebox_01_rpt = 0;
-    codebox_01_env = 1;
-    codebox_01_frz = 0;
-    codebox_01_rle = 0;
+    //codebox_01_len = 500;
+    //codebox_01_den = 1;
+    //codebox_01_cpo = 0.5;
+    //codebox_01_drf = 0;
+    //codebox_01_rvo = 0;
+    //codebox_01_pwi = 0.5;
+    //codebox_01_frp = 0;
+    //codebox_01_psh = 1;
+    //codebox_01_rpt = 0;
+    //codebox_01_env = 1;
+    //codebox_01_frz = 0;
+    //codebox_01_rle = 0;
     p_01_target = 0;
     codebox_02_in2 = 0;
     codebox_02_out3 = 0;
@@ -8909,9 +8919,7 @@ void assign_defaults()
     codebox_01_intelligent_offset = 0;
     codebox_01_newphas = 0;
     codebox_01_oldphas = 0;
-    codebox_01_smp_len = 0;
-    codebox_01_smp_cpo = 0;
-    codebox_01_smp_drf = 0;
+    //len_in_samps = 0;
     codebox_01_mphasor_currentPhase = 0;
     codebox_01_mphasor_conv = 0;
     codebox_02_pos = 0;
@@ -9062,18 +9070,18 @@ void assign_defaults()
     number dspexpr_01_in1;
     number dspexpr_01_in2;
     list codebox_01_out1;
-    number codebox_01_len;
-    number codebox_01_den;
-    number codebox_01_cpo;
-    number codebox_01_drf;
-    number codebox_01_rvo;
-    number codebox_01_pwi;
-    number codebox_01_frp;
-    number codebox_01_psh;
-    number codebox_01_rpt;
-    number codebox_01_env;
-    number codebox_01_frz;
-    number codebox_01_rle;
+    //number codebox_01_len;
+    //number codebox_01_den;
+    //number codebox_01_cpo;
+    //number codebox_01_drf;
+    //number codebox_01_rvo;
+    //number codebox_01_pwi;
+    //number codebox_01_frp;
+    //number codebox_01_psh;
+    //number codebox_01_rpt;
+    //number codebox_01_env;
+    //number codebox_01_frz;
+    //number codebox_01_rle;
     number p_01_target;
     list codebox_02_in1;
     number codebox_02_in2;
@@ -9216,9 +9224,9 @@ void assign_defaults()
     number codebox_01_intelligent_offset;
     number codebox_01_newphas;
     number codebox_01_oldphas;
-    number codebox_01_smp_len;
-    number codebox_01_smp_cpo;
-    number codebox_01_smp_drf;
+    //number len_in_samps;
+    //number cpo_in_samps;
+    //number drf_in_samps;
     number codebox_01_mphasor_currentPhase;
     number codebox_01_mphasor_conv;
     UInt codebox_01_rdm_state[4] = { };

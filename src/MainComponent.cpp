@@ -58,13 +58,7 @@ public:
 
 		_deviceManager.addAudioCallback(&_audioProcessorPlayer);
 
-		// Only add the device selector if we're running as a standalone application
-		if (JUCEApplicationBase::isStandaloneApp()) {
-			// addAndMakeVisible (_deviceSelectorComponent);
-			_includesDeviceSelector = true;
-		}
-
-		setSize (WIDTH+10, HEIGHT);
+		setSize (WIDTH, HEIGHT);
     }
 
 	void patcherChanged() override
@@ -90,8 +84,6 @@ public:
 		rnboObject.setPatcherChangedHandler(this);
 
 		_audioProcessorPlayer.setProcessor(_audioProcessor.get());
-
-		olmp = _deviceManager.getOutputLevelGetter();
 
 		_audioProcessorEditor.reset(_audioProcessor->createEditorIfNeeded());
 		if (_audioProcessorEditor) {
@@ -129,32 +121,13 @@ public:
     void paint (Graphics& g) override
     {
         // (Our component is opaque, so we must completely fill the background with a solid colour)
-        g.fillAll (borisPalette[ground]);
-
-        // You can add your drawing code here!
-		auto r = olmp.get()->getCurrentLevel() * (double)getHeight() * 10.;
-		Rectangle<int> monitorbounds = getLocalBounds().removeFromLeft(10);
-		g.setColour(Colours::black);
-		g.fillRect(monitorbounds);
-		Rectangle<int> monitorLevel = Rectangle<int>(monitorbounds.getBottomLeft(), Point<int>(monitorbounds.getRight(), monitorbounds.getBottom()-(int)r));
-		g.setColour(Colours::yellowgreen);
-		g.fillRect(monitorLevel);
-
-		repaint(monitorbounds);
+		g.fillAll(borisPalette[ground]);
     }
 
     void resized() override
     {
-		const int selectorWidth = 328;
-		int usedSelectorWidth = 0;
-
-		if (_includesDeviceSelector) {
-			usedSelectorWidth = /* std::min(getWidth(), selectorWidth); */ 10;
-			// _deviceSelectorComponent.setBounds(0, 0, usedSelectorWidth, getHeight());
-		}
-
 		if (_audioProcessorEditor) {
-			_audioProcessorEditor->setBounds(usedSelectorWidth, 0, getWidth() - usedSelectorWidth, getHeight());
+			_audioProcessorEditor->setBounds(0, 0, getWidth(), getHeight());
 		}
     }
 
