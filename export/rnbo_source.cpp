@@ -83,13 +83,13 @@ namespace RNBO {
             SampleIndex endOfGrain;
         };
 
-        class RTGrainVoice : public PatcherInterfaceImpl {
+        class RTGrainVoice {
 
             friend class rnbomatic;
 
         public:
 
-            RTGrainVoice() {}
+            RTGrainVoice(rnbomatic* grainsMaster, int voiceIndex) : _grainsMaster(grainsMaster), _voiceIndex(voiceIndex) {}
             ~RTGrainVoice()
             {
                 for (int i = 0; i < 2; i++) {
@@ -99,30 +99,8 @@ namespace RNBO {
                 free(dummyBuffer);
             }
 
-            virtual rnbomatic* getPatcher() const {
-                return static_cast<rnbomatic*>(_parentPatcher);
-            }
-
-            rnbomatic* getTopLevelPatcher() {
-                return this->getPatcher()->getTopLevelPatcher();
-            }
-
-            void cancelClockEvents() {}
-
-            template <typename T> inline number dim(T& buffer) {
-                return buffer->getSize();
-            }
-
-            template <typename T> inline number channels(T& buffer) {
-                return buffer->getChannels();
-            }
-
-            inline number intnum(const number value) {
-                return trunc(value);
-            }
-
-            number maximum(number x, number y) {
-                return (x < y ? y : x);
+            rnbomatic* getPatcher() const {
+                return _grainsMaster;
             }
 
             number wrap(number x, number low, number high) {
@@ -163,20 +141,6 @@ namespace RNBO {
                 return this->_voiceIndex;
             }
 
-            int notenumber() {
-                return this->_noteNumber;
-            }
-
-            Index getNumMidiInputPorts() const {
-                return 0;
-            }
-
-            void processMidiEvent(MillisecondTime, int, ConstByteArray, Index) {}
-
-            Index getNumMidiOutputPorts() const {
-                return 0;
-            }
-
             void process(
                 const SampleValue* const* inputs,
                 Index numInputs,
@@ -185,7 +149,6 @@ namespace RNBO {
                 Index n
             ) {
                 this->vs = n;
-                //this->updateTime(this->getEngine()->getCurrentTime());
                 SampleValue* out1 = (numOutputs >= 1 && outputs[0] ? outputs[0] : this->dummyBuffer);
                 SampleValue* out2 = (numOutputs >= 2 && outputs[1] ? outputs[1] : this->dummyBuffer);
                 const SampleValue* in2 = (numInputs >= 1 && inputs[0] ? inputs[0] : this->zeroBuffer);
@@ -225,11 +188,8 @@ namespace RNBO {
                     n
                 );
 
-                this->signaladder_01_perform(this->realtime_grain_out[0], out1, out1, n);
-                this->signaladder_02_perform(this->realtime_grain_out[1], out2, out2, n);
-
-                this->stackprotect_perform(n);
-                this->audioProcessSampleCount += this->vs;
+                this->signalaccum(this->realtime_grain_out[0], out1, n);
+                this->signalaccum(this->realtime_grain_out[1], out2, n);
             }
 
             void prepareToProcess(number sampleRate, Index maxBlockSize, bool force) {
@@ -256,42 +216,9 @@ namespace RNBO {
                     this->invsr = 1 / sampleRate;
                 }
 
-                if (sampleRateChanged)
-                    this->onSampleRateChanged(sampleRate);
+                //if (sampleRateChanged)
+                //    this->onSampleRateChanged(sampleRate);
             }
-
-            void setProbingTarget(MessageTag id) {
-                switch (id) {
-                default:
-                {
-                    this->setProbingIndex(-1);
-                    break;
-                }
-                }
-            }
-
-            void setProbingIndex(ProbingIndex) {}
-
-            Index getProbingChannels(MessageTag outletId) const {
-                RNBO_UNUSED(outletId);
-                return 0;
-            }
-
-            void setVoiceIndex(Index index) {
-                this->_voiceIndex = index;
-            }
-
-            void setNoteNumber(Int noteNumber) {
-                this->_noteNumber = noteNumber;
-            }
-
-			SampleIndex getEndOfGrain() const {
-				return this->endOfGrain;
-			}
-
-			bool getHasGrainInQueue() const {
-				return this->hasGrainInQueue;
-			}
 
             Index getIsMuted() {
                 return this->isMuted;
@@ -301,212 +228,7 @@ namespace RNBO {
                 this->isMuted = v;
             }
 
-            Index getPatcherSerial() const {
-                return 0;
-            }
-
-            void getState(PatcherStateInterface&) {}
-
-            void setState() {}
-
-            void getPreset(PatcherStateInterface&) {}
-
-            void processTempoEvent(MillisecondTime, Tempo) {}
-
-            void processTransportEvent(MillisecondTime, TransportState) {}
-
-            void processBeatTimeEvent(MillisecondTime, BeatTime) {}
-
-            void onSampleRateChanged(double) {}
-
-            void processTimeSignatureEvent(MillisecondTime, int, int) {}
-
-            void setParameterValue(ParameterIndex, ParameterValue, MillisecondTime) {}
-
-            void processParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time) {
-                this->setParameterValue(index, value, time);
-            }
-
-            void processParameterBangEvent(ParameterIndex index, MillisecondTime time) {
-                this->setParameterValue(index, this->getParameterValue(index), time);
-            }
-
-            void processNormalizedParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time) {
-                this->setParameterValueNormalized(index, value, time);
-            }
-
-            ParameterValue getParameterValue(ParameterIndex index) {
-                switch (index) {
-                default:
-                {
-                    return 0;
-                }
-                }
-            }
-
-            ParameterValue getPolyParameterValue(PatcherInterface** voices, ParameterIndex index) {
-                switch (index) {
-                default:
-                {
-                    return voices[0]->getParameterValue(index);
-                }
-                }
-            }
-
-            void setPolyParameterValue(
-                PatcherInterface** voices,
-                ParameterIndex index,
-                ParameterValue value,
-                MillisecondTime time
-            ) {
-                switch (index) {
-                default:
-                {
-                    for (Index i = 0; i < 24; i++)
-                        voices[i]->setParameterValue(index, value, time);
-                }
-                }
-            }
-
-            ParameterIndex getNumSignalInParameters() const {
-                return 0;
-            }
-
-            ParameterIndex getNumSignalOutParameters() const {
-                return 0;
-            }
-
-            ParameterIndex getNumParameters() const {
-                return 0;
-            }
-
-            ConstCharPointer getParameterName(ParameterIndex index) const {
-                switch (index) {
-                default:
-                {
-                    return "bogus";
-                }
-                }
-            }
-
-            ConstCharPointer getParameterId(ParameterIndex index) const {
-                switch (index) {
-                default:
-                {
-                    return "bogus";
-                }
-                }
-            }
-
-            void getParameterInfo(ParameterIndex, ParameterInfo*) const {}
-
-            void sendParameter(ParameterIndex index, bool ignoreValue) {
-                if (this->_voiceIndex == 1)
-                    this->getPatcher()->sendParameter(index + this->parameterOffset, ignoreValue);
-            }
-
-            void sendPolyParameter(ParameterIndex index, Index voiceIndex, bool ignoreValue) {
-                this->getPatcher()->sendParameter(index + this->parameterOffset + voiceIndex - 1, ignoreValue);
-            }
-
-            void setParameterOffset(ParameterIndex offset) {
-                this->parameterOffset = offset;
-            }
-
-            ParameterValue applyStepsToNormalizedParameterValue(ParameterValue normalizedValue, int steps) const {
-                if (steps == 1) {
-                    if (normalizedValue > 0) {
-                        normalizedValue = 1.;
-                    }
-                }
-                else {
-                    ParameterValue oneStep = (number)1. / (steps - 1);
-                    ParameterValue numberOfSteps = rnbo_fround(normalizedValue / oneStep * 1 / (number)1) * (number)1;
-                    normalizedValue = numberOfSteps * oneStep;
-                }
-
-                return normalizedValue;
-            }
-
-            ParameterValue convertToNormalizedParameterValue(ParameterIndex index, ParameterValue value) const {
-                switch (index) {
-                default:
-                {
-                    return value;
-                }
-                }
-            }
-
-            ParameterValue convertFromNormalizedParameterValue(ParameterIndex index, ParameterValue value) const {
-                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                switch (index) {
-                default:
-                {
-                    return value;
-                }
-                }
-            }
-
-            ParameterValue constrainParameterValue(ParameterIndex index, ParameterValue value) const {
-                switch (index) {
-                default:
-                {
-                    return value;
-                }
-                }
-            }
-
-            void scheduleParamInit(ParameterIndex index, Index order) {
-                this->getPatcher()->scheduleParamInit(index + this->parameterOffset, order);
-            }
-
-            void processClockEvent(MillisecondTime time, ClockId index, bool hasValue, ParameterValue value) {}
-
-            void processOutletAtCurrentTime(EngineLink*, OutletIndex, ParameterValue) {}
-
-            void processOutletEvent(
-                EngineLink* sender,
-                OutletIndex index,
-                ParameterValue value,
-                MillisecondTime time
-            ) {
-                //this->updateTime(time);
-                this->processOutletAtCurrentTime(sender, index, value);
-            }
-
-            void processNumMessage(MessageTag, MessageTag, MillisecondTime, number) {}
-
-            void processListMessage(MessageTag, MessageTag, MillisecondTime, const list&) {}
-
-            void processBangMessage(MessageTag, MessageTag, MillisecondTime) {}
-
-            MessageTagInfo resolveTag(MessageTag tag) const {
-                switch (tag) {
-
-                }
-
-                return nullptr;
-            }
-
-            DataRef* getDataRef(DataRefIndex index) {
-                switch (index) {
-                default:
-                {
-                    return nullptr;
-                }
-                }
-            }
-
-            DataRefIndex getNumDataRefs() const {
-                return 0;
-            }
-
-            void fillDataRef(DataRefIndex, DataRef&) {}
-
             void processDataViewUpdate(DataRefIndex index, MillisecondTime time) {
-                //this->updateTime(time);
-
                 if (index == 0) {
                     this->gen_01_rtbuf = new Float32Buffer(this->getPatcher()->borisinrnbo_v01_rtbuf);
                 }
@@ -517,56 +239,15 @@ namespace RNBO {
             }
 
             void initialize() {
-                this->assign_defaults();
-                this->setState();
+                for (int i = 0; i < 2; i++) {
+                    realtime_grain_out[i] = nullptr;
+                }
                 this->gen_01_rtbuf = new Float32Buffer(this->getPatcher()->borisinrnbo_v01_rtbuf);
                 this->gen_01_interpol_env = new Float32Buffer(this->getPatcher()->interpolated_envelope);
             }
 
         protected:
-
-            number msToSamps(MillisecondTime ms, number sampleRate) {
-                return ms * sampleRate * 0.001;
-            }
-
-            MillisecondTime sampsToMs(SampleIndex samps) {
-                return samps * (this->invsr * 1000);
-            }
-
-            Index getMaxBlockSize() const {
-                return this->maxvs;
-            }
-
-            number getSampleRate() const {
-                return this->sr;
-            }
-
-            bool hasFixedVectorSize() const {
-                return false;
-            }
-
-            Index getNumInputChannels() const {
-                return 2;
-            }
-
-            Index getNumOutputChannels() const {
-                return 2;
-            }
-
-            void initializeObjects() {
-                this->gen_01_history_2_init();
-                this->gen_01_history_1_init();
-            }
-
-            void sendOutlet(OutletIndex index, ParameterValue value) {
-                this->getEngine()->sendOutlet(this, index, value);
-            }
-
-            void startup() {
-                this->setIsMuted(1);
-            }
-
-            void allocateDataRefs() {
+            void allocateDataRefs() {                                                                               //mmmmmm
                 this->gen_01_rtbuf = this->gen_01_rtbuf->allocateIfNeeded();
                 this->gen_01_interpol_env = this->gen_01_interpol_env->allocateIfNeeded();
             }
@@ -607,7 +288,7 @@ namespace RNBO {
                 number __trigger_index = in1;
 
                 if (__trigger_index >= 0) {
-                    this->gen_01_counter_11_count = -1;
+                    this->envelope_counter_count = -1;
                 }
 
                 bool playsound = (__trigger_index < 0);
@@ -619,7 +300,7 @@ namespace RNBO {
 
                     number __pan = (in7 > 1 ? 1 : in7 < 0 ? 0 : in7);
                     number __vol = (in6 > 1 ? 1 : (in6 < 0 ? 0 : in6));
-                    number __trgt_samps = this->maximum(in3, 0);
+                    number __trgt_samps = std::max(in3, 0.);
                     number __pitch = (in5 > 4 ? 4 : (in5 < 0.25 ? 0.25 : in5));
                     number g_samps = __trgt_samps / __pitch;
 
@@ -631,24 +312,20 @@ namespace RNBO {
                         number carry_flag = 0;
 
                         if (triggernow) {
-                            //this->endOfGrain = g_samps;
-                            //this->hasGrainInQueue = false;
-                            //this->isMuted = 0;
-
-                            this->gen_01_counter_11_count = 0;
+                            this->envelope_counter_count = 0;
                             playsound = true;
                         }
                         else if (playsound) {
-                            this->gen_01_counter_11_count += this->env_inc_history;
+                            this->envelope_counter_count += this->env_inc_history;
 
-                            if ((this->env_inc_history > 0 && this->gen_01_counter_11_count >= g_samps)) {
-                                this->gen_01_counter_11_count = 0;
+                            if ((this->env_inc_history > 0 && this->envelope_counter_count >= g_samps)) {
+                                this->envelope_counter_count = 0;
                                 carry_flag = 1;
                             }
                         }
 
                         env_counter_hit = carry_flag;
-                        env_counter_count = this->gen_01_counter_11_count;
+                        env_counter_count = this->envelope_counter_count;
                     }
 
                     bool env_counter_incr = ((env_counter_hit) ? 0 : 1);
@@ -656,12 +333,9 @@ namespace RNBO {
                     number pos_in_grain = (g_samps == 0. ? 0. : env_counter_count / g_samps);           // why is this necessary?
 
                     if (env_counter_hit) {
-                        //this->getPatcher()->updateTime(this->_currentTime);
                         this->endOfGrain = 0;
                         this->getPatcher()->muteVoice(this->voice());
                     }
-
-                    //number envelope_value = this->getVirtualSamp(this->gen_01_interpol_env, pos_in_grain, envbuf_dim);
 
                     number envelope_value = 0;
                     {
@@ -708,19 +382,19 @@ namespace RNBO {
                         number carry_flag = 0;
 
                         if (triggernow) {
-                            this->gen_01_counter_48_count = 0;
+                            this->audio_counter_count = 0;
                         }
                         else {
-                            this->gen_01_counter_48_count += play_inc_history;
+                            this->audio_counter_count += play_inc_history;
 
-                            if ((play_inc_history > 0 && this->gen_01_counter_48_count >= g_samps)) {
-                                this->gen_01_counter_48_count = 0;
+                            if ((play_inc_history > 0 && this->audio_counter_count >= g_samps)) {
+                                this->audio_counter_count = 0;
                                 carry_flag = 1;
                             }
                         }
 
                         play_counter_hit = carry_flag;
-                        play_counter_count = this->gen_01_counter_48_count;
+                        play_counter_count = this->audio_counter_count;
                     }
 
                     bool play_counter_incr = ((bool)(play_counter_hit) ? 0 : 1);
@@ -773,151 +447,64 @@ namespace RNBO {
 
                 if (this->endOfGrain > 0)
                     this->endOfGrain -= this->vs;
-				this->getTopLevelPatcher()->updateVoiceState(this->voice(), { !getIsMuted(), this->hasGrainInQueue, this->endOfGrain});
+				this->getPatcher()->updateVoiceState(this->voice(), { !getIsMuted(), this->hasGrainInQueue, this->endOfGrain});
             }
 
-            void signaladder_01_perform(
+            void signalaccum(
                 const SampleValue* in1,
-                const SampleValue* in2,
                 SampleValue* out,
                 Index n
             ) {
                 Index i;
 
                 for (i = 0; i < n; i++) {
-                    out[(Index)i] = in1[(Index)i] + in2[(Index)i];
+                    out[(Index)i] = in1[(Index)i] + out[(Index)i];
                 }
             }
 
-            void signaladder_02_perform(
-                const SampleValue* in1,
-                const SampleValue* in2,
-                SampleValue* out,
-                Index n
-            ) {
-                Index i;
+            number position_value = 0;
+            number grainsize_value = 0;
+            number direction_value = 0;
+            number pishift_value = 0;
+            number volume_value = 0;
+            number panning_value = 0;
 
-                for (i = 0; i < n; i++) {
-                    out[(Index)i] = in1[(Index)i] + in2[(Index)i];
-                }
-            }
 
-            void stackprotect_perform(Index n) {
-                RNBO_UNUSED(n);
-                auto __stackprotect_count = this->stackprotect_count;
-                __stackprotect_count = 0;
-                this->stackprotect_count = __stackprotect_count;
-            }
-
-            void gen_01_history_2_init() {
-                this->play_inc_history = 0;
-            }
-
-            void gen_01_history_1_init() {
-                this->env_inc_history = 0;
-            }
-
-            bool stackprotect_check() {
-                this->stackprotect_count++;
-
-                if (this->stackprotect_count > 128) {
-                    console->log("STACK OVERFLOW DETECTED - stopped processing branch !");
-                    return true;
-                }
-
-                return false;
-            }
-
-            //void updateTime(MillisecondTime time) {
-            //    this->_currentTime = time;
-            //}
-
-            void assign_defaults()
-            {
-                position_value = 0;
-                grainsize_value = 0;
-                direction_value = 0;
-                pishift_value = 0;
-                volume_value = 0;
-                panning_value = 0;
-                voice_01_mute_number = 0;
-                _currentTime = 0;
-                audioProcessSampleCount = 0;
-                zeroBuffer = nullptr;
-                dummyBuffer = nullptr;
-                realtime_grain_out[0] = nullptr;
-                realtime_grain_out[1] = nullptr;
-                didAllocateSignals = 0;
-                vs = 0;
-                maxvs = 0;
-                sr = 44100;
-                invsr = 0.00002267573696;
-                triggerindex = -1;
-				hasGrainInQueue = false;
-				endOfGrain = 0;
-                play_inc_history = 0;
-                env_inc_history = 0;
-                gen_01_counter_11_carry = 0;
-                gen_01_counter_11_count = 0;
-                gen_01_latch_15_value = 0;
-                gen_01_latch_18_value = 0;
-                rel_start_pos_history = 0;
-                gen_01_counter_48_carry = 0;
-                gen_01_counter_48_count = 0;
-                gen_01_latch_52_value = 0;
-                start_play_pos_history = 0;
-                gen_01_setupDone = false;
-                reverse_offset = 0;
-                stackprotect_count = 0;
-                _voiceIndex = 0;
-                _noteNumber = 0;
-                isMuted = 0;
-                parameterOffset = 0;
-            }
-
-            // member variables
-            number position_value;
-            number grainsize_value;
-            number direction_value;
-            number pishift_value;
-            number volume_value;
-            number panning_value;
-            number voice_01_mute_number;
-            MillisecondTime _currentTime;
-            SampleIndex audioProcessSampleCount;
-            signal zeroBuffer;
-            signal dummyBuffer;
+            signal zeroBuffer = nullptr;
+            signal dummyBuffer = nullptr;
             SampleValue* realtime_grain_out[2];
-            bool didAllocateSignals;
-            Index vs;
-            Index maxvs;
-            number sr;
-            number invsr;
+            bool didAllocateSignals = false;
+            Index vs = 0;
+            Index maxvs = 0;
+            number sr = 44100;
+			number invsr = 0.00002267573696;
             
-            SampleIndex triggerindex;
-			bool hasGrainInQueue;
-            SampleIndex endOfGrain;
+            SampleIndex triggerindex = -1;
+            bool hasGrainInQueue = false;
+            SampleIndex endOfGrain = 0;
 
-            int play_inc_history;
-            int env_inc_history;
+            SampleIndex play_inc_history = 0;
+            SampleIndex env_inc_history = 0;
             Float32BufferRef gen_01_rtbuf;
             Float32BufferRef gen_01_interpol_env;
-            int gen_01_counter_11_carry;
-            number gen_01_counter_11_count;
-            number gen_01_latch_15_value;
-            number gen_01_latch_18_value;
-            number rel_start_pos_history;
-            int gen_01_counter_48_carry;
-            number gen_01_counter_48_count;
-            number gen_01_latch_52_value;
-            number start_play_pos_history;
-            bool gen_01_setupDone;
-            number reverse_offset;
-            number stackprotect_count;
+
+            SampleIndex envelope_counter_count = 0;
+
+
+            number rel_start_pos_history = 0;
+
+            SampleIndex audio_counter_count = 0;
+
+            number start_play_pos_history = 0;
+
+            number reverse_offset = 0;
+
             Index _voiceIndex;
-            Int _noteNumber;
-            Index isMuted;
-            ParameterIndex parameterOffset;
+
+            bool isMuted = true;
+
+
+            rnbomatic* _grainsMaster;
 
         };
 
@@ -1486,12 +1073,11 @@ namespace RNBO {
         void getState(PatcherStateInterface&) {}
 
         void setState() {
-            for (Index i = 0; i < 24; i++) {
-                this->rtgrainvoice[(Index)i] = new RTGrainVoice();
-                this->rtgrainvoice[(Index)i]->setEngineAndPatcher(this->getEngine(), this);
-                this->rtgrainvoice[(Index)i]->initialize();
-                this->rtgrainvoice[(Index)i]->setParameterOffset(this->getParameterOffset(this->rtgrainvoice[0]));
-                this->rtgrainvoice[(Index)i]->setVoiceIndex(i + 1);
+            for (int i = 0; i < 24; i++) {
+                this->rtgrainvoice[i] = new RTGrainVoice(this, i + 1);
+                //this->rtgrainvoice[i]->setEngineAndPatcher(this->getEngine(), this);
+                this->rtgrainvoice[i]->initialize();
+                //this->rtgrainvoice[i]->setParameterOffset(this->getParameterOffset(this->rtgrainvoice[0]));
             }
         }
 
@@ -1519,8 +1105,8 @@ namespace RNBO {
             this->param_20_getPresetValue(getSubState(preset, "tmp"));
             this->param_21_getPresetValue(getSubState(preset, "rtm"));
 
-            for (Index i = 0; i < 24; i++)
-                this->rtgrainvoice[i]->getPreset(getSubStateAt(getSubState(preset, "__sps"), "rtgrains", i));
+            //for (Index i = 0; i < 24; i++)
+            //    this->rtgrainvoice[i]->getPreset(getSubStateAt(getSubState(preset, "__sps"), "rtgrains", i));
         }
 
         void setPreset(MillisecondTime time, PatcherStateInterface& preset) {
@@ -1552,9 +1138,9 @@ namespace RNBO {
             this->updateTime(time);
 
             if (this->globaltransport_setTempo(this->_currentTime, tempo, false)) {
-                for (Index i = 0; i < 24; i++) {
-                    this->rtgrainvoice[i]->processTempoEvent(time, tempo);
-                }
+                //for (Index i = 0; i < 24; i++) {
+                //    this->rtgrainvoice[i]->processTempoEvent(time, tempo);
+                //}
 
                 this->timevalue_01_onTempoChanged(tempo);
                 this->timevalue_02_onTempoChanged(tempo);
@@ -1565,21 +1151,21 @@ namespace RNBO {
         void processTransportEvent(MillisecondTime time, TransportState state) {
             this->updateTime(time);
 
-            if (this->globaltransport_setState(this->_currentTime, state, false)) {
-                for (Index i = 0; i < 24; i++) {
-                    this->rtgrainvoice[i]->processTransportEvent(time, state);
-                }
-            }
+            //if (this->globaltransport_setState(this->_currentTime, state, false)) {
+            //    for (Index i = 0; i < 24; i++) {
+            //        this->rtgrainvoice[i]->processTransportEvent(time, state);
+            //    }
+            //}
         }
 
         void processBeatTimeEvent(MillisecondTime time, BeatTime beattime) {
             this->updateTime(time);
 
-            if (this->globaltransport_setBeatTime(this->_currentTime, beattime, false)) {
-                for (Index i = 0; i < 24; i++) {
-                    this->rtgrainvoice[i]->processBeatTimeEvent(time, beattime);
-                }
-            }
+            //if (this->globaltransport_setBeatTime(this->_currentTime, beattime, false)) {
+            //    for (Index i = 0; i < 24; i++) {
+            //        this->rtgrainvoice[i]->processBeatTimeEvent(time, beattime);
+            //    }
+            //}
         }
 
         void onSampleRateChanged(double samplerate) {
@@ -1592,11 +1178,11 @@ namespace RNBO {
             this->updateTime(time);
 
             if (this->globaltransport_setTimeSignature(this->_currentTime, numerator, denominator, false)) {
-                for (Index i = 0; i < 24; i++) {
-                    this->rtgrainvoice[i]->processTimeSignatureEvent(time, numerator, denominator);
-                }
-
                 this->timevalue_01_onTimeSignatureChanged(numerator, denominator);
+                //for (Index i = 0; i < 24; i++) {
+                //    this->rtgrainvoice[i]->processTimeSignatureEvent(time, numerator, denominator);
+                //}
+
                 this->timevalue_02_onTimeSignatureChanged(numerator, denominator);
                 this->timevalue_03_onTimeSignatureChanged(numerator, denominator);
             }
@@ -1715,8 +1301,8 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters())
-                    this->rtgrainvoice[0]->setPolyParameterValue((PatcherInterface**)this->rtgrainvoice, index, v, time);
+                //if (index < this->rtgrainvoice[0]->getNumParameters())
+                    //this->rtgrainvoice[0]->setPolyParameterValue((PatcherInterface**)this->rtgrainvoice, index, v, time);
 
                 break;
             }
@@ -1825,8 +1411,8 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters())
-                    return this->rtgrainvoice[0]->getPolyParameterValue((PatcherInterface**)this->rtgrainvoice, index);
+                //if (index < this->rtgrainvoice[0]->getNumParameters())
+                //    return this->rtgrainvoice[0]->getPolyParameterValue((PatcherInterface**)this->rtgrainvoice, index);
 
                 return 0;
             }
@@ -1842,7 +1428,8 @@ namespace RNBO {
         }
 
         ParameterIndex getNumParameters() const {
-            return 21 + this->rtgrainvoice[0]->getNumParameters();
+            //return 21 + this->rtgrainvoice[0]->getNumParameters();
+            return 21;
         }
 
         ConstCharPointer getParameterName(ParameterIndex index) const {
@@ -1935,11 +1522,11 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                    {
-                        return this->rtgrainvoice[0]->getParameterName(index);
-                    }
-                }
+                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
+                //    {
+                //        return this->rtgrainvoice[0]->getParameterName(index);
+                //    }
+                //}
 
                 return "bogus";
             }
@@ -2036,11 +1623,11 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                    {
-                        return this->rtgrainvoice[0]->getParameterId(index);
-                    }
-                }
+                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
+                //    {
+                //        return this->rtgrainvoice[0]->getParameterId(index);
+                //    }
+                //}
 
                 return "bogus";
             }
@@ -2463,11 +2050,11 @@ namespace RNBO {
                 {
                     index -= 21;
 
-                    if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                        for (Index i = 0; i < 24; i++) {
-                            this->rtgrainvoice[i]->getParameterInfo(index, info);
-                        }
-                    }
+                    //if (index < this->rtgrainvoice[0]->getNumParameters()) {
+                    //    for (Index i = 0; i < 24; i++) {
+                    //        this->rtgrainvoice[i]->getParameterInfo(index, info);
+                    //    }
+                    //}
 
                     break;
                 }
@@ -2507,8 +2094,8 @@ namespace RNBO {
         }
 
         ParameterIndex getParameterOffset(BaseInterface* subpatcher) const {
-            if (subpatcher == this->rtgrainvoice[0])
-                return 21;
+            //if (subpatcher == this->rtgrainvoice[0])
+            //    return 21;
 
             return 0;
         }
@@ -2640,11 +2227,11 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                    {
-                        return this->rtgrainvoice[0]->convertToNormalizedParameterValue(index, value);
-                    }
-                }
+                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
+                //    {
+                //        return this->rtgrainvoice[0]->convertToNormalizedParameterValue(index, value);
+                //    }
+                //}
 
                 return value;
             }
@@ -2781,11 +2368,11 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                    {
-                        return this->rtgrainvoice[0]->convertFromNormalizedParameterValue(index, value);
-                    }
-                }
+                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
+                //    {
+                //        return this->rtgrainvoice[0]->convertFromNormalizedParameterValue(index, value);
+                //    }
+                //}
 
                 return value;
             }
@@ -2882,11 +2469,11 @@ namespace RNBO {
             {
                 index -= 21;
 
-                if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                    {
-                        return this->rtgrainvoice[0]->constrainParameterValue(index, value);
-                    }
-                }
+                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
+                //    {
+                //        return this->rtgrainvoice[0]->constrainParameterValue(index, value);
+                //    }
+                //}
 
                 return value;
             }
@@ -2929,9 +2516,9 @@ namespace RNBO {
         void processNumMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, number payload) {
             this->updateTime(time);
 
-            for (Index i = 0; i < 24; i++) {
-                this->rtgrainvoice[i]->processNumMessage(tag, objectId, time, payload);
-            }
+            //for (Index i = 0; i < 24; i++) {
+            //    this->rtgrainvoice[i]->processNumMessage(tag, objectId, time, payload);
+            //}
         }
 
         void processListMessage(
@@ -2943,18 +2530,18 @@ namespace RNBO {
             RNBO_UNUSED(objectId);
             this->updateTime(time);
 
-            for (Index i = 0; i < 24; i++) {
-                this->rtgrainvoice[i]->processListMessage(tag, objectId, time, payload);
-            }
+            //for (Index i = 0; i < 24; i++) {
+            //    this->rtgrainvoice[i]->processListMessage(tag, objectId, time, payload);
+            //}
         }
 
         void processBangMessage(MessageTag tag, MessageTag objectId, MillisecondTime time) {
             RNBO_UNUSED(objectId);
             this->updateTime(time);
 
-            for (Index i = 0; i < 24; i++) {
-                this->rtgrainvoice[i]->processBangMessage(tag, objectId, time);
-            }
+            //for (Index i = 0; i < 24; i++) {
+            //    this->rtgrainvoice[i]->processBangMessage(tag, objectId, time);
+            //}
         }
 
         MessageTagInfo resolveTag(MessageTag tag) const {
@@ -2969,10 +2556,10 @@ namespace RNBO {
             }
             }
 
-            auto subpatchResult_0 = this->rtgrainvoice[0]->resolveTag(tag);
+            //auto subpatchResult_0 = this->rtgrainvoice[0]->resolveTag(tag);
 
-            if (subpatchResult_0)
-                return subpatchResult_0;
+            //if (subpatchResult_0)
+            //    return subpatchResult_0;
 
             return "";
         }
@@ -3343,10 +2930,6 @@ namespace RNBO {
             this->codebox_tilde_03_startrec_init();
             this->data_02_init();
             this->data_03_init();
-
-            for (Index i = 0; i < 24; i++) {
-                this->rtgrainvoice[i]->initializeObjects();
-            }
         }
 
         void sendOutlet(OutletIndex index, ParameterValue value) {
@@ -3356,10 +2939,6 @@ namespace RNBO {
         void startup() {
             this->updateTime(this->getEngine()->getCurrentTime());
             for (Index i = 0; i < 24; i++) {
-                this->rtgrainvoice[i]->startup();
-
-                //voice_state[i] = false;
-
                 voiceStates[i].isActive = false;
 				voiceStates[i].hasGrainInQueue = false;
                 voiceStates[i].endOfGrain = 0;
