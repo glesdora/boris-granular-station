@@ -74,6 +74,12 @@ namespace RNBO {
 
 #define FIXEDSIZEARRAYINIT(...) { }
 
+    struct voiceState {
+        bool isActive;
+        bool hasGrainInQueue;
+        SampleIndex endOfGrain;
+    };
+
     class rnbomatic : public PatcherInterfaceImpl {
     public:
 
@@ -188,12 +194,13 @@ namespace RNBO {
                 auto trgindx = this->triggerindex;
                 if (trgindx >= 0) {
                     if (trgindx >= this->vs) {
-                        this->hasGrainInQueue = true;
                         this->triggerindex -= this->vs;
                         return;
                     }
-                    this->hasGrainInQueue = false;
-                    this->endOfGrain = this->triggerindex + this->grainsize_value;
+
+                    this->endOfGrain = triggerindex + grainsize_value / pishift_value;      // ti + gsamps
+                    this->setIsMuted(0);
+					this->hasGrainInQueue = false;                                          // grain is still in queue, but will start on this block
                     this->triggerindex = -1;
                 }
 
@@ -638,6 +645,10 @@ namespace RNBO {
                         number carry_flag = 0;
 
                         if (triggernow) {
+                            //this->endOfGrain = g_samps;
+                            //this->hasGrainInQueue = false;
+                            //this->isMuted = 0;
+
                             this->gen_01_counter_11_count = 0;
                             playsound = true;
                         }
@@ -660,6 +671,7 @@ namespace RNBO {
 
                     if (env_counter_hit) {
                         //this->getPatcher()->updateTime(this->_currentTime);
+                        this->endOfGrain = 0;
                         this->getPatcher()->muteVoice(this->voice());
                     }
 
@@ -772,6 +784,10 @@ namespace RNBO {
                     out2[(Index)i] = outright;
                     out1[(Index)i] = outleft;
                 }
+
+                if (this->endOfGrain > 0)
+                    this->endOfGrain -= this->vs;
+				this->getTopLevelPatcher()->updateVoiceState(this->voice(), { !getIsMuted(), this->hasGrainInQueue, this->endOfGrain});
             }
 
             void signaladder_01_perform(
@@ -927,7 +943,6 @@ namespace RNBO {
         {
         }
 
-        /*S-mod*/
         ~rnbomatic()
         {
             for (int i = 0; i < 6; i++) {
@@ -947,18 +962,12 @@ namespace RNBO {
                 delete rtgrainvoice[i];
             }
         }
-        /*E-mod*/
 
         rnbomatic* getTopLevelPatcher() {
             return this;
         }
 
-        void cancelClockEvents()
-        {
-            //getEngine()->flushClockEvents(this, -611950441, false);
-            //getEngine()->flushClockEvents(this, -1584063977, false);
-            //getEngine()->flushClockEvents(this, 1821745152, false);
-        }
+        void cancelClockEvents() {}
 
         template <typename T> void listquicksort(T& arr, T& sortindices, Int l, Int h, bool ascending) {
             if (l < h) {
@@ -1265,8 +1274,6 @@ namespace RNBO {
                 n
             );
 
-            //this->edge_02_perform(this->signals[3], n);
-
             this->codebox_tilde_02_perform(
                 this->codebox_tilde_02_in1,
                 this->codebox_tilde_02_in2,
@@ -1301,8 +1308,6 @@ namespace RNBO {
             );
 
             this->latch_tilde_01_perform(this->signals[4], this->latch_tilde_01_control, this->signals[2], n);
-
-            //this->p_01_perform(this->signals[1], this->signals[2], this->signals[4], this->signals[5], n);          //!!!!
 
             {
                 ConstSampleArray<2> ins = { signals[1], signals[2] };
@@ -2099,8 +2104,8 @@ namespace RNBO {
                     info->initialValue = 100;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101; 
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2118,8 +2123,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2156,8 +2161,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2175,8 +2180,8 @@ namespace RNBO {
                     info->initialValue = 1;
                     info->min = 0.25;
                     info->max = 4;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 0;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 0;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2194,8 +2199,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2232,8 +2237,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2270,8 +2275,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2289,8 +2294,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2308,8 +2313,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2346,8 +2351,8 @@ namespace RNBO {
                     info->initialValue = 0;
                     info->min = 0;
                     info->max = 100;
-                    info->exponent = 1;/*S-mod*/
-                    info->steps = 101;  /*E-mod*/
+                    info->exponent = 1;
+                    info->steps = 101;
                     info->debug = false;
                     info->saveable = true;
                     info->transmittable = true;
@@ -2937,28 +2942,6 @@ namespace RNBO {
         }
 
         void processClockEvent(MillisecondTime time, ClockId index, bool hasValue, ParameterValue value) {}
-        //    RNBO_UNUSED(value);
-        //    RNBO_UNUSED(hasValue);
-        //    this->updateTime(time);
-
-        //    switch (index) {
-        //    //case -611950441:
-        //    //{
-        //    //    this->edge_02_onout_bang();
-        //    //    break;
-        //    //}
-        //    //case -1584063977:
-        //    //{
-        //    //    this->edge_02_offout_bang();
-        //    //    break;
-        //    //}
-        //    //case 1821745152:
-        //    //{
-        //    //    //this->setGrainProperties();
-        //    //    break;
-        //    //}
-        //    }
-        //}
 
         void processOutletAtCurrentTime(EngineLink*, OutletIndex, ParameterValue) {}
 
@@ -2974,76 +2957,6 @@ namespace RNBO {
 
         void processNumMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, number payload) {
             this->updateTime(time);
-
-            switch (tag) {
-            case TAG("valin"):
-            {
-                if (TAG("dial_obj-64") == objectId)
-                    this->dial_01_valin_set(payload);
-
-                if (TAG("dial_obj-65") == objectId)
-                    this->dial_02_valin_set(payload);
-
-                if (TAG("dial_obj-66") == objectId)
-                    this->dial_03_valin_set(payload);
-
-                if (TAG("dial_obj-78") == objectId)
-                    this->dial_04_valin_set(payload);
-
-                if (TAG("dial_obj-67") == objectId)
-                    this->dial_05_valin_set(payload);
-
-                if (TAG("dial_obj-92") == objectId)
-                    this->dial_06_valin_set(payload);
-
-                if (TAG("dial_obj-68") == objectId)
-                    this->dial_07_valin_set(payload);
-
-                if (TAG("dial_obj-93") == objectId)
-                    this->dial_08_valin_set(payload);
-
-                if (TAG("dial_obj-69") == objectId)
-                    this->dial_09_valin_set(payload);
-
-                if (TAG("dial_obj-94") == objectId)
-                    this->dial_10_valin_set(payload);
-
-                if (TAG("dial_obj-70") == objectId)
-                    this->dial_11_valin_set(payload);
-
-                if (TAG("dial_obj-71") == objectId)
-                    this->dial_12_valin_set(payload);
-
-                if (TAG("dial_obj-72") == objectId)
-                    this->dial_13_valin_set(payload);
-
-                if (TAG("dial_obj-95") == objectId)
-                    this->dial_14_valin_set(payload);
-
-                if (TAG("dial_obj-73") == objectId)
-                    this->dial_15_valin_set(payload);
-
-                if (TAG("dial_obj-97") == objectId)
-                    this->dial_16_valin_set(payload);
-
-                if (TAG("toggle_obj-100") == objectId)
-                    this->toggle_01_valin_set(payload);
-
-                if (TAG("toggle_obj-108") == objectId)
-                    this->toggle_02_valin_set(payload);
-
-                if (TAG("toggle_obj-111") == objectId)
-                    this->toggle_03_valin_set(payload);
-
-                if (TAG("dial_obj-113") == objectId)
-                    this->dial_17_valin_set(payload);
-
-                if (TAG("dial_obj-125") == objectId)
-                    this->dial_18_valin_set(payload);
-
-                break;
-            }
-            }
 
             for (Index i = 0; i < 24; i++) {
                 this->rtgrainvoice[i]->processNumMessage(tag, objectId, time, payload);
@@ -3079,90 +2992,6 @@ namespace RNBO {
             {
                 return "valout";
             }
-            case TAG("dial_obj-64"):
-            {
-                return "dial_obj-64";
-            }
-            case TAG("dial_obj-65"):
-            {
-                return "dial_obj-65";
-            }
-            case TAG("dial_obj-66"):
-            {
-                return "dial_obj-66";
-            }
-            case TAG("dial_obj-78"):
-            {
-                return "dial_obj-78";
-            }
-            case TAG("dial_obj-67"):
-            {
-                return "dial_obj-67";
-            }
-            case TAG("dial_obj-92"):
-            {
-                return "dial_obj-92";
-            }
-            case TAG("dial_obj-68"):
-            {
-                return "dial_obj-68";
-            }
-            case TAG("dial_obj-93"):
-            {
-                return "dial_obj-93";
-            }
-            case TAG("dial_obj-69"):
-            {
-                return "dial_obj-69";
-            }
-            case TAG("dial_obj-94"):
-            {
-                return "dial_obj-94";
-            }
-            case TAG("dial_obj-70"):
-            {
-                return "dial_obj-70";
-            }
-            case TAG("dial_obj-71"):
-            {
-                return "dial_obj-71";
-            }
-            case TAG("dial_obj-72"):
-            {
-                return "dial_obj-72";
-            }
-            case TAG("dial_obj-95"):
-            {
-                return "dial_obj-95";
-            }
-            case TAG("dial_obj-73"):
-            {
-                return "dial_obj-73";
-            }
-            case TAG("dial_obj-97"):
-            {
-                return "dial_obj-97";
-            }
-            case TAG("toggle_obj-100"):
-            {
-                return "toggle_obj-100";
-            }
-            case TAG("toggle_obj-108"):
-            {
-                return "toggle_obj-108";
-            }
-            case TAG("toggle_obj-111"):
-            {
-                return "toggle_obj-111";
-            }
-            case TAG("dial_obj-113"):
-            {
-                return "dial_obj-113";
-            }
-            case TAG("dial_obj-125"):
-            {
-                return "dial_obj-125";
-            }
             case TAG("valin"):
             {
                 return "valin";
@@ -3191,6 +3020,12 @@ namespace RNBO {
 
     protected:
 
+        void updateVoiceState(int voice, voiceState voicestate) {
+			auto voiceindex = voice - 1;
+
+			voiceStates[voiceindex] = voicestate;
+        }
+
         void param_01_value_set(number v) {
             v = this->param_01_value_constrain(v);
             this->param_01_value = v;
@@ -3201,7 +3036,6 @@ namespace RNBO {
                 this->param_01_lastValue = this->param_01_value;
             }
 
-            //this->codebox_01_den_set(v);
             this->codebox_tilde_01_in3_set(v);
         }
 
@@ -3247,7 +3081,6 @@ namespace RNBO {
 
             this->codebox_tilde_03_in2_set(v);
             this->codebox_tilde_02_in1_set(v);
-            //this->codebox_01_len_set(v);
             this->codebox_tilde_01_in2_set(v);
         }
 
@@ -3255,10 +3088,6 @@ namespace RNBO {
             v = this->param_05_value_constrain(v);
             this->param_05_value = v;
             this->sendParameter(4, false);
-
-            //{
-            //    this->param_05_normalized_set(this->tonormalized(4, this->param_05_value));
-            //}
 
             if (this->param_05_value != this->param_05_lastValue) {
                 this->getEngine()->presetTouched();
@@ -3275,18 +3104,12 @@ namespace RNBO {
                 this->getEngine()->presetTouched();
                 this->param_06_lastValue = this->param_06_value;
             }
-
-            //this->codebox_01_psh_set(v);
         }
 
         void param_07_value_set(number v) {
             v = this->param_07_value_constrain(v);
             this->param_07_value = v;
             this->sendParameter(6, false);
-
-            //{
-            //    this->param_07_normalized_set(this->tonormalized(6, this->param_07_value));
-            //}
 
             if (this->param_07_value != this->param_07_lastValue) {
                 this->getEngine()->presetTouched();
@@ -3303,18 +3126,12 @@ namespace RNBO {
                 this->getEngine()->presetTouched();
                 this->param_08_lastValue = this->param_08_value;
             }
-
-            //this->codebox_01_env_set(v);
         }
 
         void param_09_value_set(number v) {
             v = this->param_09_value_constrain(v);
             this->param_09_value = v;
             this->sendParameter(8, false);
-
-            //{
-            //    this->param_09_normalized_set(this->tonormalized(8, this->param_09_value));
-            //}
 
             if (this->param_09_value != this->param_09_lastValue) {
                 this->getEngine()->presetTouched();
@@ -3331,18 +3148,12 @@ namespace RNBO {
                 this->getEngine()->presetTouched();
                 this->param_10_lastValue = this->param_10_value;
             }
-
-            //this->codebox_01_cpo_set(v);
         }
 
         void param_11_value_set(number v) {
             v = this->param_11_value_constrain(v);
             this->param_11_value = v;
             this->sendParameter(10, false);
-
-            //{
-            //    this->param_11_normalized_set(this->tonormalized(10, this->param_11_value));
-            //}
 
             if (this->param_11_value != this->param_11_lastValue) {
                 this->getEngine()->presetTouched();
@@ -3355,10 +3166,6 @@ namespace RNBO {
             this->param_12_value = v;
             this->sendParameter(11, false);
 
-            //{
-            //    this->param_12_normalized_set(this->tonormalized(11, this->param_12_value));
-            //}
-
             if (this->param_12_value != this->param_12_lastValue) {
                 this->getEngine()->presetTouched();
                 this->param_12_lastValue = this->param_12_value;
@@ -3369,10 +3176,6 @@ namespace RNBO {
             v = this->param_13_value_constrain(v);
             this->param_13_value = v;
             this->sendParameter(12, false);
-
-            //{
-            //    this->param_13_normalized_set(this->tonormalized(12, this->param_13_value));
-            //}
 
             if (this->param_13_value != this->param_13_lastValue) {
                 this->getEngine()->presetTouched();
@@ -3447,7 +3250,6 @@ namespace RNBO {
 
             this->codebox_tilde_03_in1_set(v);
             this->expr_02_in1_set(v);
-            //this->codebox_01_frz_set(v);
         }
 
         void param_19_value_set(number v) {
@@ -3487,96 +3289,6 @@ namespace RNBO {
             }
 
             this->codebox_tilde_01_in8_set(v);
-        }
-
-        void edge_02_onout_bang() {}
-
-        void edge_02_offout_bang() {
-            //this->setGrainProperties();
-        }
-
-        void dial_01_valin_set(number v) {
-            this->dial_01_value_set(v);
-        }
-
-        void dial_02_valin_set(number v) {
-            this->dial_02_value_set(v);
-        }
-
-        void dial_03_valin_set(number v) {
-            this->dial_03_value_set(v);
-        }
-
-        void dial_04_valin_set(number v) {
-            this->dial_04_value_set(v);
-        }
-
-        void dial_05_valin_set(number v) {
-            this->dial_05_value_set(v);
-        }
-
-        void dial_06_valin_set(number v) {
-            this->dial_06_value_set(v);
-        }
-
-        void dial_07_valin_set(number v) {
-            this->dial_07_value_set(v);
-        }
-
-        void dial_08_valin_set(number v) {
-            this->dial_08_value_set(v);
-        }
-
-        void dial_09_valin_set(number v) {
-            this->dial_09_value_set(v);
-        }
-
-        void dial_10_valin_set(number v) {
-            this->dial_10_value_set(v);
-        }
-
-        void dial_11_valin_set(number v) {
-            this->dial_11_value_set(v);
-        }
-
-        void dial_12_valin_set(number v) {
-            this->dial_12_value_set(v);
-        }
-
-        void dial_13_valin_set(number v) {
-            this->dial_13_value_set(v);
-        }
-
-        void dial_14_valin_set(number v) {
-            this->dial_14_value_set(v);
-        }
-
-        void dial_15_valin_set(number v) {
-            this->dial_15_value_set(v);
-        }
-
-        void dial_16_valin_set(number v) {
-            this->dial_16_value_set(v);
-        }
-
-        void toggle_01_valin_set(number v) {
-            this->toggle_01_value_number_set(v);
-        }
-
-        void toggle_02_valin_set(number v) {
-            this->toggle_02_value_number_set(v);
-        }
-
-        void toggle_03_valin_set(number v) {
-            this->toggle_03_value_number_set(v);
-        }
-
-        void dial_17_valin_set(number v) {
-            this->dial_17_value_set(v);
-        }
-
-        void dial_18_valin_set(number v) {
-            this->dial_18_value_set(v);
         }
 
         number msToSamps(MillisecondTime ms, number sampleRate) {
@@ -3657,7 +3369,6 @@ namespace RNBO {
         }
 
         void initializeObjects() {
-            //this->codebox_01_rdm_init();
             this->codebox_tilde_01_n_subd_init();
             this->codebox_tilde_01_del_init();
             this->codebox_tilde_01_rdm_init();
@@ -3685,13 +3396,13 @@ namespace RNBO {
             this->updateTime(this->getEngine()->getCurrentTime());
             for (Index i = 0; i < 24; i++) {
                 this->rtgrainvoice[i]->startup();
-                //codebox_02_voiceState[i][0] = 0;
-                //codebox_02_voiceState[i][1] = 0;
 
-                voice_state[i] = false;
+                //voice_state[i] = false;
+
+                voiceStates[i].isActive = false;
+				voiceStates[i].hasGrainInQueue = false;
+                voiceStates[i].endOfGrain = 0;
             }
-
-            /*this->getEngine()->scheduleClockEvent(this, 1821745152, 0 + this->_currentTime);*/
 
             this->timevalue_01_sendValue();
             this->timevalue_02_sendValue();
@@ -3788,21 +3499,6 @@ namespace RNBO {
             v = (v > 1 ? 1 : (v < 0.04 ? 0.04 : v));
             return v;
         }
-        //
-        //static number codebox_01_den_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_den_set(number v) {
-        //    v = this->codebox_01_den_constrain(v);
-        //    this->codebox_01_den = v;
-        //}
 
         void codebox_tilde_01_in3_set(number v) {
             this->codebox_tilde_01_in3 = v;
@@ -3847,21 +3543,6 @@ namespace RNBO {
             this->codebox_tilde_02_in1 = v;
         }
 
-        //static number codebox_01_len_constrain(number v) {
-        //    if (v < 20)
-        //        v = 20;
-        //
-        //    if (v > 2000)
-        //        v = 2000;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_len_set(number v) {
-        //    v = this->codebox_01_len_constrain(v);
-        //    this->codebox_01_len = v;
-        //}
-
         void codebox_tilde_01_in2_set(number v) {
             this->codebox_tilde_01_in2 = v;
         }
@@ -3871,205 +3552,45 @@ namespace RNBO {
             return v;
         }
 
-        //static number codebox_01_rle_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_rle_set(number v) {
-        //    v = this->codebox_01_rle_constrain(v);
-        //    this->codebox_01_rle = v;
-        //}
-
-        //void param_05_normalized_set(number v) {
-        //    this->codebox_01_rle_set(v);
-        //}
-
         static number param_06_value_constrain(number v) {
             v = (v > 4 ? 4 : (v < 0.25 ? 0.25 : v));
             return v;
         }
-        //
-        //static number codebox_01_psh_constrain(number v) {
-        //    if (v < 0.25)
-        //        v = 0.25;
-        //
-        //    if (v > 4)
-        //        v = 4;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_psh_set(number v) {
-        //    v = this->codebox_01_psh_constrain(v);
-        //    this->codebox_01_psh = v;
-        //}
 
         static number param_07_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
         }
 
-        //static number codebox_01_rpt_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_rpt_set(number v) {
-        //    v = this->codebox_01_rpt_constrain(v);
-        //    this->codebox_01_rpt = v;
-        //}
-
-        //void param_07_normalized_set(number v) {
-        //    this->codebox_01_rpt_set(v);
-        //}
-
         static number param_08_value_constrain(number v) {
             v = (v > 3 ? 3 : (v < 0 ? 0 : v));
             return v;
         }
-        //
-        //static number codebox_01_env_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 3)
-        //        v = 3;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_env_set(number v) {
-        //    v = this->codebox_01_env_constrain(v);
-        //    this->codebox_01_env = v;
-        //}
 
         static number param_09_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
         }
 
-        //static number codebox_01_frp_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_frp_set(number v) {
-        //    v = this->codebox_01_frp_constrain(v);
-        //    this->codebox_01_frp = v;
-        //}
-
-        //void param_09_normalized_set(number v) {
-        //    //this->codebox_01_frp_set(v);
-        //    this->codebox_01_frp = v;
-        //}
-
         static number param_10_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0 ? 0 : v));
             return v;
         }
-
-        //static number codebox_01_cpo_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_cpo_set(number v) {
-        //    v = this->codebox_01_cpo_constrain(v);
-        //    this->codebox_01_cpo = v;
-        //}
 
         static number param_11_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
         }
 
-        //static number codebox_01_drf_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_drf_set(number v) {
-        //    v = this->codebox_01_drf_constrain(v);
-        //    this->codebox_01_drf = v;
-        //}
-
-        //void param_11_normalized_set(number v) {
-        //    this->codebox_01_drf_set(v);
-        //}
-
         static number param_12_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
         }
 
-        //static number codebox_01_pwi_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_pwi_set(number v) {
-        //    v = this->codebox_01_pwi_constrain(v);
-        //    this->codebox_01_pwi = v;
-        //}
-
-        //void param_12_normalized_set(number v) {
-        //    this->codebox_01_pwi_set(v);
-        //}
-
         static number param_13_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
         }
-
-        //static number codebox_01_rvo_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_rvo_set(number v) {
-        //    v = this->codebox_01_rvo_constrain(v);
-        //    this->codebox_01_rvo = v;
-        //}
-
-        //void param_13_normalized_set(number v) {
-        //    this->codebox_01_rvo_set(v);
-        //}
 
         static number param_14_value_constrain(number v) {
             v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
@@ -4139,28 +3660,14 @@ namespace RNBO {
         void codebox_tilde_03_in1_set(number v) {
             this->codebox_tilde_03_in1 = v;
         }
-        /*S-mod*/
+
         void bufferop_01_trigger_bang() {
             auto& buffer = this->bufferop_01_buffer;
-            //SampleIndex bufsize = (SampleIndex)(this->bufferop_01_buffer->getSize());
-            //number bufsizeDiv = bufsize - 1;
 
-            //for (number channel = 0; channel < buffer->getChannels(); channel++) {
-            //    number doIt = this->bufferop_01_channels->length == 0 || (bool)(this->bufferop_01_channels->includes(channel + 1));
-
-            //    if ((bool)(doIt)) {
-            //        for (SampleIndex index = 0; index < bufsize; index++) {
-            //            number x = index / bufsizeDiv;
-            //            number value = buffer->getSample(channel, index);
-            //            value = 0;
-            //            buffer->setSample(channel, index, value);
-            //        }
-            //    }
-            //}
             buffer->setZero();
             buffer->setTouched(true);
         }
-        /*E-mod*/
+
         void select_01_match1_bang() {
             this->bufferop_01_trigger_bang();
         }
@@ -4209,21 +3716,6 @@ namespace RNBO {
             this->expr_02_in1 = in1;
             this->expr_02_out1_set(this->expr_02_in1 == 0);//#map:!_obj-60:1
         }
-
-        //static number codebox_01_frz_constrain(number v) {
-        //    if (v < 0)
-        //        v = 0;
-        //
-        //    if (v > 1)
-        //        v = 1;
-        //
-        //    return v;
-        //}
-
-        //void codebox_01_frz_set(number v) {
-        //    v = this->codebox_01_frz_constrain(v);
-        //    this->codebox_01_frz = v;
-        //}
 
         static number param_19_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0 ? 0 : v));
@@ -4276,32 +3768,6 @@ namespace RNBO {
             this->codebox_tilde_01_in8 = v;
         }
 
-        //void p_01_voicestatus_set(const list& v) {
-        //    //for (Index i = 0; i < 24; i++) {
-        //    //    if (i + 1 == this->p_01_target || 0 == this->p_01_target) {
-        //    //        this->rtgrainvoice[i]->updateTime(this->_currentTime);
-        //    //    }
-        //    //}
-
-        //    for (Index i = 0; i < 24; i++) {
-        //        if (i + 1 == this->p_01_target || 0 == this->p_01_target) {
-        //            this->rtgrainvoice[i]->voice_01_mutein_list_set(v);
-        //        }
-        //    }
-        //}
-
-        //void p_01_activevoices_set(number v) {
-        //    //for (Index i = 0; i < 24; i++) {
-        //    //    if (i + 1 == this->p_01_target || 0 == this->p_01_target) {
-        //    //        this->rtgrainvoice[i]->updateTime(this->_currentTime);
-        //    //    }
-        //    //}
-
-        //    //for (Index i = 0; i < 24; i++) {
-        //    //    this->rtgrainvoice[i]->voice_01_activevoices_set(v);
-        //    //}
-        //}
-
         void p_01_mute_set(const list& v) {
             Index voiceNumber = (Index)(v[0]);
             Index muteState = (Index)(v[1]);
@@ -4318,77 +3784,12 @@ namespace RNBO {
                     this->rtgrainvoice[(Index)subpatcherIndex]->setIsMuted(muteState);
                 }
             }
-
-            //list tmp = { v[0], v[1] };
-            //this->p_01_voicestatus_set(tmp);
-            //this->p_01_activevoices_set(this->p_01_calcActiveVoices());
         }
 
         void setVoiceMuteState(const list& v) {
             this->codebox_02_out2 = jsCreateListCopy(v);
             this->p_01_mute_set(this->codebox_02_out2);
         }
-
-        //void setTarget(number v) {
-        //    this->p_01_target = v;
-        //}
-
-        //void selectTarget(number targetindex) {
-        //    //this->codebox_02_out3 = v;
-        //    //this->p_01_target_set(this->codebox_02_out3);
-
-        //    //p_01_target_set(targetindex);
-        //}
-        //void p_01_in1_list_set(const list& v) {
-        //
-        //	// this is only called when I'm selecting a specific target, so I'm not concerned about 
-        //	// the 0 case (target all)
-        //    /*for (Index i = 0; i < 24; i++) {
-        //        if (i + 1 == this->p_01_target || 0 == this->p_01_target) {
-        //            this->p_01[i]->updateTime(this->_currentTime);
-        //        }
-        //    }
-        //
-        //    for (Index i = 0; i < 24; i++) {
-        //        if (i + 1 == this->p_01_target || 0 == this->p_01_target) {
-        //            this->p_01[i]->eventinlet_01_out1_list_set(v);
-        //        }
-        //    }*/
-        //	Index tindex = this->p_01_target - 1;
-        //
-        //    this->rtgrainvoice[tindex]->updateTime(this->_currentTime);
-        //	this->rtgrainvoice[tindex]->initiateVoice(v);
-        //}
-        //
-        //void sendGrainPropsToTarget(SampleIndex trigatindex, const list& grainProps) {
-        //    /*this->codebox_02_out1 = jsCreateListCopy(v);
-        //    this->p_01_in1_list_set(this->codebox_02_out1);*/
-        //
-        //	//this->p_01_in1_list_set(grainProps);
-        //
-        //    Index tindex = this->p_01_target - 1;
-        //
-        //    this->rtgrainvoice[tindex]->updateTime(this->_currentTime);
-        //    this->rtgrainvoice[tindex]->initiateVoice(trigatindex, grainProps);
-        //}
-
-        //void triggerGrain(SampleIndex trigatindex, const list& grainprops) {
-        //    int target = this->findtargetvoice();
-
-        //    if (target >= 0) {
-        //        this->p_01_target = target;
-        //        this->setVoiceMuteState({ target, 0 });
-        //        /*this->sendGrainPropsToTarget(trigatindex, {grainprops});*/
-
-        //        this->rtgrainvoice[this->p_01_target - 1]->initiateVoice(trigatindex, grainprops);
-        //    }
-        //}
-
-        //void codebox_01_out1_set(const list& v) {
-        //    //this->codebox_01_out1 = jsCreateListCopy(v);
-        //	this->codebox_01_out1 = v;
-        //    this->codebox_02_in1_set(this->codebox_01_out1);
-        //}
 
         void setGrainProperties(SampleIndex trigatindex) {
             number len = getParameterValue(3);
@@ -4428,327 +3829,6 @@ namespace RNBO {
                 this->setVoiceMuteState({ target, 0 });
                 this->rtgrainvoice[this->p_01_target - 1]->initiateVoice(trigatindex, grainprops);
             }
-        }
-
-        void dial_01_output_set(number v) {
-            this->param_01_value_set(v);
-        }
-
-        void dial_01_value_set(number v) {
-            this->dial_01_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0.04, 0.04 + 96 - 1, 1), 1) * 0.01;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-64"), v, this->_currentTime);
-            this->dial_01_output_set(value);
-        }
-
-        void dial_02_output_set(number v) {
-            this->param_02_value_set(v);
-        }
-
-        void dial_02_value_set(number v) {
-            this->dial_02_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-65"), v, this->_currentTime);
-            this->dial_02_output_set(value);
-        }
-
-        void dial_03_output_set(number v) {
-            this->param_03_value_set(v);
-        }
-
-        void dial_03_value_set(number v) {
-            this->dial_03_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-66"), v, this->_currentTime);
-            this->dial_03_output_set(value);
-        }
-
-        void dial_04_output_set(number v) {
-            this->param_04_value_set(v);
-        }
-
-        void dial_04_value_set(number v) {
-            this->dial_04_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 20, 20 + 1980 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-78"), v, this->_currentTime);
-            this->dial_04_output_set(value);
-        }
-
-        void dial_05_output_set(number v) {
-            this->param_05_value_set(v);
-        }
-
-        void dial_05_value_set(number v) {
-            this->dial_05_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-67"), v, this->_currentTime);
-            this->dial_05_output_set(value);
-        }
-
-        void dial_06_output_set(number v) {
-            this->param_06_value_set(v);
-        }
-
-        void dial_06_value_set(number v) {
-            this->dial_06_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0.25, 0.25 + 75 - 1, 1), 1) * 0.05;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-92"), v, this->_currentTime);
-            this->dial_06_output_set(value);
-        }
-
-        void dial_07_output_set(number v) {
-            this->param_07_value_set(v);
-        }
-
-        void dial_07_value_set(number v) {
-            this->dial_07_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-68"), v, this->_currentTime);
-            this->dial_07_output_set(value);
-        }
-
-        void dial_08_output_set(number v) {
-            this->param_08_value_set(v);
-        }
-
-        void dial_08_value_set(number v) {
-            this->dial_08_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 30 - 1, 1), 1) * 0.1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-93"), v, this->_currentTime);
-            this->dial_08_output_set(value);
-        }
-
-        void dial_09_output_set(number v) {
-            this->param_09_value_set(v);
-        }
-
-        void dial_09_value_set(number v) {
-            this->dial_09_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-69"), v, this->_currentTime);
-            this->dial_09_output_set(value);
-        }
-
-        void dial_10_output_set(number v) {
-            this->param_10_value_set(v);
-        }
-
-        void dial_10_value_set(number v) {
-            this->dial_10_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 0.01;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-94"), v, this->_currentTime);
-            this->dial_10_output_set(value);
-        }
-
-        void dial_11_output_set(number v) {
-            this->param_11_value_set(v);
-        }
-
-        void dial_11_value_set(number v) {
-            this->dial_11_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-70"), v, this->_currentTime);
-            this->dial_11_output_set(value);
-        }
-
-        void dial_12_output_set(number v) {
-            this->param_12_value_set(v);
-        }
-
-        void dial_12_value_set(number v) {
-            this->dial_12_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-71"), v, this->_currentTime);
-            this->dial_12_output_set(value);
-        }
-
-        void dial_13_output_set(number v) {
-            this->param_13_value_set(v);
-        }
-
-        void dial_13_value_set(number v) {
-            this->dial_13_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-72"), v, this->_currentTime);
-            this->dial_13_output_set(value);
-        }
-
-        void dial_14_output_set(number v) {
-            this->param_14_value_set(v);
-        }
-
-        void dial_14_value_set(number v) {
-            this->dial_14_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 150 - 1, 1), 1) * 0.01;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-95"), v, this->_currentTime);
-            this->dial_14_output_set(value);
-        }
-
-        void dial_15_output_set(number v) {
-            this->param_15_value_set(v);
-        }
-
-        void dial_15_value_set(number v) {
-            this->dial_15_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 100 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-73"), v, this->_currentTime);
-            this->dial_15_output_set(value);
-        }
-
-        void dial_16_output_set(number v) {
-            this->param_16_value_set(v);
-        }
-
-        void dial_16_value_set(number v) {
-            this->dial_16_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 150 - 1, 1), 1) * 0.01;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-97"), v, this->_currentTime);
-            this->dial_16_output_set(value);
-        }
-
-        void toggle_01_output_set(number v) {
-            this->param_17_value_set(v);
-        }
-
-        void toggle_01_value_number_set(number v) {
-            this->toggle_01_value_number_setter(v);
-            v = this->toggle_01_value_number;
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("toggle_obj-100"), v, this->_currentTime);
-            this->toggle_01_output_set(v);
-        }
-
-        void toggle_02_output_set(number v) {
-            this->param_18_value_set(v);
-        }
-
-        void toggle_02_value_number_set(number v) {
-            this->toggle_02_value_number_setter(v);
-            v = this->toggle_02_value_number;
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("toggle_obj-108"), v, this->_currentTime);
-            this->toggle_02_output_set(v);
-        }
-
-        void toggle_03_output_set(number v) {
-            this->param_19_value_set(v);
-        }
-
-        void toggle_03_value_number_set(number v) {
-            this->toggle_03_value_number_setter(v);
-            v = this->toggle_03_value_number;
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("toggle_obj-111"), v, this->_currentTime);
-            this->toggle_03_output_set(v);
-        }
-
-        void dial_17_output_set(number v) {
-            this->param_20_value_set(v);
-        }
-
-        void dial_17_value_set(number v) {
-            this->dial_17_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 7 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-113"), v, this->_currentTime);
-            this->dial_17_output_set(value);
-        }
-
-        void dial_18_output_set(number v) {
-            this->param_21_value_set(v);
-        }
-
-        void dial_18_value_set(number v) {
-            this->dial_18_value = v;
-            number value;
-
-            {
-                value = this->__wrapped_op_round(this->scale(v, 0, 128, 0, 0 + 3 - 1, 1), 1) * 1;
-            }
-
-            this->getEngine()->sendNumMessage(TAG("valout"), TAG("dial_obj-125"), v, this->_currentTime);
-            this->dial_18_output_set(value);
         }
 
         void phasor_01_freq_set(number v) {
@@ -4813,20 +3893,17 @@ namespace RNBO {
             }
         }
 
-        void muteVoice(number voicenumber) {
-            //this->codebox_02_in2 = voicenumber;
-            //this->codebox_02_voiceState[(Index)voiceIndex][0] = 0;//#map:_###_obj_###_:22
-            //this->codebox_02_voiceState[(Index)voiceIndex][1] = this->currenttime();//#map:_###_obj_###_:23
-
+        void muteVoice(number voicenumber) {        // this is only called from processCore, so from the voice itself
             Index voiceIndex = voicenumber - 1;
 
-            voice_state[voiceIndex] = false;
+            //voice_state[voiceIndex] = false;
+            
+			voiceStates[voiceIndex].isActive = false;
+			voiceStates[voiceIndex].hasGrainInQueue = false;
+			voiceStates[voiceIndex].endOfGrain = 0;
+            
             this->setVoiceMuteState({ voicenumber, 1 });
         }
-        //
-        //void p_01_out3_number_set(number v) {
-        //    this->muteVoice(v);
-        //}
 
         void phasor_01_perform(number freq, SampleValue* out, Index n) {
             auto __phasor_01_lastLockedPhase = this->phasor_01_lastLockedPhase;
@@ -4944,7 +4021,7 @@ namespace RNBO {
 
             this->phasor_03_lastLockedPhase = __phasor_03_lastLockedPhase;
         }
-        /*S-mod*/
+
         void generate_triggers(
             number in1,
             number in2,
@@ -4967,7 +4044,6 @@ namespace RNBO {
             Index i;
 
             for (i = 0; i < n; i++) {
-                //out1[(Index)i] = 0;
                 number mut = in1;
                 number len = in2;
                 number den = in3;
@@ -4994,18 +4070,12 @@ namespace RNBO {
 
                     if (__freerunningphas_new < __freerunningphas_old) {
                         number r = rand01();
-                        /*number bangin = r <= cha;
-                        r = rand01();
-                        __codebox_tilde_01_rdmdel = r * maxdelay;
-                        out1[(Index)i] = this->codebox_tilde_01_del_next(bangin, __codebox_tilde_01_rdmdel);*/
                         if (r <= cha) {
                             r = rand01();
 							auto delayedtrig = i + r * maxdelay;        //maxdelay is in samples
                             this->setGrainProperties(delayedtrig);
                         }
                     }
-
-                    //out1[(Index)i] = this->codebox_tilde_01_del_next(0, __codebox_tilde_01_rdmdel);
                     __freerunningphas_old = __freerunningphas_new;
                 }
                 else {
@@ -5045,21 +4115,17 @@ namespace RNBO {
                     if (!mut) {
                         if (new_sub_phase < __codebox_tilde_01_old_sub_phase) {
                             number r = this->codebox_tilde_01_rdm_next() / (number)2 + 0.5;
-                            //number bangin = r <= cha;
-                            //r = this->codebox_tilde_01_rdm_next() / (number)2 + 0.5;//#map:_###_obj_###_:85
-                            //__codebox_tilde_01_rdmdel = r * maxdelay;//#map:_###_obj_###_:86
-                            //out1[(Index)i] = this->codebox_tilde_01_del_next(bangin, __codebox_tilde_01_rdmdel);//#map:_###_obj_###_:88
                             if (r <= cha) {
                                 r = rand01();
-                                auto delayedtrig = i + r * maxdelay;        //maxdelay is in samples
+                                auto delayedtrig = i + r * maxdelay;
                                 this->setGrainProperties(delayedtrig);
                             }
-                        }//#map:_###_obj_###_:81
+                        }
                     }
 
-                    __codebox_tilde_01_old_sub_phase = new_sub_phase;//#map:_###_obj_###_:93
+                    __codebox_tilde_01_old_sub_phase = new_sub_phase;
 
-                }//#map:_###_obj_###_:27
+                }
             }
 
             this->codebox_tilde_01_newphas = __freerunningphas_new;
@@ -5067,28 +4133,6 @@ namespace RNBO {
             this->codebox_tilde_01_rdmdel = __codebox_tilde_01_rdmdel;
             this->codebox_tilde_01_old_sub_phase = __codebox_tilde_01_old_sub_phase;
         }
-        /*E-mod*/
-        //void edge_02_perform(const SampleValue* input, Index n) {
-        //    auto __edge_02_currentState = this->edge_02_currentState;
-
-        //    for (Index i = 0; i < n; i++) {
-        //        if (__edge_02_currentState == 1) {
-        //            if (input[(Index)i] == 0.) {
-        //                //this->getEngine()->scheduleClockEvent(this, -1584063977, this->sampsToMs(i) + this->_currentTime);;
-        //                this->setGrainProperties(i);
-        //                __edge_02_currentState = 0;
-        //            }
-        //        }
-        //        else {
-        //            if (input[(Index)i] != 0.) {
-        //                //this->getEngine()->scheduleClockEvent(this, -611950441, this->sampsToMs(i) + this->_currentTime);;
-        //                __edge_02_currentState = 1;
-        //            }
-        //        }
-        //    }
-
-        //    this->edge_02_currentState = __edge_02_currentState;
-        //}
 
         void codebox_tilde_02_perform(number in1, number in2, SampleValue* out1, Index n) {
             auto __codebox_tilde_02_stoppin_time = this->codebox_tilde_02_stoppin_time;
@@ -5311,23 +4355,6 @@ namespace RNBO {
 
             this->latch_tilde_01_value = __latch_tilde_01_value;
         }
-
-        //void p_01_perform(
-        //    const SampleValue * in2,
-        //    const SampleValue * in3,
-        //    SampleValue * out1,
-        //    SampleValue * out2,
-        //    Index n
-        //) {
-        //    ConstSampleArray<2> ins = {in2, in3};
-        //    SampleArray<2> outs = {out1, out2};
-        //
-        //    for (number chan = 0; chan < 2; chan++)
-        //        zeroSignal(outs[(Index)chan], n);
-        //
-        //    for (Index i = 0; i < 24; i++)
-        //        this->rtgrainvoice[i]->process(ins, 2, outs, 2, n);
-        //}
 
         void dcblock_tilde_01_perform(const Sample* x, number gain, SampleValue* out1, Index n) {
             RNBO_UNUSED(gain);
@@ -5607,18 +4634,6 @@ namespace RNBO {
             this->limi_01_threshold = rnbo_pow(10., v * 0.05);
         }
 
-        void toggle_01_value_number_setter(number v) {
-            this->toggle_01_value_number = (v != 0 ? 1 : 0);
-        }
-
-        void toggle_02_value_number_setter(number v) {
-            this->toggle_02_value_number = (v != 0 ? 1 : 0);
-        }
-
-        void toggle_03_value_number_setter(number v) {
-            this->toggle_03_value_number = (v != 0 ? 1 : 0);
-        }
-
         void edge_02_dspsetup(bool force) {
             if ((bool)(this->edge_02_setupDone) && (bool)(!(bool)(force)))
                 return;
@@ -5746,25 +4761,6 @@ namespace RNBO {
             this->codebox_01_mphasor_conv = (this->sr == 0. ? 0. : (number)1 / this->sr);
         }
 
-        //void codebox_01_rdm_reset() {
-        //    xoshiro_reset(
-        //        systemticks() + this->voice() + this->random(0, 10000),
-        //        this->codebox_01_rdm_state
-        //    );
-        //}
-
-        //void codebox_01_rdm_init() {
-        //    this->codebox_01_rdm_reset();
-        //}
-
-        //void codebox_01_rdm_seed(number v) {
-        //    xoshiro_reset(v, this->codebox_01_rdm_state);
-        //}
-
-        //number codebox_01_rdm_next() {
-        //    return xoshiro_next(this->codebox_01_rdm_state);
-        //}
-
         number setGrainSize(number len, number rle)
         {
             number newlen = (1 - (rand01() * 0.5 + 0.5) * rle) * len;
@@ -5842,56 +4838,28 @@ namespace RNBO {
             }
         }
 
-        //void codebox_02_sendnoteon(number target) /*#map:_###_obj_###_:28*/
-        //{
-        //    this->codebox_02_out2_set({target, 0});//#map:_###_obj_###_:30
-        //    this->codebox_02_out3_set(target);//#map:_###_obj_###_:32
-        //
-        //    this->codebox_02_out1_set({
-        //        this->codebox_02_pos,
-        //        this->codebox_02_len,
-        //        this->codebox_02_f_r,
-        //        this->codebox_02_ptc,
-        //        this->codebox_02_vol,
-        //        this->codebox_02_pan
-        //    });//#map:_###_obj_###_:35
-        //}
+        /*  · If a voice is muted, but in timer state, it is ignored.
+            · If a voice is unmuted, and eog is smaller then newtrig, it's good.
+            · If a voice is muted and not in timer state, it's good.
+            */
 
-        //void codebox_02_assignvoice()
-        //{
-        //    for (int i = 0; i < 24; i++) {
-        //        bool candidate_state = this->codebox_02_voiceState[i][0];
-        //
-        //        if (candidate_state == 0) {
-        //            number target = i + 1;
-        //            this->codebox_02_voiceState[i][0] = 1;
-        //            this->codebox_02_voiceState[i][1] = this->currenttime();
-        //            this->codebox_02_sendnoteon(target);
-        //            break;
-        //        }
-        //    }
-        //}
-
-        int findtargetvoice(SampleIndex ti)
+        int findtargetvoice(SampleIndex ti)     //VOICE MANAGER
         {
             for (int i = 0; i < 24; i++) {
-                bool candidate_state = voice_state[i];
+                //bool candidate_state = voice_state[i];
 
+                auto candidate_isActive = voiceStates[i].isActive;
+				auto candidate_hasGrainInQueue = voiceStates[i].hasGrainInQueue;
+				auto candidate_endOfGrain = voiceStates[i].endOfGrain;
 
-                if(rtgrainvoice[i]->getHasGrainInQueue())
+                if(candidate_hasGrainInQueue)
                     continue;
-                if (candidate_state == 0) {
+                
+				// the main class here only updates the hasGrainInQueue flag, while the active state and the eog are handled by the voice
+                if (!candidate_isActive || (candidate_isActive && candidate_endOfGrain < ti)) {
                     int target = i + 1;
-                    voice_state[i] = true;
+					voiceStates[i].hasGrainInQueue = true; 
                     return target;
-                }
-                else if (candidate_state == 1) {
-					auto eog = rtgrainvoice[i]->getEndOfGrain();
-                    if (ti > eog)
-                    {
-                        int target = i + 1;
-                        return target;
-                    }
                 }
             }
 
@@ -6479,17 +5447,6 @@ namespace RNBO {
             this->param_01_value_set(preset["value"]);
         }
 
-        void dial_01_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_01_value;
-        }
-
-        void dial_01_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_01_value_set(preset["value"]);
-        }
-
         void param_02_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_02_value;
         }
@@ -6499,17 +5456,6 @@ namespace RNBO {
                 return;
 
             this->param_02_value_set(preset["value"]);
-        }
-
-        void dial_02_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_02_value;
-        }
-
-        void dial_02_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_02_value_set(preset["value"]);
         }
 
         void param_03_getPresetValue(PatcherStateInterface& preset) {
@@ -6523,17 +5469,6 @@ namespace RNBO {
             this->param_03_value_set(preset["value"]);
         }
 
-        void dial_03_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_03_value;
-        }
-
-        void dial_03_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_03_value_set(preset["value"]);
-        }
-
         void param_04_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_04_value;
         }
@@ -6545,17 +5480,6 @@ namespace RNBO {
             this->param_04_value_set(preset["value"]);
         }
 
-        void dial_04_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_04_value;
-        }
-
-        void dial_04_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_04_value_set(preset["value"]);
-        }
-
         void param_05_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_05_value;
         }
@@ -6565,17 +5489,6 @@ namespace RNBO {
                 return;
 
             this->param_05_value_set(preset["value"]);
-        }
-
-        void dial_05_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_05_value;
-        }
-
-        void dial_05_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_05_value_set(preset["value"]);
         }
 
         void data_01_init() {
@@ -6634,17 +5547,6 @@ namespace RNBO {
             this->param_06_value_set(preset["value"]);
         }
 
-        void dial_06_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_06_value;
-        }
-
-        void dial_06_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_06_value_set(preset["value"]);
-        }
-
         void param_07_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_07_value;
         }
@@ -6654,17 +5556,6 @@ namespace RNBO {
                 return;
 
             this->param_07_value_set(preset["value"]);
-        }
-
-        void dial_07_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_07_value;
-        }
-
-        void dial_07_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_07_value_set(preset["value"]);
         }
 
         void phasor_02_dspsetup(bool force) {
@@ -6686,17 +5577,6 @@ namespace RNBO {
             this->param_08_value_set(preset["value"]);
         }
 
-        void dial_08_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_08_value;
-        }
-
-        void dial_08_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_08_value_set(preset["value"]);
-        }
-
         void param_09_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_09_value;
         }
@@ -6706,17 +5586,6 @@ namespace RNBO {
                 return;
 
             this->param_09_value_set(preset["value"]);
-        }
-
-        void dial_09_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_09_value;
-        }
-
-        void dial_09_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_09_value_set(preset["value"]);
         }
 
         void phasor_03_dspsetup(bool force) {
@@ -6738,17 +5607,6 @@ namespace RNBO {
             this->param_10_value_set(preset["value"]);
         }
 
-        void dial_10_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_10_value;
-        }
-
-        void dial_10_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_10_value_set(preset["value"]);
-        }
-
         void param_11_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_11_value;
         }
@@ -6758,17 +5616,6 @@ namespace RNBO {
                 return;
 
             this->param_11_value_set(preset["value"]);
-        }
-
-        void dial_11_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_11_value;
-        }
-
-        void dial_11_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_11_value_set(preset["value"]);
         }
 
         void param_12_getPresetValue(PatcherStateInterface& preset) {
@@ -6782,17 +5629,6 @@ namespace RNBO {
             this->param_12_value_set(preset["value"]);
         }
 
-        void dial_12_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_12_value;
-        }
-
-        void dial_12_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_12_value_set(preset["value"]);
-        }
-
         void param_13_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_13_value;
         }
@@ -6804,17 +5640,6 @@ namespace RNBO {
             this->param_13_value_set(preset["value"]);
         }
 
-        void dial_13_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_13_value;
-        }
-
-        void dial_13_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_13_value_set(preset["value"]);
-        }
-
         void param_14_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_14_value;
         }
@@ -6824,17 +5649,6 @@ namespace RNBO {
                 return;
 
             this->param_14_value_set(preset["value"]);
-        }
-
-        void dial_14_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->dial_14_value;
-        }
-
-        void dial_14_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->dial_14_value_set(preset["value"]);
         }
 
         void latch_tilde_01_reset() {
@@ -6964,17 +5778,6 @@ namespace RNBO {
             this->param_15_value_set(preset["value"]);
         }
 
-        //void dial_15_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->dial_15_value;
-        //}
-
-        //void dial_15_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->dial_15_value_set(preset["value"]);
-        //}
-
         void param_16_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_16_value;
         }
@@ -6985,28 +5788,6 @@ namespace RNBO {
 
             this->param_16_value_set(preset["value"]);
         }
-
-        //void dial_16_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->dial_16_value;
-        //}
-
-        //void dial_16_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->dial_16_value_set(preset["value"]);
-        //}
-
-        //void toggle_01_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->toggle_01_value_number;
-        //}
-
-        //void toggle_01_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->toggle_01_value_number_set(preset["value"]);
-        //}
 
         void param_17_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_17_value;
@@ -7030,28 +5811,6 @@ namespace RNBO {
             this->param_18_value_set(preset["value"]);
         }
 
-        //void toggle_02_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->toggle_02_value_number;
-        //}
-
-        //void toggle_02_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->toggle_02_value_number_set(preset["value"]);
-        //}
-
-        //void toggle_03_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->toggle_03_value_number;
-        //}
-
-        //void toggle_03_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->toggle_03_value_number_set(preset["value"]);
-        //}
-
         void param_19_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_19_value;
         }
@@ -7063,17 +5822,6 @@ namespace RNBO {
             this->param_19_value_set(preset["value"]);
         }
 
-        //void dial_17_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->dial_17_value;
-        //}
-
-        //void dial_17_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->dial_17_value_set(preset["value"]);
-        //}
-
         void param_20_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_20_value;
         }
@@ -7084,17 +5832,6 @@ namespace RNBO {
 
             this->param_20_value_set(preset["value"]);
         }
-
-        //void dial_18_getPresetValue(PatcherStateInterface& preset) {
-        //    preset["value"] = this->dial_18_value;
-        //}
-
-        //void dial_18_setPresetValue(PatcherStateInterface& preset) {
-        //    if ((bool)(stateIsEmpty(preset)))
-        //        return;
-
-        //    this->dial_18_value_set(preset["value"]);
-        //}
 
         void param_21_getPresetValue(PatcherStateInterface& preset) {
             preset["value"] = this->param_21_value;
@@ -7579,13 +6316,6 @@ namespace RNBO {
 
         void updateTime(MillisecondTime time) {
             this->_currentTime = time;
-            //this->sampleOffsetIntoNextAudioBuffer = (SampleIndex)(rnbo_fround(this->msToSamps(time - this->getEngine()->getCurrentTime(), this->sr)));
-
-            //if (this->sampleOffsetIntoNextAudioBuffer >= (SampleIndex)(this->vs))
-            //    this->sampleOffsetIntoNextAudioBuffer = (SampleIndex)(this->vs) - 1;
-
-            //if (this->sampleOffsetIntoNextAudioBuffer < 0)
-            //    this->sampleOffsetIntoNextAudioBuffer = 0;
         }
 
         void assign_defaults()
@@ -7603,21 +6333,7 @@ namespace RNBO {
             limi_01_release = 1000;
             dspexpr_01_in1 = 0;
             dspexpr_01_in2 = 1;
-            //codebox_01_len = 500;
-            //codebox_01_den = 1;
-            //codebox_01_cpo = 0.5;
-            //codebox_01_drf = 0;
-            //codebox_01_rvo = 0;
-            //codebox_01_pwi = 0.5;
-            //codebox_01_frp = 0;
-            //codebox_01_psh = 1;
-            //codebox_01_rpt = 0;
-            //codebox_01_env = 1;
-            //codebox_01_frz = 0;
-            //codebox_01_rle = 0;
             p_01_target = 0;
-            //codebox_02_in2 = 0;
-            //codebox_02_out3 = 0;
             codebox_tilde_01_in1 = 0;
             codebox_tilde_01_in2 = 0;
             codebox_tilde_01_in3 = 0;
@@ -7630,17 +6346,12 @@ namespace RNBO {
             codebox_tilde_01_in10 = 0;
             codebox_tilde_01_in11 = 0;
             param_01_value = 0.52;
-            dial_01_value = 0;
             param_02_value = 100;
-            dial_02_value = 0;
             dspexpr_02_in1 = 0;
             dspexpr_02_in2 = 1;
             param_03_value = 0;
-            dial_03_value = 0;
             param_04_value = 200;
-            dial_04_value = 0;
             param_05_value = 0;
-            dial_05_value = 0;
             data_01_sizeout = 0;
             data_01_size = 100;
             data_01_sizems = 0;
@@ -7648,25 +6359,16 @@ namespace RNBO {
             data_01_channels = 1;
             phasor_01_freq = 0;
             param_06_value = 1;
-            dial_06_value = 0;
             param_07_value = 0;
-            dial_07_value = 0;
             phasor_02_freq = 0;
             param_08_value = 1;
-            dial_08_value = 0;
             param_09_value = 0;
-            dial_09_value = 0;
             phasor_03_freq = 0;
             param_10_value = 0;
-            dial_10_value = 0;
             param_11_value = 0;
-            dial_11_value = 0;
             param_12_value = 0;
-            dial_12_value = 0;
             param_13_value = 0;
-            dial_13_value = 0;
             param_14_value = 1;
-            dial_14_value = 0;
             latch_tilde_01_x = 0;
             latch_tilde_01_control = 0;
             codebox_tilde_02_in1 = 0;
@@ -7680,22 +6382,13 @@ namespace RNBO {
             recordtilde_02_begin = 0;
             recordtilde_02_end = -1;
             recordtilde_02_loop = 0;
-            dial_15_value = 0;
             param_16_value = 1;
-            dial_16_value = 0;
-            toggle_01_value_number = 0;
-            toggle_01_value_number_setter(toggle_01_value_number);
             param_17_value = 0;
             param_18_value = 0;
-            toggle_02_value_number = 0;
-            toggle_02_value_number_setter(toggle_02_value_number);
-            toggle_03_value_number = 0;
-            toggle_03_value_number_setter(toggle_03_value_number);
             param_19_value = 0;
             expr_02_in1 = 0;
             expr_02_out1 = 0;
             select_01_test1 = 1;
-            dial_17_value = 0;
             param_20_value = 3;
             dspexpr_03_in1 = 0;
             dspexpr_03_in2 = 0.71;
@@ -7705,7 +6398,6 @@ namespace RNBO {
             dspexpr_05_in2 = 0;
             dspexpr_06_in1 = 0;
             dspexpr_06_in2 = 1;
-            dial_18_value = 0;
             param_21_value = 0;
             dcblock_tilde_01_x = 0;
             dcblock_tilde_01_gain = 0.9997;
@@ -7731,7 +6423,6 @@ namespace RNBO {
             expr_01_out1 = 0;
             _currentTime = 0;
             audioProcessSampleCount = 0;
-            //sampleOffsetIntoNextAudioBuffer = 0;
             zeroBuffer = nullptr;
             dummyBuffer = nullptr;
             signals[0] = nullptr;
@@ -7755,10 +6446,8 @@ namespace RNBO {
             limi_01_dc2_xm1 = 0;
             limi_01_dc2_ym1 = 0;
             limi_01_setupDone = false;
-            //codebox_01_intelligent_offset = 0;
             codebox_01_newphas = 0;
             codebox_01_oldphas = 0;
-            //len_in_samps = 0;
             codebox_01_mphasor_currentPhase = 0;
             codebox_01_mphasor_conv = 0;
             codebox_02_pos = 0;
@@ -7790,15 +6479,10 @@ namespace RNBO {
             codebox_tilde_01_del_writer = 0;
             codebox_tilde_01_setupDone = false;
             param_01_lastValue = 0;
-            dial_01_lastValue = 0;
             param_02_lastValue = 0;
-            dial_02_lastValue = 0;
             param_03_lastValue = 0;
-            dial_03_lastValue = 0;
             param_04_lastValue = 0;
-            dial_04_lastValue = 0;
             param_05_lastValue = 0;
-            dial_05_lastValue = 0;
             data_01_sizemode = 1;
             data_01_setupDone = false;
             phasor_01_sigbuf = nullptr;
@@ -7806,31 +6490,22 @@ namespace RNBO {
             phasor_01_conv = 0;
             phasor_01_setupDone = false;
             param_06_lastValue = 0;
-            dial_06_lastValue = 0;
             param_07_lastValue = 0;
-            dial_07_lastValue = 0;
             phasor_02_sigbuf = nullptr;
             phasor_02_lastLockedPhase = 0;
             phasor_02_conv = 0;
             phasor_02_setupDone = false;
             param_08_lastValue = 0;
-            dial_08_lastValue = 0;
             param_09_lastValue = 0;
-            dial_09_lastValue = 0;
             phasor_03_sigbuf = nullptr;
             phasor_03_lastLockedPhase = 0;
             phasor_03_conv = 0;
             phasor_03_setupDone = false;
             param_10_lastValue = 0;
-            dial_10_lastValue = 0;
             param_11_lastValue = 0;
-            dial_11_lastValue = 0;
             param_12_lastValue = 0;
-            dial_12_lastValue = 0;
             param_13_lastValue = 0;
-            dial_13_lastValue = 0;
             param_14_lastValue = 0;
-            dial_14_lastValue = 0;
             latch_tilde_01_value = 0;
             latch_tilde_01_setupDone = false;
             codebox_tilde_02_len = 0;
@@ -7847,14 +6522,9 @@ namespace RNBO {
             param_15_lastValue = 0;
             recordtilde_02_wIndex = 0;
             recordtilde_02_lastRecord = 0;
-            dial_15_lastValue = 0;
             param_16_lastValue = 0;
-            dial_16_lastValue = 0;
-            toggle_01_lastValue = 0;
             param_17_lastValue = 0;
             param_18_lastValue = 0;
-            toggle_02_lastValue = 0;
-            toggle_03_lastValue = 0;
             param_19_lastValue = 0;
             dial_17_lastValue = 0;
             param_20_lastValue = 0;
@@ -7909,24 +6579,10 @@ namespace RNBO {
         number dspexpr_01_in1;
         number dspexpr_01_in2;
         list codebox_01_out1;
-        //number codebox_01_len;
-        //number codebox_01_den;
-        //number codebox_01_cpo;
-        //number codebox_01_drf;
-        //number codebox_01_rvo;
-        //number codebox_01_pwi;
-        //number codebox_01_frp;
-        //number codebox_01_psh;
-        //number codebox_01_rpt;
-        //number codebox_01_env;
-        //number codebox_01_frz;
-        //number codebox_01_rle;
         Index p_01_target;
         list codebox_02_in1;
-        //number codebox_02_in2;
         list codebox_02_out1;
         list codebox_02_out2;
-        //number codebox_02_out3;
         number codebox_tilde_01_in1;
         number codebox_tilde_01_in2;
         number codebox_tilde_01_in3;
@@ -7939,17 +6595,12 @@ namespace RNBO {
         number codebox_tilde_01_in10;
         number codebox_tilde_01_in11;
         number param_01_value;
-        number dial_01_value;
         number param_02_value;
-        number dial_02_value;
         number dspexpr_02_in1;
         number dspexpr_02_in2;
         number param_03_value;
-        number dial_03_value;
         number param_04_value;
-        number dial_04_value;
         number param_05_value;
-        number dial_05_value;
         number data_01_sizeout;
         number data_01_size;
         number data_01_sizems;
@@ -7957,25 +6608,16 @@ namespace RNBO {
         number data_01_channels;
         number phasor_01_freq;
         number param_06_value;
-        number dial_06_value;
         number param_07_value;
-        number dial_07_value;
         number phasor_02_freq;
         number param_08_value;
-        number dial_08_value;
         number param_09_value;
-        number dial_09_value;
         number phasor_03_freq;
         number param_10_value;
-        number dial_10_value;
         number param_11_value;
-        number dial_11_value;
         number param_12_value;
-        number dial_12_value;
         number param_13_value;
-        number dial_13_value;
         number param_14_value;
-        number dial_14_value;
         number latch_tilde_01_x;
         number latch_tilde_01_control;
         number codebox_tilde_02_in1;
@@ -7989,20 +6631,14 @@ namespace RNBO {
         number recordtilde_02_begin;
         number recordtilde_02_end;
         number recordtilde_02_loop;
-        number dial_15_value;
         number param_16_value;
-        number dial_16_value;
-        number toggle_01_value_number;
         number param_17_value;
         number param_18_value;
-        number toggle_02_value_number;
-        number toggle_03_value_number;
         number param_19_value;
         number expr_02_in1;
         number expr_02_out1;
         number select_01_test1;
         list bufferop_01_channels;
-        number dial_17_value;
         number param_20_value;
         number dspexpr_03_in1;
         number dspexpr_03_in2;
@@ -8012,7 +6648,6 @@ namespace RNBO {
         number dspexpr_05_in2;
         number dspexpr_06_in1;
         number dspexpr_06_in2;
-        number dial_18_value;
         number param_21_value;
         number dcblock_tilde_01_x;
         number dcblock_tilde_01_gain;
@@ -8038,7 +6673,6 @@ namespace RNBO {
         number expr_01_out1;
         MillisecondTime _currentTime;
         SampleIndex audioProcessSampleCount;
-        //SampleIndex sampleOffsetIntoNextAudioBuffer;
         signal zeroBuffer;
         signal dummyBuffer;
         SampleValue* signals[6];
@@ -8060,17 +6694,14 @@ namespace RNBO {
         number limi_01_dc2_xm1;
         number limi_01_dc2_ym1;
         bool limi_01_setupDone;
-        //number codebox_01_intelligent_offset;
         number codebox_01_newphas;
         number codebox_01_oldphas;
-        //number len_in_samps;
-        //number cpo_in_samps;
-        //number drf_in_samps;
         number codebox_01_mphasor_currentPhase;
         number codebox_01_mphasor_conv;
-        //UInt codebox_01_rdm_state[4] = { };
-        //number codebox_02_voiceState[24][2] = { };
-        bool voice_state[24] = { };
+        //bool voice_state[24] = { };
+
+		voiceState voiceStates[24] = { };
+
         number codebox_02_pos;
         number codebox_02_len;
         number codebox_02_f_r;
@@ -8113,15 +6744,10 @@ namespace RNBO {
         UInt codebox_tilde_01_rdm_state[4] = { };
         bool codebox_tilde_01_setupDone;
         number param_01_lastValue;
-        number dial_01_lastValue;
         number param_02_lastValue;
-        number dial_02_lastValue;
         number param_03_lastValue;
-        number dial_03_lastValue;
         number param_04_lastValue;
-        number dial_04_lastValue;
         number param_05_lastValue;
-        number dial_05_lastValue;
         Float32BufferRef data_01_buffer;
         Int data_01_sizemode;
         bool data_01_setupDone;
@@ -8130,31 +6756,22 @@ namespace RNBO {
         number phasor_01_conv;
         bool phasor_01_setupDone;
         number param_06_lastValue;
-        number dial_06_lastValue;
         number param_07_lastValue;
-        number dial_07_lastValue;
         signal phasor_02_sigbuf;
         number phasor_02_lastLockedPhase;
         number phasor_02_conv;
         bool phasor_02_setupDone;
         number param_08_lastValue;
-        number dial_08_lastValue;
         number param_09_lastValue;
-        number dial_09_lastValue;
         signal phasor_03_sigbuf;
         number phasor_03_lastLockedPhase;
         number phasor_03_conv;
         bool phasor_03_setupDone;
         number param_10_lastValue;
-        number dial_10_lastValue;
         number param_11_lastValue;
-        number dial_11_lastValue;
         number param_12_lastValue;
-        number dial_12_lastValue;
         number param_13_lastValue;
-        number dial_13_lastValue;
         number param_14_lastValue;
-        number dial_14_lastValue;
         number latch_tilde_01_value;
         bool latch_tilde_01_setupDone;
         number codebox_tilde_02_len;
@@ -8173,14 +6790,9 @@ namespace RNBO {
         Float32BufferRef recordtilde_02_buffer;
         SampleIndex recordtilde_02_wIndex;
         number recordtilde_02_lastRecord;
-        number dial_15_lastValue;
         number param_16_lastValue;
-        number dial_16_lastValue;
-        number toggle_01_lastValue;
         number param_17_lastValue;
         number param_18_lastValue;
-        number toggle_02_lastValue;
-        number toggle_03_lastValue;
         number param_19_lastValue;
         Float32BufferRef bufferop_01_buffer;
         number dial_17_lastValue;
