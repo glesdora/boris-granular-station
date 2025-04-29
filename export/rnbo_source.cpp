@@ -74,14 +74,14 @@ namespace RNBO {
 
 #define FIXEDSIZEARRAYINIT(...) { }
 
-    struct voiceState {
-        bool isActive;
-        bool hasGrainInQueue;
-        SampleIndex endOfGrain;
-    };
-
     class rnbomatic : public PatcherInterfaceImpl {
     public:
+
+        struct voiceState {
+            bool isActive;
+            bool hasGrainInQueue;
+            SampleIndex endOfGrain;
+        };
 
         class RTGrainVoice : public PatcherInterfaceImpl {
 
@@ -210,7 +210,7 @@ namespace RNBO {
                 if (trgindx >= 0)
                     reverse_offset = in2[trgindx];
 
-                this->processCore(
+                this->processBrain(
                     trgindx,
                     position_value,
                     grainsize_value,
@@ -570,16 +570,6 @@ namespace RNBO {
                 this->gen_01_rtbuf = this->gen_01_rtbuf->allocateIfNeeded();
                 this->gen_01_interpol_env = this->gen_01_interpol_env->allocateIfNeeded();
             }
-
-            //void voice_01_mutestatus_set(number) {}
-
-            //void voice_01_mutein_list_set(const list& v) {
-            //    if (v[0] == this->voice() || v[0] == 0) {
-            //        this->voice_01_mutestatus_set(v[1]);
-            //    }
-            //}
-
-            //void voice_01_activevoices_set(number) {}
          
             void initiateVoice(SampleIndex trigatindex, const list& v) {
                 if (v->length > 5) {
@@ -594,11 +584,7 @@ namespace RNBO {
                 this->triggerindex = trigatindex;
             }
 
-            void voice_01_noteNumber_set(number) {}
-
-            void midiouthelper_midiout_set(number) {}
-
-            void processCore(
+            void processBrain(
                 const Sample in1,
                 const Sample in2,
                 const Sample in3,
@@ -829,10 +815,6 @@ namespace RNBO {
 
             void gen_01_history_1_init() {
                 this->env_inc_history = 0;
-            }
-
-            void midiouthelper_sendMidi(number v) {
-                this->midiouthelper_midiout_set(v);
             }
 
             bool stackprotect_check() {
@@ -1422,11 +1404,6 @@ namespace RNBO {
             }
             case 2:
             {
-                return addressOf(this->codebox_tilde_01_del_bufferobj);
-                break;
-            }
-            case 3:
-            {
                 return addressOf(this->inter_databuf_01);
                 break;
             }
@@ -1438,7 +1415,7 @@ namespace RNBO {
         }
 
         DataRefIndex getNumDataRefs() const {
-            return 4;
+            return 3;
         }
 
         void fillDataRef(DataRefIndex, DataRef&) {}
@@ -1462,11 +1439,8 @@ namespace RNBO {
                 this->data_01_bufferUpdated();
             }
 
-            if (index == 2) {
-                this->codebox_tilde_01_del_buffer = new Float64Buffer(this->codebox_tilde_01_del_bufferobj);
-            }
 
-            if (index == 3) {
+            if (index == 2) {
                 this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
                 this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
                 this->data_02_bufferUpdated();
@@ -1480,7 +1454,6 @@ namespace RNBO {
         void initialize() {
             this->borisinrnbo_v01_rtbuf = initDataRef("borisinrnbo_v01_rtbuf", true, nullptr, "data");
             this->interpolated_envelope = initDataRef("interpolated_envelope", false, nullptr, "buffer~");
-            this->codebox_tilde_01_del_bufferobj = initDataRef("codebox_tilde_01_del_bufferobj", true, nullptr, "buffer~");
             this->inter_databuf_01 = initDataRef("inter_databuf_01", false, nullptr, "data");
             this->assign_defaults();
             this->setState();
@@ -1490,9 +1463,7 @@ namespace RNBO {
             this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->interpolated_envelope->setIndex(1);
             this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
-            this->codebox_tilde_01_del_bufferobj->setIndex(2);
-            this->codebox_tilde_01_del_buffer = new Float64Buffer(this->codebox_tilde_01_del_bufferobj);
-            this->inter_databuf_01->setIndex(3);
+            this->inter_databuf_01->setIndex(2);
             this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
             this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
             this->initializeObjects();
@@ -3348,15 +3319,6 @@ namespace RNBO {
                 this->getEngine()->sendDataRefUpdated(1);
             }
 
-            this->codebox_tilde_01_del_buffer = this->codebox_tilde_01_del_buffer->allocateIfNeeded();
-
-            if (this->codebox_tilde_01_del_bufferobj->hasRequestedSize()) {
-                if (this->codebox_tilde_01_del_bufferobj->wantsFill())
-                    this->zeroDataRef(this->codebox_tilde_01_del_bufferobj);
-
-                this->getEngine()->sendDataRefUpdated(2);
-            }
-
             this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
             this->data_02_buffer = this->data_02_buffer->allocateIfNeeded();
 
@@ -3370,7 +3332,6 @@ namespace RNBO {
 
         void initializeObjects() {
             this->codebox_tilde_01_n_subd_init();
-            this->codebox_tilde_01_del_init();
             this->codebox_tilde_01_rdm_init();
             this->data_01_init();
             this->codebox_tilde_02_timer_init();
@@ -5247,166 +5208,6 @@ namespace RNBO {
             this->codebox_tilde_01_mphasor_conv = (this->sr == 0. ? 0. : (number)1 / this->sr);
         }
 
-        void codebox_tilde_01_del_step() {
-            this->codebox_tilde_01_del_reader++;
-
-            if (this->codebox_tilde_01_del_reader >= (int)(this->codebox_tilde_01_del_buffer->getSize()))
-                this->codebox_tilde_01_del_reader = 0;
-        }
-
-        number codebox_tilde_01_del_read(number size, Int interp) {
-            if (interp == 0) {
-                number r = (int)(this->codebox_tilde_01_del_buffer->getSize()) + this->codebox_tilde_01_del_reader - ((size > this->codebox_tilde_01_del__maxdelay ? this->codebox_tilde_01_del__maxdelay : (size < (this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer) ? this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer : size)));
-                long index1 = (long)(rnbo_floor(r));
-                number frac = r - index1;
-                long index2 = (long)(index1 + 1);
-
-                return this->linearinterp(frac, this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index1 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index2 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ));
-            }
-            else if (interp == 1) {
-                number r = (int)(this->codebox_tilde_01_del_buffer->getSize()) + this->codebox_tilde_01_del_reader - ((size > this->codebox_tilde_01_del__maxdelay ? this->codebox_tilde_01_del__maxdelay : (size < (1 + this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer) ? 1 + this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer : size)));
-                long index1 = (long)(rnbo_floor(r));
-                number frac = r - index1;
-                Index index2 = (Index)(index1 + 1);
-                Index index3 = (Index)(index2 + 1);
-                Index index4 = (Index)(index3 + 1);
-
-                return this->cubicinterp(frac, this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index1 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index2 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index3 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index4 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ));
-            }
-            else if (interp == 2) {
-                number r = (int)(this->codebox_tilde_01_del_buffer->getSize()) + this->codebox_tilde_01_del_reader - ((size > this->codebox_tilde_01_del__maxdelay ? this->codebox_tilde_01_del__maxdelay : (size < (1 + this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer) ? 1 + this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer : size)));
-                long index1 = (long)(rnbo_floor(r));
-                number frac = r - index1;
-                Index index2 = (Index)(index1 + 1);
-                Index index3 = (Index)(index2 + 1);
-                Index index4 = (Index)(index3 + 1);
-
-                return this->splineinterp(frac, this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index1 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index2 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index3 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index4 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ));
-            }
-            else if (interp == 3) {
-                number r = (int)(this->codebox_tilde_01_del_buffer->getSize()) + this->codebox_tilde_01_del_reader - ((size > this->codebox_tilde_01_del__maxdelay ? this->codebox_tilde_01_del__maxdelay : (size < (this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer) ? this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer : size)));
-                long index1 = (long)(rnbo_floor(r));
-                number frac = r - index1;
-                Index index2 = (Index)(index1 + 1);
-
-                return this->cosineinterp(frac, this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index1 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ), this->codebox_tilde_01_del_buffer->getSample(
-                    0,
-                    (Index)((BinOpInt)((BinOpInt)index2 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-                ));
-            }
-
-            number r = (int)(this->codebox_tilde_01_del_buffer->getSize()) + this->codebox_tilde_01_del_reader - ((size > this->codebox_tilde_01_del__maxdelay ? this->codebox_tilde_01_del__maxdelay : (size < (this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer) ? this->codebox_tilde_01_del_reader != this->codebox_tilde_01_del_writer : size)));
-            long index1 = (long)(rnbo_floor(r));
-
-            return this->codebox_tilde_01_del_buffer->getSample(
-                0,
-                (Index)((BinOpInt)((BinOpInt)index1 & (BinOpInt)this->codebox_tilde_01_del_wrap))
-            );
-        }
-
-        void codebox_tilde_01_del_write(number v) {
-            this->codebox_tilde_01_del_writer = this->codebox_tilde_01_del_reader;
-            this->codebox_tilde_01_del_buffer[(Index)this->codebox_tilde_01_del_writer] = v;
-        }
-
-        number codebox_tilde_01_del_next(number v, int size) {
-            number effectiveSize = (size == -1 ? this->codebox_tilde_01_del__maxdelay : size);
-            number val = this->codebox_tilde_01_del_read(effectiveSize, 0);
-            this->codebox_tilde_01_del_write(v);
-            this->codebox_tilde_01_del_step();
-            return val;
-        }
-
-        array<Index, 2> codebox_tilde_01_del_calcSizeInSamples() {
-            number sizeInSamples = 0;
-            Index allocatedSizeInSamples = 0;
-
-            {
-                sizeInSamples = this->codebox_tilde_01_del_evaluateSizeExpr(this->samplerate(), this->vectorsize());
-                this->codebox_tilde_01_del_sizemode = 0;
-            }
-
-            sizeInSamples = rnbo_floor(sizeInSamples);
-            sizeInSamples = this->maximum(sizeInSamples, 2);
-            allocatedSizeInSamples = (Index)(sizeInSamples);
-            allocatedSizeInSamples = nextpoweroftwo(allocatedSizeInSamples);
-            return { sizeInSamples, allocatedSizeInSamples };
-        }
-
-        void codebox_tilde_01_del_init() {
-            auto result = this->codebox_tilde_01_del_calcSizeInSamples();
-            this->codebox_tilde_01_del__maxdelay = result[0];
-            Index requestedSizeInSamples = (Index)(result[1]);
-            this->codebox_tilde_01_del_buffer->requestSize(requestedSizeInSamples, 1);
-            this->codebox_tilde_01_del_wrap = requestedSizeInSamples - 1;
-        }
-
-        void codebox_tilde_01_del_clear() {
-            this->codebox_tilde_01_del_buffer->setZero();
-        }
-
-        void codebox_tilde_01_del_reset() {
-            auto result = this->codebox_tilde_01_del_calcSizeInSamples();
-            this->codebox_tilde_01_del__maxdelay = result[0];
-            Index allocatedSizeInSamples = (Index)(result[1]);
-            this->codebox_tilde_01_del_buffer->setSize(allocatedSizeInSamples);
-            updateDataRef(this, this->codebox_tilde_01_del_buffer);
-            this->codebox_tilde_01_del_wrap = this->codebox_tilde_01_del_buffer->getSize() - 1;
-            this->codebox_tilde_01_del_clear();
-
-            if (this->codebox_tilde_01_del_reader >= this->codebox_tilde_01_del__maxdelay || this->codebox_tilde_01_del_writer >= this->codebox_tilde_01_del__maxdelay) {
-                this->codebox_tilde_01_del_reader = 0;
-                this->codebox_tilde_01_del_writer = 0;
-            }
-        }
-
-        void codebox_tilde_01_del_dspsetup() {
-            this->codebox_tilde_01_del_reset();
-        }
-
-        number codebox_tilde_01_del_evaluateSizeExpr(number samplerate, number vectorsize) {
-            RNBO_UNUSED(vectorsize);
-            RNBO_UNUSED(samplerate);
-            return 96000;
-        }
-
-        number codebox_tilde_01_del_size() {
-            return this->codebox_tilde_01_del__maxdelay;
-        }
-
         void codebox_tilde_01_rdm_reset() {
             xoshiro_reset(
                 systemticks() + this->voice() + this->random(0, 10000),
@@ -5433,7 +5234,6 @@ namespace RNBO {
             this->codebox_tilde_01_setupDone = true;
             this->codebox_tilde_01_n_subd_dspsetup();
             this->codebox_tilde_01_mphasor_dspsetup();
-            this->codebox_tilde_01_del_dspsetup();
         }
 
         void param_01_getPresetValue(PatcherStateInterface& preset) {
@@ -6472,11 +6272,6 @@ namespace RNBO {
             codebox_tilde_01_n_subd_lockprob = true;
             codebox_tilde_01_mphasor_currentPhase = 0;
             codebox_tilde_01_mphasor_conv = 0;
-            codebox_tilde_01_del__maxdelay = 0;
-            codebox_tilde_01_del_sizemode = 0;
-            codebox_tilde_01_del_wrap = 0;
-            codebox_tilde_01_del_reader = 0;
-            codebox_tilde_01_del_writer = 0;
             codebox_tilde_01_setupDone = false;
             param_01_lastValue = 0;
             param_02_lastValue = 0;
@@ -6735,12 +6530,6 @@ namespace RNBO {
         bool codebox_tilde_01_n_subd_lockprob;
         number codebox_tilde_01_mphasor_currentPhase;
         number codebox_tilde_01_mphasor_conv;
-        Float64BufferRef codebox_tilde_01_del_buffer;
-        Index codebox_tilde_01_del__maxdelay;
-        Int codebox_tilde_01_del_sizemode;
-        Index codebox_tilde_01_del_wrap;
-        Int codebox_tilde_01_del_reader;
-        Int codebox_tilde_01_del_writer;
         UInt codebox_tilde_01_rdm_state[4] = { };
         bool codebox_tilde_01_setupDone;
         number param_01_lastValue;
@@ -6835,7 +6624,6 @@ namespace RNBO {
         number stackprotect_count;
         DataRef borisinrnbo_v01_rtbuf;
         DataRef interpolated_envelope;
-        DataRef codebox_tilde_01_del_bufferobj;
         DataRef inter_databuf_01;
         Index _voiceIndex;
         Int _noteNumber;
