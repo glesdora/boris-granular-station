@@ -819,7 +819,7 @@ namespace RNBO {
             this->codebox_tilde_01_dspsetup(forceDSPSetup);
             this->edge_02_dspsetup(forceDSPSetup);
             //this->data_02_dspsetup(forceDSPSetup);
-            this->data_03_dspsetup(forceDSPSetup);
+            //this->data_03_dspsetup(forceDSPSetup);
             this->dcblock_tilde_01_dspsetup(forceDSPSetup);
             this->limi_01_dspsetup(forceDSPSetup);
             this->globaltransport_dspsetup(forceDSPSetup);
@@ -889,8 +889,8 @@ namespace RNBO {
             if (index == 0) {
                 this->recordtilde_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
                 this->bufferop_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
-                this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
-                this->data_03_bufferUpdated();
+                //this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
+                //this->data_03_bufferUpdated();
             }
 
             if (index == 1) {
@@ -919,7 +919,7 @@ namespace RNBO {
             this->borisinrnbo_v01_rtbuf->setIndex(0);
             this->recordtilde_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->bufferop_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
-            this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
+            //this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->interpolated_envelope->setIndex(1);
             //this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
             this->inter_databuf_01->setIndex(2);
@@ -2623,13 +2623,15 @@ namespace RNBO {
                 this->rtgrainvoice[i]->allocateDataRefs();
             }
 
-            this->data_03_buffer->requestSize(this->mstosamps(20000), 1);
-            this->data_03_buffer->setSampleRate(this->sr);
+            //this->data_03_buffer->requestSize(this->mstosamps(20000), 1);
+            //this->data_03_buffer->setSampleRate(this->sr);
+			this->recordtilde_01_buffer->requestSize(this->mstosamps(20000), 1);
+			this->recordtilde_01_buffer->setSampleRate(this->sr);
             //this->data_01_buffer->requestSize(100, 1);
             //this->data_01_buffer->setSampleRate(this->sr);
             this->recordtilde_01_buffer = this->recordtilde_01_buffer->allocateIfNeeded();
             this->bufferop_01_buffer = this->bufferop_01_buffer->allocateIfNeeded();
-            this->data_03_buffer = this->data_03_buffer->allocateIfNeeded();
+            //this->data_03_buffer = this->data_03_buffer->allocateIfNeeded();
 
             if (this->borisinrnbo_v01_rtbuf->hasRequestedSize()) {
                 if (this->borisinrnbo_v01_rtbuf->wantsFill())
@@ -2661,7 +2663,7 @@ namespace RNBO {
         void initializeObjects() {
             //this->data_01_init();
             //this->data_02_init();
-            this->data_03_init();
+            //this->data_03_init();
         }
 
         void sendOutlet(OutletIndex index, ParameterValue value) {
@@ -3636,13 +3638,13 @@ namespace RNBO {
         //    this->data_02_sizeout = v;
         //}
 
-        void data_03_srout_set(number) {}
+        //void data_03_srout_set(number) {}
 
-        void data_03_chanout_set(number) {}
+        //void data_03_chanout_set(number) {}
 
-        void data_03_sizeout_set(number v) {
-            this->data_03_sizeout = v;
-        }
+        //void data_03_sizeout_set(number v) {
+        //    this->data_03_sizeout = v;
+        //}
 
         void limi_01_lookahead_setter(number v) {
             this->limi_01_lookahead = (v > 128 ? 128 : (v < 0 ? 0 : v));
@@ -4291,7 +4293,7 @@ namespace RNBO {
             this->data_02_sizeout_set(this->data_02_buffer->getSize());
         }*/
 
-        void data_03_init() {
+        /*void data_03_init() {
             this->data_03_buffer->setWantsFill(true);
         }
 
@@ -4326,7 +4328,7 @@ namespace RNBO {
             this->data_03_srout_set(this->data_03_buffer->getSampleRate());
             this->data_03_chanout_set(this->data_03_buffer->getChannels());
             this->data_03_sizeout_set(this->data_03_buffer->getSize());
-        }
+        }*/
 
         void timevalue_01_sendValue() {
             {
@@ -4722,11 +4724,11 @@ namespace RNBO {
             //data_02_sizems = 0;
             //data_02_normalize = 0.995;
             //data_02_channels = 1;
-            data_03_sizeout = 0;
-            data_03_size = 0;
-            data_03_sizems = 20000;
-            data_03_normalize = 0.995;
-            data_03_channels = 1;
+            //data_03_sizeout = 0;
+            //data_03_size = 0;
+            //data_03_sizems = 20000;
+            //data_03_normalize = 0.995;
+            //data_03_channels = 1;
             ctlin_01_input = 0;
             ctlin_01_controller = 2;
             ctlin_01_channel = -1;
@@ -4828,8 +4830,8 @@ namespace RNBO {
             revoffhndlr_hit = 0;
             //data_02_sizemode = 3;
             //data_02_setupDone = false;
-            data_03_sizemode = 2;
-            data_03_setupDone = false;
+            //data_03_sizemode = 2;
+            //data_03_setupDone = false;
             ctlin_01_status = 0;
             ctlin_01_byte1 = -1;
             ctlin_01_inchan = 0;
@@ -4939,11 +4941,11 @@ namespace RNBO {
         //number data_02_sizems;
         //number data_02_normalize;
         //number data_02_channels;
-        number data_03_sizeout;
-        number data_03_size;
-        number data_03_sizems;
-        number data_03_normalize;
-        number data_03_channels;
+        //number data_03_sizeout;
+        //number data_03_size;
+        //number data_03_sizems;
+        //number data_03_normalize;
+        //number data_03_channels;
         number ctlin_01_input;
         number ctlin_01_controller;
         number ctlin_01_channel;
@@ -5054,9 +5056,9 @@ namespace RNBO {
         //Float32BufferRef data_02_buffer;
         //Int data_02_sizemode;
         //bool data_02_setupDone;
-        Float32BufferRef data_03_buffer;
-        Int data_03_sizemode;
-        bool data_03_setupDone;
+        //Float32BufferRef data_03_buffer;
+        //Int data_03_sizemode;
+        //bool data_03_setupDone;
         int ctlin_01_status;
         int ctlin_01_byte1;
         int ctlin_01_inchan;
