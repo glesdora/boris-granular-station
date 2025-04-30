@@ -570,11 +570,6 @@ namespace RNBO {
             return this->_voiceIndex;
         }
 
-        number random(number low, number high) {
-            number range = high - low;
-            return rand01() * range + low;
-        }
-
         number mstosamps(MillisecondTime ms) {
             return ms * this->sr * 0.001;
         }
@@ -587,79 +582,8 @@ namespace RNBO {
             return (denom == 0.0 ? 0.0 : num / denom);
         }
 
-        number safepow(number base, number exponent) {
-            return fixnan(rnbo_pow(base, exponent));
-        }
-
-        number scale(
-            number x,
-            number lowin,
-            number hiin,
-            number lowout,
-            number highout,
-            number pow
-        ) {
-            auto inscale = this->safediv(1., hiin - lowin);
-            number outdiff = highout - lowout;
-            number value = (x - lowin) * inscale;
-
-            if (pow != 1) {
-                if (value > 0)
-                    value = this->safepow(value, pow);
-                else
-                    value = -this->safepow(-value, pow);
-            }
-
-            value = value * outdiff + lowout;
-            return value;
-        }
-
         MillisecondTime currenttime() {
             return this->_currentTime;
-        }
-
-        inline number safemod(number f, number m) {
-            if (m != 0) {
-                Int f_trunc = (Int)(trunc(f));
-                Int m_trunc = (Int)(trunc(m));
-
-                if (f == f_trunc && m == m_trunc) {
-                    f = f_trunc % m_trunc;
-                }
-                else {
-                    if (m < 0) {
-                        m = -m;
-                    }
-
-                    if (f >= m) {
-                        if (f >= m * 2.0) {
-                            number d = f / m;
-                            Int i = (Int)(trunc(d));
-                            d = d - i;
-                            f = d * m;
-                        }
-                        else {
-                            f -= m;
-                        }
-                    }
-                    else if (f <= -m) {
-                        if (f <= -m * 2.0) {
-                            number d = f / m;
-                            Int i = (Int)(trunc(d));
-                            d = d - i;
-                            f = d * m;
-                        }
-                        else {
-                            f += m;
-                        }
-                    }
-                }
-            }
-            else {
-                f = 0.0;
-            }
-
-            return f;
         }
 
         array<ListNum, 2> listcompare(const list& input1, const list& input2) {
@@ -686,57 +610,6 @@ namespace RNBO {
             }
 
             return tmp;
-        }
-
-        inline number linearinterp(number frac, number x, number y) {
-            return x + (y - x) * frac;
-        }
-
-        inline number cubicinterp(number a, number w, number x, number y, number z) {
-            number a2 = a * a;
-            number f0 = z - y - w + x;
-            number f1 = w - x - f0;
-            number f2 = y - w;
-            number f3 = x;
-            return f0 * a * a2 + f1 * a2 + f2 * a + f3;
-        }
-
-        inline number splineinterp(number a, number w, number x, number y, number z) {
-            number a2 = a * a;
-            number f0 = -0.5 * w + 1.5 * x - 1.5 * y + 0.5 * z;
-            number f1 = w - 2.5 * x + 2 * y - 0.5 * z;
-            number f2 = -0.5 * w + 0.5 * y;
-            return f0 * a * a2 + f1 * a2 + f2 * a + x;
-        }
-
-        inline number cosT8(number r) {
-            number t84 = 56.0;
-            number t83 = 1680.0;
-            number t82 = 20160.0;
-            number t81 = 2.4801587302e-05;
-            number t73 = 42.0;
-            number t72 = 840.0;
-            number t71 = 1.9841269841e-04;
-
-            if (r < 0.785398163397448309615660845819875721 && r > -0.785398163397448309615660845819875721) {
-                number rr = r * r;
-                return 1.0 - rr * t81 * (t82 - rr * (t83 - rr * (t84 - rr)));
-            }
-            else if (r > 0.0) {
-                r -= 1.57079632679489661923132169163975144;
-                number rr = r * r;
-                return -r * (1.0 - t71 * rr * (t72 - rr * (t73 - rr)));
-            }
-            else {
-                r += 1.57079632679489661923132169163975144;
-                number rr = r * r;
-                return r * (1.0 - t71 * rr * (t72 - rr * (t73 - rr)));
-            }
-        }
-
-        inline number cosineinterp(number frac, number x, number y) {
-            number a2 = (1.0 - this->cosT8(frac * 3.14159265358979323846)) / (number)2.0;
-            return x * (1.0 - a2) + y * a2;
         }
 
         Index vectorsize() {
@@ -865,7 +738,14 @@ namespace RNBO {
                 n
             );
 
-            this->latch_tilde_01_perform(this->signals[4], this->latch_tilde_01_control, this->signals[2], n);
+            auto rp = this->recpointer_at_scroll;
+            for (Index i = 0; i < n; i++) {
+                if (this->scrollvalue_for_getrecpointeratscroll)
+                    rp = signals[4][i];
+
+                this->signals[2][i] = rp;
+            }
+            this->recpointer_at_scroll = rp;
 
             {
                 ConstSampleArray<2> ins = { signals[1], signals[2] };
@@ -932,15 +812,14 @@ namespace RNBO {
                 this->invsr = 1 / sampleRate;
             }
 
-            this->data_01_dspsetup(forceDSPSetup);
+            //this->data_01_dspsetup(forceDSPSetup);
             this->phasor_01_dspsetup(forceDSPSetup);
             this->phasor_02_dspsetup(forceDSPSetup);
             this->phasor_03_dspsetup(forceDSPSetup);
             this->codebox_tilde_01_dspsetup(forceDSPSetup);
             this->edge_02_dspsetup(forceDSPSetup);
-            this->data_02_dspsetup(forceDSPSetup);
+            //this->data_02_dspsetup(forceDSPSetup);
             this->data_03_dspsetup(forceDSPSetup);
-            this->latch_tilde_01_dspsetup(forceDSPSetup);
             this->dcblock_tilde_01_dspsetup(forceDSPSetup);
             this->limi_01_dspsetup(forceDSPSetup);
             this->globaltransport_dspsetup(forceDSPSetup);
@@ -1015,15 +894,15 @@ namespace RNBO {
             }
 
             if (index == 1) {
-                this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
-                this->data_01_bufferUpdated();
+                //this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
+                //this->data_01_bufferUpdated();
             }
 
 
             if (index == 2) {
                 this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
-                this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
-                this->data_02_bufferUpdated();
+                //this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
+                //this->data_02_bufferUpdated();
             }
 
             for (Index i = 0; i < 24; i++) {
@@ -1042,10 +921,10 @@ namespace RNBO {
             this->bufferop_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->interpolated_envelope->setIndex(1);
-            this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
+            //this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
             this->inter_databuf_01->setIndex(2);
             this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
-            this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
+            //this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
             this->initializeObjects();
             this->allocateDataRefs();
             this->startup();
@@ -2018,12 +1897,7 @@ namespace RNBO {
             this->getEngine()->notifyParameterValueChanged(index, (ignoreValue ? 0 : this->getParameterValue(index)), ignoreValue);
         }
 
-        ParameterIndex getParameterOffset(BaseInterface* subpatcher) const {
-            //if (subpatcher == this->rtgrainvoice[0])
-            //    return 21;
-
-            return 0;
-        }
+        ParameterIndex getParameterOffset(BaseInterface* subpatcher) const { return 0; }
 
         ParameterValue applyStepsToNormalizedParameterValue(ParameterValue normalizedValue, int steps) const {
             if (steps == 1) {
@@ -2462,7 +2336,7 @@ namespace RNBO {
                 this->param_01_lastValue = this->param_01_value;
             }
 
-            this->codebox_tilde_01_in3_set(v);
+            this->den_for_gentrggs = v;
         }
 
         void param_02_value_set(number v) {
@@ -2470,9 +2344,7 @@ namespace RNBO {
             this->param_02_value = v;
             this->sendParameter(1, false);
 
-            {
-                this->param_02_normalized_set(this->tonormalized(1, this->param_02_value));
-            }
+            this->cha_for_gentrggs = this->tonormalized(1, this->param_02_value);
 
             if (this->param_02_value != this->param_02_lastValue) {
                 this->getEngine()->presetTouched();
@@ -2485,9 +2357,7 @@ namespace RNBO {
             this->param_03_value = v;
             this->sendParameter(2, false);
 
-            {
-                this->param_03_normalized_set(this->tonormalized(2, this->param_03_value));
-            }
+            this->rdl_for_gentrggs = this->tonormalized(2, this->param_03_value);
 
             if (this->param_03_value != this->param_03_lastValue) {
                 this->getEngine()->presetTouched();
@@ -2627,9 +2497,7 @@ namespace RNBO {
             this->param_15_value = v;
             this->sendParameter(14, false);
 
-            {
-                this->param_15_normalized_set(this->tonormalized(14, this->param_15_value));
-            }
+            this->feedb_for_process = this->tonormalized(14, this->param_15_value);
 
             if (this->param_15_value != this->param_15_lastValue) {
                 this->getEngine()->presetTouched();
@@ -2661,7 +2529,7 @@ namespace RNBO {
                 this->param_17_lastValue = this->param_17_value;
             }
 
-            this->codebox_tilde_01_in1_set(v);
+            this->mute_for_gentriggs = v;
         }
 
         void param_18_value_set(number v) {
@@ -2679,7 +2547,7 @@ namespace RNBO {
             bool scroll = (v == 0);
             if (scroll)
                 this->empty_audio_buffer();
-            this->stop_rec_head(scroll);
+            this->scrollvalue_for_getrecpointeratscroll = scroll;
             this->scrollvalue_for_delayrecstop = scroll;
         }
 
@@ -2693,7 +2561,7 @@ namespace RNBO {
                 this->param_19_lastValue = this->param_19_value;
             }
 
-            this->codebox_tilde_01_in6_set(v);
+            this->syc_for_gentrggs = v;
         }
 
         void param_20_value_set(number v) {
@@ -2706,7 +2574,7 @@ namespace RNBO {
                 this->param_20_lastValue = this->param_20_value;
             }
 
-            this->codebox_tilde_01_in7_set(v);
+            this->tmp_for_gentrggs = v;
         }
 
         void param_21_value_set(number v) {
@@ -2719,7 +2587,7 @@ namespace RNBO {
                 this->param_21_lastValue = this->param_21_value;
             }
 
-            this->codebox_tilde_01_in8_set(v);
+            this->rtm_for_gentrggs = v;
         }
 
         number msToSamps(MillisecondTime ms, number sampleRate) {
@@ -2757,8 +2625,8 @@ namespace RNBO {
 
             this->data_03_buffer->requestSize(this->mstosamps(20000), 1);
             this->data_03_buffer->setSampleRate(this->sr);
-            this->data_01_buffer->requestSize(100, 1);
-            this->data_01_buffer->setSampleRate(this->sr);
+            //this->data_01_buffer->requestSize(100, 1);
+            //this->data_01_buffer->setSampleRate(this->sr);
             this->recordtilde_01_buffer = this->recordtilde_01_buffer->allocateIfNeeded();
             this->bufferop_01_buffer = this->bufferop_01_buffer->allocateIfNeeded();
             this->data_03_buffer = this->data_03_buffer->allocateIfNeeded();
@@ -2770,7 +2638,7 @@ namespace RNBO {
                 this->getEngine()->sendDataRefUpdated(0);
             }
 
-            this->data_01_buffer = this->data_01_buffer->allocateIfNeeded();
+            //this->data_01_buffer = this->data_01_buffer->allocateIfNeeded();
 
             if (this->interpolated_envelope->hasRequestedSize()) {
                 if (this->interpolated_envelope->wantsFill())
@@ -2780,7 +2648,7 @@ namespace RNBO {
             }
 
             this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
-            this->data_02_buffer = this->data_02_buffer->allocateIfNeeded();
+            //this->data_02_buffer = this->data_02_buffer->allocateIfNeeded();
 
             if (this->inter_databuf_01->hasRequestedSize()) {
                 if (this->inter_databuf_01->wantsFill())
@@ -2791,8 +2659,8 @@ namespace RNBO {
         }
 
         void initializeObjects() {
-            this->data_01_init();
-            this->data_02_init();
+            //this->data_01_init();
+            //this->data_02_init();
             this->data_03_init();
         }
 
@@ -2904,21 +2772,9 @@ namespace RNBO {
             return v;
         }
 
-        void codebox_tilde_01_in3_set(number v) {
-            this->den_for_gentrggs = v;
-        }
-
         static number param_02_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
-        }
-
-        void codebox_tilde_01_in4_set(number v) {
-            this->cha_for_gentrggs = v;
-        }
-
-        void param_02_normalized_set(number v) {
-            this->codebox_tilde_01_in4_set(v);
         }
 
         static number param_03_value_constrain(number v) {
@@ -2926,22 +2782,10 @@ namespace RNBO {
             return v;
         }
 
-        void codebox_tilde_01_in5_set(number v) {
-            this->rdl_for_gentrggs = v;
-        }
-
-        void param_03_normalized_set(number v) {
-            this->codebox_tilde_01_in5_set(v);
-        }
-
         static number param_04_value_constrain(number v) {
             v = (v > 2000 ? 2000 : (v < 20 ? 20 : v));
             return v;
         }
-
-        //void codebox_tilde_03_in2_set(number v) {
-        //    this->codebox_tilde_03_in2 = v;
-        //}
 
         void codebox_tilde_01_in2_set(number v) {
             this->len_for_gentrggs = v;
@@ -3002,14 +2846,6 @@ namespace RNBO {
             return v;
         }
 
-        void dspexpr_07_in2_set(number v) {
-            this->feedb_for_process = v;
-        }
-
-        void param_15_normalized_set(number v) {
-            this->dspexpr_07_in2_set(v);
-        }
-
         static number param_16_value_constrain(number v) {
             v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
             return v;
@@ -3036,10 +2872,6 @@ namespace RNBO {
             return v;
         }
 
-        void codebox_tilde_01_in1_set(number v) {
-            this->mute_for_gentriggs = v;
-        }
-
         static number param_18_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0 ? 0 : v));
 
@@ -3053,67 +2885,11 @@ namespace RNBO {
             return v;
         }
 
-        //void codebox_tilde_03_in1_set(number v) {
-        //    this->frz_for_revoffhndlr = v;
-        //}
-
-        //void bufferop_01_trigger_bang() {
-        //    auto& buffer = this->bufferop_01_buffer;
-
-        //    buffer->setZero();
-        //    buffer->setTouched(true);
-        //}
-
-        //void select_01_match1_bang() {
-        //    this->bufferop_01_trigger_bang();
-        //}
-
-        //void select_01_nomatch_number_set(number) {}
-
-        //void select_01_input_number_set(number v) {
-        //    if (v == this->select_01_test1)
-        //        this->select_01_match1_bang();
-        //    else
-        //        this->select_01_nomatch_number_set(v);
-        //}
-
         void empty_audio_buffer() {
             auto& buffer = this->bufferop_01_buffer;
             buffer->setZero();
             buffer->setTouched(true);
         }
-
-        void latch_tilde_01_control_set(number v) {
-            this->latch_tilde_01_control = v;
-        }
-
-        void stop_rec_head(number v) {
-            this->latch_tilde_01_control_set(v);
-        }
-
-        //void codebox_tilde_02_in2_set(number v) {
-        //    this->codebox_tilde_02_in2 = v;
-        //}
-
-        //void handle_freeze_delay(number v) {
-        //    this->codebox_tilde_02_in2 = v;
-        //}
-
-        //void trigger_02_input_number_set(number v) {
-        //    this->trigger_02_out3_set(trunc(v));
-        //    this->trigger_02_out2_set(trunc(v));
-        //    this->trigger_02_out1_set(trunc(v));
-        //}
-
-        //void expr_02_out1_set(number v) {                                           
-        //    this->expr_02_out1 = v;
-        //    this->trigger_02_input_number_set(this->expr_02_out1);
-        //}
-
-        //void expr_02_in1_set(number in1) {                                          //negation
-        //    this->expr_02_in1 = in1;
-        //    this->expr_02_out1_set(this->expr_02_in1 == 0);//#map:!_obj-60:1        
-        //}
 
         static number param_19_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0 ? 0 : v));
@@ -3126,10 +2902,6 @@ namespace RNBO {
             }
 
             return v;
-        }
-
-        void codebox_tilde_01_in6_set(number v) {
-            this->syc_for_gentrggs = v;
         }
 
         static number param_20_value_constrain(number v) {
@@ -3145,10 +2917,6 @@ namespace RNBO {
             return v;
         }
 
-        void codebox_tilde_01_in7_set(number v) {
-            this->tmp_for_gentrggs = v;
-        }
-
         static number param_21_value_constrain(number v) {
             v = (v > 2 ? 2 : (v < 0 ? 0 : v));
 
@@ -3160,10 +2928,6 @@ namespace RNBO {
             }
 
             return v;
-        }
-
-        void codebox_tilde_01_in8_set(number v) {
-            this->rtm_for_gentrggs = v;
         }
 
         void setGrainProperties(SampleIndex trigatindex) {
@@ -3481,7 +3245,7 @@ namespace RNBO {
             this->gentrggs_syncphase_old = syncphase_old;
         }
 
-        void delayRecStop(number glength, bool scroll, SampleValue* out1, Index n) {     //not sample accurate, shouldn't be a problem
+        void delayRecStop(number glength, bool scroll, SampleValue* out1, Index n) {
             auto delaysamps = this->delrecstop_delaysamps;
             auto record = this->delrecstop_record;
                     
@@ -3524,8 +3288,7 @@ namespace RNBO {
             auto c = this->revoffhndlr_c;
 			auto glensamps = trunc(this->mstosamps(len)) + 1;               // +1 to be sure that the offset is at least as long as the grain length
 
-            if (frz < this->revoffhndlr_frzhistory) {                       //at scrl pressed               
-                DBG("SCROLL PRESSED, OFFSET: " << offset);
+            if (frz < this->revoffhndlr_frzhistory) {
                 c = 0;
                 hit = 0;
             }
@@ -3626,20 +3389,6 @@ namespace RNBO {
             }
 
             this->recordtilde_01_wIndex = __recordtilde_01_wIndex;
-        }
-
-        void latch_tilde_01_perform(const Sample* x, number control, SampleValue* out1, Index n) {
-            auto __latch_tilde_01_value = this->latch_tilde_01_value;
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                if (control != 0.)
-                    __latch_tilde_01_value = x[(Index)i];
-
-                out1[(Index)i] = __latch_tilde_01_value;
-            }
-
-            this->latch_tilde_01_value = __latch_tilde_01_value;
         }
 
         void dcblock_tilde_01_perform(const Sample* x, number gain, SampleValue* out1, Index n) {
@@ -3871,21 +3620,21 @@ namespace RNBO {
             this->stackprotect_count = __stackprotect_count;
         }
 
-        void data_01_srout_set(number) {}
+        //void data_01_srout_set(number) {}
 
-        void data_01_chanout_set(number) {}
+        //void data_01_chanout_set(number) {}
 
-        void data_01_sizeout_set(number v) {
-            this->data_01_sizeout = v;
-        }
+        //void data_01_sizeout_set(number v) {
+        //    this->data_01_sizeout = v;
+        //}
 
-        void data_02_srout_set(number) {}
+        //void data_02_srout_set(number) {}
 
-        void data_02_chanout_set(number) {}
+        //void data_02_chanout_set(number) {}
 
-        void data_02_sizeout_set(number v) {
-            this->data_02_sizeout = v;
-        }
+        //void data_02_sizeout_set(number v) {
+        //    this->data_02_sizeout = v;
+        //}
 
         void data_03_srout_set(number) {}
 
@@ -4063,14 +3812,20 @@ namespace RNBO {
                 3 * leninsamps
             ));
 
+			//maybe better: r_marg = std::max(1, leninsamps * (psh * (1 + rpt) - 1)); worst case, r_marg = leninsamps * (4 * (1 + 1) - 1) = 7 * leninsamps
+			//If length = 2 s, 14 s is a lot, but in theory inside the buffer. Need to test it. I'm talking about grains played at 8x speed. Can I really access the left half of the buffer?
+			//With the current limit at 3 * leninsamps, with psh = 4, rpt = 1 and len = 2 s, I should hear half of the grains glitching.
+
             number pos = rnbo_ceil(this->clip(
                 posinsamps + rand01() * drfinsamps,
-                this->maximum(r_marg, leninsamps - intelligent_offset),
+                std::max(r_marg, leninsamps - intelligent_offset),
                 this->samplerate() * 10
             ));
 
-            pos = this->scale(pos, 0, this->samplerate() * 10, 0, 0.5, 1);//#map:_###_obj_###_:39
-            return pos;//#map:_###_obj_###_:41
+			//scale between 0 and 0.5, to cover the accessible half of the buffer
+            pos /= (this->samplerate() * 10. * 2.);
+
+            return pos;
         }
 
         number setGrainDirection(number frp) // return -1 or 1
@@ -4101,19 +3856,6 @@ namespace RNBO {
         {
             number pan = 0.5 * (1 + rand01() * pwi);
             return pan;
-        }
-
-        number p_01_calcActiveVoices() {
-            {
-                number activeVoices = 0;
-
-                for (Index i = 0; i < 24; i++) {
-                    if ((bool)(!(bool)(this->rtgrainvoice[(Index)i]->getIsMuted())))
-                        activeVoices++;
-                }
-
-                return activeVoices;
-            }
         }
 
         /*  · If a voice is muted, but in timer state, it is ignored.
@@ -4236,42 +3978,42 @@ namespace RNBO {
             this->param_05_value_set(preset["value"]);
         }
 
-        void data_01_init() {
-            this->data_01_buffer->setWantsFill(true);
-        }
+        //void data_01_init() {
+        //    this->data_01_buffer->setWantsFill(true);
+        //}
 
-        Index data_01_evaluateSizeExpr(number samplerate, number vectorsize) {
-            RNBO_UNUSED(vectorsize);
-            RNBO_UNUSED(samplerate);
-            number size = 0;
-            return (Index)(size);
-        }
+        //Index data_01_evaluateSizeExpr(number samplerate, number vectorsize) {
+        //    RNBO_UNUSED(vectorsize);
+        //    RNBO_UNUSED(samplerate);
+        //    number size = 0;
+        //    return (Index)(size);
+        //}
 
-        void data_01_dspsetup(bool force) {
-            if ((bool)(this->data_01_setupDone) && (bool)(!(bool)(force)))
-                return;
+        //void data_01_dspsetup(bool force) {
+        //    if ((bool)(this->data_01_setupDone) && (bool)(!(bool)(force)))
+        //        return;
 
-            if (this->data_01_sizemode == 2) {
-                this->data_01_buffer = this->data_01_buffer->setSize((Index)(this->mstosamps(this->data_01_sizems)));
-                updateDataRef(this, this->data_01_buffer);
-            }
-            else if (this->data_01_sizemode == 3) {
-                this->data_01_buffer = this->data_01_buffer->setSize(this->data_01_evaluateSizeExpr(this->samplerate(), this->vectorsize()));
-                updateDataRef(this, this->data_01_buffer);
-            }
+        //    if (this->data_01_sizemode == 2) {
+        //        this->data_01_buffer = this->data_01_buffer->setSize((Index)(this->mstosamps(this->data_01_sizems)));
+        //        updateDataRef(this, this->data_01_buffer);
+        //    }
+        //    else if (this->data_01_sizemode == 3) {
+        //        this->data_01_buffer = this->data_01_buffer->setSize(this->data_01_evaluateSizeExpr(this->samplerate(), this->vectorsize()));
+        //        updateDataRef(this, this->data_01_buffer);
+        //    }
 
-            this->data_01_setupDone = true;
-        }
+        //    this->data_01_setupDone = true;
+        //}
 
-        void data_01_bufferUpdated() {
-            this->data_01_report();
-        }
+        //void data_01_bufferUpdated() {
+        //    this->data_01_report();
+        //}
 
-        void data_01_report() {
-            this->data_01_srout_set(this->data_01_buffer->getSampleRate());
-            this->data_01_chanout_set(this->data_01_buffer->getChannels());
-            this->data_01_sizeout_set(this->data_01_buffer->getSize());
-        }
+        //void data_01_report() {
+        //    this->data_01_srout_set(this->data_01_buffer->getSampleRate());
+        //    this->data_01_chanout_set(this->data_01_buffer->getChannels());
+        //    this->data_01_sizeout_set(this->data_01_buffer->getSize());
+        //}
 
         void phasor_01_dspsetup(bool force) {
             if ((bool)(this->phasor_01_setupDone) && (bool)(!(bool)(force)))
@@ -4396,18 +4138,6 @@ namespace RNBO {
             this->param_14_value_set(preset["value"]);
         }
 
-        void latch_tilde_01_reset() {
-            this->latch_tilde_01_value = 0;
-        }
-
-        void latch_tilde_01_dspsetup(bool force) {
-            if ((bool)(this->latch_tilde_01_setupDone) && (bool)(!(bool)(force)))
-                return;
-
-            this->latch_tilde_01_reset();
-            this->latch_tilde_01_setupDone = true;
-        }
-
         number recordtilde_01_calcSync(
             number writeIndex,
             number loopMin,
@@ -4513,7 +4243,7 @@ namespace RNBO {
             this->dcblock_tilde_01_setupDone = true;
         }
 
-        void data_02_init() {
+       /* void data_02_init() {
             {
                 this->data_02_buffer->requestSize(
                     this->data_02_evaluateSizeExpr(this->samplerate(), this->vectorsize()),
@@ -4559,7 +4289,7 @@ namespace RNBO {
             this->data_02_srout_set(this->data_02_buffer->getSampleRate());
             this->data_02_chanout_set(this->data_02_buffer->getChannels());
             this->data_02_sizeout_set(this->data_02_buffer->getSize());
-        }
+        }*/
 
         void data_03_init() {
             this->data_03_buffer->setWantsFill(true);
@@ -4936,11 +4666,11 @@ namespace RNBO {
             param_03_value = 0;
             param_04_value = 200;
             param_05_value = 0;
-            data_01_sizeout = 0;
-            data_01_size = 100;
-            data_01_sizems = 0;
-            data_01_normalize = 0.995;
-            data_01_channels = 1;
+            //data_01_sizeout = 0;
+            //data_01_size = 100;
+            //data_01_sizems = 0;
+            //data_01_normalize = 0.995;
+            //data_01_channels = 1;
             phasor_01_freq = 0;
             param_06_value = 1;
             param_07_value = 0;
@@ -4953,8 +4683,7 @@ namespace RNBO {
             param_12_value = 0;
             param_13_value = 0;
             param_14_value = 1;
-            latch_tilde_01_x = 0;
-            latch_tilde_01_control = 0;
+            scrollvalue_for_getrecpointeratscroll = 0;
             glength_for_delayrecstop = 0;
             scrollvalue_for_delayrecstop = 0;
             recordtilde_01_record = 0;
@@ -4988,11 +4717,11 @@ namespace RNBO {
             feedb_for_process = 0;
             frz_for_revoffhndlr = 0;
             glength_for_revoffhndlr = 0;
-            data_02_sizeout = 0;
-            data_02_size = 0;
-            data_02_sizems = 0;
-            data_02_normalize = 0.995;
-            data_02_channels = 1;
+            //data_02_sizeout = 0;
+            //data_02_size = 0;
+            //data_02_sizems = 0;
+            //data_02_normalize = 0.995;
+            //data_02_channels = 1;
             data_03_sizeout = 0;
             data_03_size = 0;
             data_03_sizems = 20000;
@@ -5049,8 +4778,8 @@ namespace RNBO {
             param_03_lastValue = 0;
             param_04_lastValue = 0;
             param_05_lastValue = 0;
-            data_01_sizemode = 1;
-            data_01_setupDone = false;
+            //data_01_sizemode = 1;
+            //data_01_setupDone = false;
             phasor_01_sigbuf = nullptr;
             phasor_01_lastLockedPhase = 0;
             phasor_01_conv = 0;
@@ -5072,8 +4801,7 @@ namespace RNBO {
             param_12_lastValue = 0;
             param_13_lastValue = 0;
             param_14_lastValue = 0;
-            latch_tilde_01_value = 0;
-            latch_tilde_01_setupDone = false;
+            recpointer_at_scroll = 0;
             delrecstop_delaysamps = 0;
             delrecstop_record = 0;
             delrecstop_scrollhistory = 1;
@@ -5098,8 +4826,8 @@ namespace RNBO {
             revoffhndlr_frzhistory = 0;
             revoffhndlr_c = 0;
             revoffhndlr_hit = 0;
-            data_02_sizemode = 3;
-            data_02_setupDone = false;
+            //data_02_sizemode = 3;
+            //data_02_setupDone = false;
             data_03_sizemode = 2;
             data_03_setupDone = false;
             ctlin_01_status = 0;
@@ -5154,11 +4882,11 @@ namespace RNBO {
         number param_03_value;
         number param_04_value;
         number param_05_value;
-        number data_01_sizeout;
-        number data_01_size;
-        number data_01_sizems;
-        number data_01_normalize;
-        number data_01_channels;
+        //number data_01_sizeout;
+        //number data_01_size;
+        //number data_01_sizems;
+        //number data_01_normalize;
+        //number data_01_channels;
         number phasor_01_freq;
         number param_06_value;
         number param_07_value;
@@ -5171,8 +4899,7 @@ namespace RNBO {
         number param_12_value;
         number param_13_value;
         number param_14_value;
-        number latch_tilde_01_x;
-        number latch_tilde_01_control;
+        bool scrollvalue_for_getrecpointeratscroll;
         SampleIndex glength_for_delayrecstop;
         bool scrollvalue_for_delayrecstop;
         number recordtilde_01_record;
@@ -5207,11 +4934,11 @@ namespace RNBO {
         number feedb_for_process;
         bool frz_for_revoffhndlr;
         number glength_for_revoffhndlr;
-        number data_02_sizeout;
-        number data_02_size;
-        number data_02_sizems;
-        number data_02_normalize;
-        number data_02_channels;
+        //number data_02_sizeout;
+        //number data_02_size;
+        //number data_02_sizems;
+        //number data_02_normalize;
+        //number data_02_channels;
         number data_03_sizeout;
         number data_03_size;
         number data_03_sizems;
@@ -5270,9 +4997,9 @@ namespace RNBO {
         number param_03_lastValue;
         number param_04_lastValue;
         number param_05_lastValue;
-        Float32BufferRef data_01_buffer;
-        Int data_01_sizemode;
-        bool data_01_setupDone;
+        //Float32BufferRef data_01_buffer;
+        //Int data_01_sizemode;
+        //bool data_01_setupDone;
         signal phasor_01_sigbuf;
         number phasor_01_lastLockedPhase;
         number phasor_01_conv;
@@ -5294,8 +5021,7 @@ namespace RNBO {
         number param_12_lastValue;
         number param_13_lastValue;
         number param_14_lastValue;
-        number latch_tilde_01_value;
-        bool latch_tilde_01_setupDone;
+        number recpointer_at_scroll;
         SampleIndex delrecstop_delaysamps;
         bool delrecstop_record;
         bool delrecstop_scrollhistory;
@@ -5325,9 +5051,9 @@ namespace RNBO {
         bool revoffhndlr_frzhistory;
         SampleIndex revoffhndlr_c;
         bool revoffhndlr_hit;
-        Float32BufferRef data_02_buffer;
-        Int data_02_sizemode;
-        bool data_02_setupDone;
+        //Float32BufferRef data_02_buffer;
+        //Int data_02_sizemode;
+        //bool data_02_setupDone;
         Float32BufferRef data_03_buffer;
         Int data_03_sizemode;
         bool data_03_setupDone;
