@@ -170,7 +170,6 @@ namespace RNBO {
 
                 if (trgindx >= 0) {
                     reverse_offset = revoffs[trgindx];
-                    DBG(reverse_offset);
                 }
 
                 this->processBrain(
@@ -2790,7 +2789,8 @@ namespace RNBO {
             this->frz_for_revoffhndlr = static_cast<bool>(v);
 
             bool scroll = (v == 0);
-            this->empty_audio_buffer(scroll);
+            if (scroll)
+                this->empty_audio_buffer();
             this->stop_rec_head(scroll);
             this->scrollvalue_for_delayrecstop = scroll;
         }
@@ -2906,9 +2906,6 @@ namespace RNBO {
             this->codebox_tilde_01_n_subd_init();
             this->codebox_tilde_01_rdm_init();
             this->data_01_init();
-            this->codebox_tilde_03_offs_rev_init();
-            this->codebox_tilde_03_done_init();
-            this->codebox_tilde_03_startrec_init();
             this->data_02_init();
             this->data_03_init();
         }
@@ -3194,7 +3191,7 @@ namespace RNBO {
         //        this->select_01_nomatch_number_set(v);
         //}
 
-        void empty_audio_buffer(number v) {
+        void empty_audio_buffer() {
             auto& buffer = this->bufferop_01_buffer;
             buffer->setZero();
             buffer->setTouched(true);
@@ -3598,13 +3595,10 @@ namespace RNBO {
             this->gentrggs_syncphase_old = syncphase_old;
         }
 
-        void delayRecStop(number in1, number in2, SampleValue* out1, Index n) {     //not sample accurate, shouldn't be a problem
+        void delayRecStop(number glength, bool scroll, SampleValue* out1, Index n) {     //not sample accurate, shouldn't be a problem
             auto delaysamps = this->delrecstop_delaysamps;
-            bool record = this->delrecstop_record;
+            auto record = this->delrecstop_record;
                     
-            number glength = in1;
-            bool scroll = in2;
-
             if (scroll != this->delrecstop_scrollhistory) {
                 if (scroll) {
                     this->delrecstop_inc = 0;
@@ -3613,7 +3607,7 @@ namespace RNBO {
                 else {
                     this->delrecstop_count = 0;
                     delrecstop_inc = 1;
-                    delaysamps = this->mstosamps(glength);
+                    delaysamps = static_cast<SampleIndex>(this->mstosamps(glength)) + 1;
                 }
             }
 
@@ -3625,7 +3619,7 @@ namespace RNBO {
                     record = false;
                 }
 
-                out1[(Index)i] = record;
+                out1[i] = record;
             }
 
 			this->delrecstop_scrollhistory = scroll;
@@ -5037,77 +5031,6 @@ namespace RNBO {
             this->dcblock_tilde_01_setupDone = true;
         }
 
-        array<number, 3> codebox_tilde_03_offs_rev_next(number a, number reset, number limit) {
-            number carry_flag = 0;
-
-            if (reset != 0) {
-                this->codebox_tilde_03_offs_rev_count = 0;
-                this->codebox_tilde_03_offs_rev_carry = 0;
-            }
-            else {
-                this->codebox_tilde_03_offs_rev_count += a;
-
-                if (limit != 0) {
-                    if ((a > 0 && this->codebox_tilde_03_offs_rev_count >= limit) || (a < 0 && this->codebox_tilde_03_offs_rev_count <= limit)) {
-                        this->codebox_tilde_03_offs_rev_count = 0;
-                        this->codebox_tilde_03_offs_rev_carry += 1;
-                        carry_flag = 1;
-                    }
-                }
-            }
-
-            return {
-                this->codebox_tilde_03_offs_rev_count,
-                carry_flag,
-                this->codebox_tilde_03_offs_rev_carry
-            };
-        }
-
-        void codebox_tilde_03_offs_rev_init() {
-            this->codebox_tilde_03_offs_rev_count = 0;
-        }
-
-        void codebox_tilde_03_offs_rev_reset() {
-            this->codebox_tilde_03_offs_rev_carry = 0;
-            this->codebox_tilde_03_offs_rev_count = 0;
-        }
-
-        number codebox_tilde_03_done_next(number val) {
-            if ((0 == 0 && val <= 0) || (0 == 1 && val > 0)) {
-                this->codebox_tilde_03_done_active = false;
-            }
-            else if ((bool)(!(bool)(this->codebox_tilde_03_done_active))) {
-                this->codebox_tilde_03_done_active = true;
-                return 1.0;
-            }
-
-            return 0.0;
-        }
-
-        void codebox_tilde_03_done_init() {}
-
-        void codebox_tilde_03_done_reset() {
-            this->codebox_tilde_03_done_active = false;
-        }
-
-        number codebox_tilde_03_startrec_next(number val) {
-            if ((0 == 0 && val <= 0) || (0 == 1 && val > 0)) {
-                this->codebox_tilde_03_startrec_active = false;
-            }
-            else if ((bool)(!(bool)(this->codebox_tilde_03_startrec_active))) {
-                this->codebox_tilde_03_startrec_active = true;
-                return 1.0;
-            }
-
-            return 0.0;
-        }
-
-        void codebox_tilde_03_startrec_init() {}
-
-        void codebox_tilde_03_startrec_reset() {
-            this->codebox_tilde_03_startrec_active = false;
-        }
-
         void data_02_init() {
             {
                 this->data_02_buffer->requestSize(
@@ -5701,13 +5624,8 @@ namespace RNBO {
             feedbacktilde_01_feedbackbuffer = nullptr;
             revoffhndlr_offset = 0;
             revoffhndlr_frzhistory = 0;
-            codebox_tilde_03_counterstate = { 0, 0, 0 };
             revoffhndlr_c = 0;
             revoffhndlr_hit = 0;
-            codebox_tilde_03_offs_rev_carry = 0;
-            codebox_tilde_03_offs_rev_count = 0;
-            codebox_tilde_03_done_active = false;
-            codebox_tilde_03_startrec_active = false;
             data_02_sizemode = 3;
             data_02_setupDone = false;
             data_03_sizemode = 2;
@@ -5783,8 +5701,8 @@ namespace RNBO {
         number param_14_value;
         number latch_tilde_01_x;
         number latch_tilde_01_control;
-        number glength_for_delayrecstop;
-        number scrollvalue_for_delayrecstop;
+        SampleIndex glength_for_delayrecstop;
+        bool scrollvalue_for_delayrecstop;
         number recordtilde_01_record;
         number recordtilde_01_begin;
         number recordtilde_01_end;
@@ -5928,7 +5846,7 @@ namespace RNBO {
         number param_14_lastValue;
         number latch_tilde_01_value;
         bool latch_tilde_01_setupDone;
-        number delrecstop_delaysamps;
+        SampleIndex delrecstop_delaysamps;
         bool delrecstop_record;
         bool delrecstop_scrollhistory;
         SampleIndex delrecstop_count;
@@ -5955,13 +5873,8 @@ namespace RNBO {
         signal feedbacktilde_01_feedbackbuffer;
         SampleIndex revoffhndlr_offset;
         bool revoffhndlr_frzhistory;
-        list codebox_tilde_03_counterstate;
         SampleIndex revoffhndlr_c;
         bool revoffhndlr_hit;
-        int codebox_tilde_03_offs_rev_carry;
-        number codebox_tilde_03_offs_rev_count;
-        bool codebox_tilde_03_done_active;
-        bool codebox_tilde_03_startrec_active;
         Float32BufferRef data_02_buffer;
         Int data_02_sizemode;
         bool data_02_setupDone;
