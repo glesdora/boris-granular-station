@@ -149,7 +149,7 @@ namespace RNBO {
                 this->vs = n;
                 SampleValue* out1 = (numOutputs >= 1 && outputs[0] ? outputs[0] : this->dummyBuffer);
                 SampleValue* out2 = (numOutputs >= 2 && outputs[1] ? outputs[1] : this->dummyBuffer);
-                const SampleValue* in2 = (numInputs >= 1 && inputs[0] ? inputs[0] : this->zeroBuffer);
+                const SampleValue* revoffs = (numInputs >= 1 && inputs[0] ? inputs[0] : this->zeroBuffer);
                 const SampleValue* recpointer = (numInputs >= 2 && inputs[1] ? inputs[1] : this->zeroBuffer);
 
                 auto trgindx = this->triggerindex;
@@ -168,8 +168,10 @@ namespace RNBO {
                 if (this->getIsMuted())
                     return;
 
-                if (trgindx >= 0)
-                    reverse_offset = in2[trgindx];
+                if (trgindx >= 0) {
+                    reverse_offset = revoffs[trgindx];
+                    DBG(reverse_offset);
+                }
 
                 this->processBrain(
                     trgindx,
@@ -817,14 +819,14 @@ namespace RNBO {
             this->phasor_03_perform(this->phasor_03_freq, this->signals[2], n);
 
             this->generate_triggers(
-                this->codebox_tilde_01_in1,
-                this->codebox_tilde_01_in2,
-                this->codebox_tilde_01_in3,
-                this->codebox_tilde_01_in4,
-                this->codebox_tilde_01_in5,
-                this->codebox_tilde_01_in6,
-                this->codebox_tilde_01_in7,
-                this->codebox_tilde_01_in8,
+                this->mute_for_gentriggs,
+                this->len_for_gentrggs,
+                this->den_for_gentrggs,
+                this->cha_for_gentrggs,
+                this->rdl_for_gentrggs,
+                this->syc_for_gentrggs,
+                this->tmp_for_gentrggs,
+                this->rtm_for_gentrggs,
                 this->signals[0],
                 this->signals[1],
                 this->signals[2],
@@ -838,22 +840,21 @@ namespace RNBO {
                 n
             );
 
-            this->dspexpr_04_perform(in1, in2, this->signals[2], n);
-            this->dspexpr_03_perform(this->signals[2], this->dspexpr_03_in2, this->signals[1], n);
-            this->dspexpr_06_perform(this->signals[1], this->dspexpr_06_in2, this->signals[2], n);
+            //mixdown chans + gain
+            for (Index i = 0; i < n; i++) {
+                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * this->gai_for_process;
+            }
 
-            this->codebox_tilde_03_perform(
-                this->codebox_tilde_03_in1,
-                this->codebox_tilde_03_in2,
+            this->revoffsethandler(
+                this->frz_for_revoffhndlr,
+                this->glength_for_revoffhndlr,
                 this->signals[1],
-                this->dummyBuffer,
-                this->dummyBuffer,
                 n
             );
 
-            this->feedbackreader_01_perform(this->signals[0], n);
-            this->dspexpr_07_perform(this->signals[0], this->dspexpr_07_in2, this->signals[4], n);
-            this->dspexpr_05_perform(this->signals[2], this->signals[4], this->signals[0], n);
+            this->feedbackreader_01_perform(this->signals[0], n);                                       //fills signal0 with audio buf values
+			this->dspexpr_07_perform(this->signals[0], this->dspexpr_07_in2, this->signals[4], n);      //multiplies signal0 with feedback ratio, and reports output to signal4
+			this->dspexpr_05_perform(this->signals[2], this->signals[4], this->signals[0], n);          //sums signal2 and signal4, and reports output to signal0
 
             this->recordtilde_01_perform(
                 this->signals[3],
@@ -2617,7 +2618,7 @@ namespace RNBO {
                 this->param_04_lastValue = this->param_04_value;
             }
 
-            this->codebox_tilde_03_in2_set(v);
+            this->glength_for_revoffhndlr = v;
             this->glength_for_delayrecstop = v;
             this->codebox_tilde_01_in2_set(v);
         }
@@ -2731,7 +2732,7 @@ namespace RNBO {
                 this->param_14_lastValue = this->param_14_value;
             }
 
-            this->dspexpr_06_in2_set(v);
+            this->gai_for_process = v;
         }
 
         void param_15_value_set(number v) {
@@ -2786,7 +2787,7 @@ namespace RNBO {
                 this->param_18_lastValue = this->param_18_value;
             }
 
-            this->codebox_tilde_03_in1_set(v);
+            this->frz_for_revoffhndlr = static_cast<bool>(v);
 
             bool scroll = (v == 0);
             this->empty_audio_buffer(scroll);
@@ -3021,7 +3022,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in3_set(number v) {
-            this->codebox_tilde_01_in3 = v;
+            this->den_for_gentrggs = v;
         }
 
         static number param_02_value_constrain(number v) {
@@ -3030,7 +3031,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in4_set(number v) {
-            this->codebox_tilde_01_in4 = v;
+            this->cha_for_gentrggs = v;
         }
 
         void param_02_normalized_set(number v) {
@@ -3043,7 +3044,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in5_set(number v) {
-            this->codebox_tilde_01_in5 = v;
+            this->rdl_for_gentrggs = v;
         }
 
         void param_03_normalized_set(number v) {
@@ -3055,12 +3056,12 @@ namespace RNBO {
             return v;
         }
 
-        void codebox_tilde_03_in2_set(number v) {
-            this->codebox_tilde_03_in2 = v;
-        }
+        //void codebox_tilde_03_in2_set(number v) {
+        //    this->codebox_tilde_03_in2 = v;
+        //}
 
         void codebox_tilde_01_in2_set(number v) {
-            this->codebox_tilde_01_in2 = v;
+            this->len_for_gentrggs = v;
         }
 
         static number param_05_value_constrain(number v) {
@@ -3113,10 +3114,6 @@ namespace RNBO {
             return v;
         }
 
-        void dspexpr_06_in2_set(number v) {
-            this->dspexpr_06_in2 = v;
-        }
-
         static number param_15_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
@@ -3157,7 +3154,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in1_set(number v) {
-            this->codebox_tilde_01_in1 = v;
+            this->mute_for_gentriggs = v;
         }
 
         static number param_18_value_constrain(number v) {
@@ -3173,9 +3170,9 @@ namespace RNBO {
             return v;
         }
 
-        void codebox_tilde_03_in1_set(number v) {
-            this->codebox_tilde_03_in1 = v;
-        }
+        //void codebox_tilde_03_in1_set(number v) {
+        //    this->frz_for_revoffhndlr = v;
+        //}
 
         //void bufferop_01_trigger_bang() {
         //    auto& buffer = this->bufferop_01_buffer;
@@ -3249,7 +3246,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in6_set(number v) {
-            this->codebox_tilde_01_in6 = v;
+            this->syc_for_gentrggs = v;
         }
 
         static number param_20_value_constrain(number v) {
@@ -3266,7 +3263,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in7_set(number v) {
-            this->codebox_tilde_01_in7 = v;
+            this->tmp_for_gentrggs = v;
         }
 
         static number param_21_value_constrain(number v) {
@@ -3283,7 +3280,7 @@ namespace RNBO {
         }
 
         void codebox_tilde_01_in8_set(number v) {
-            this->codebox_tilde_01_in8 = v;
+            this->rtm_for_gentrggs = v;
         }
 
         void setGrainProperties(SampleIndex trigatindex) {
@@ -3504,44 +3501,33 @@ namespace RNBO {
         }
 
         void generate_triggers(
-            number in1,
-            number in2,
-            number in3,
-            number in4,
-            number in5,
-            number in6,
-            number in7,
-            number in8,
-            const Sample* in9,
-            const Sample* in10,
-            const Sample* in11,
+            bool mut,
+            number len,
+            number den,
+            number cha,
+            number rdl,
+            bool sync,
+            int notetempo,
+            int noterythm,
+            const Sample* sync_n_phasor,
+            const Sample* sync_nd_phasor,
+            const Sample* sync_nt_phasor,
             Index n
         ) {
-            auto __codebox_tilde_01_old_sub_phase = this->codebox_tilde_01_old_sub_phase;
-            auto __codebox_tilde_01_rdmdel = this->codebox_tilde_01_rdmdel;
-            auto __freerunningphas_old = this->codebox_tilde_01_oldphas;
-            auto __freerunningphas_new = this->codebox_tilde_01_newphas;
-
-            number mut = in1;
-            number len = in2;
-            number den = in3;
-            number cha = in4;
-            number rdl = in5;
-            number syc = in6;
-            number temposel = in7;
-            number notevaluesel = in8;
+            auto syncphase_old = this->gentrggs_syncphase_old;
+            auto freerunphase_old = this->gentrggs_freerunphase_old;
 
             number maxdelay = 0;
             number frq = 0;
 
             for (Index i = 0; i < n; i++) {
-                number sync_n_phase = in9[(Index)i];
-                number sync_nd_phase = in10[(Index)i];
-                number sync_nt_phase = in11[(Index)i];
+                number sync_n_phase = sync_n_phasor[i];
+                number sync_nd_phase = sync_nd_phasor[i];
+                number sync_nt_phase = sync_nt_phasor[i];
 
-                if (syc == 0) {
+                if (sync == 0) {
                     frq = (-0.60651 + 41.4268 * rnbo_exp(-0.001 * len)) * den * (1 - mut);
-                    __freerunningphas_new = this->codebox_tilde_01_mphasor_next(frq, -1);
+                    auto freerunphase = this->codebox_tilde_01_mphasor_next(frq, -1);
 
                     if (frq < ((2 * this->samplerate() == 0. ? 0. : (number)1 / (2 * this->samplerate())))) {
                         maxdelay = rdl * 2 * this->samplerate();
@@ -3550,7 +3536,7 @@ namespace RNBO {
                         maxdelay = ((frq == 0. ? 0. : rdl / frq)) * this->samplerate();
                     }
 
-                    if (__freerunningphas_new < __freerunningphas_old) {
+                    if (freerunphase < freerunphase_old) {
                         number r = rand01();
                         if (r <= cha) {
                             r = rand01();
@@ -3558,11 +3544,11 @@ namespace RNBO {
                             this->setGrainProperties(delayedtrig);
                         }
                     }
-                    __freerunningphas_old = __freerunningphas_new;
+                    freerunphase_old = freerunphase;
                 }
                 else {
                     number div;
-                    div = 1 << (6 - (int)temposel);
+                    div = 1 << (6 - (int)notetempo);
                     frq = this->beatstohz((div == 0. ? 0. : (number)4 * (1 - mut) / div));                  // -mod: if mute frq is 0
 
                     if (frq < ((2 * this->samplerate() == 0. ? 0. : (number)1 / (2 * this->samplerate())))) {
@@ -3574,9 +3560,7 @@ namespace RNBO {
 
                     number new_sub_phase = 0;
 
-                    // to add: on change of notevaluesel, old_sub_phase should be reset => param rtm 
-
-                    switch ((int)notevaluesel) {
+                    switch ((int)noterythm) {
                     case 0:
                     {
                         new_sub_phase = fmod(sync_n_phase * div, 1);
@@ -3595,7 +3579,7 @@ namespace RNBO {
                     }
 
                     if (!mut) {
-                        if (new_sub_phase < __codebox_tilde_01_old_sub_phase) {
+                        if (new_sub_phase < syncphase_old) {
                             number r = this->codebox_tilde_01_rdm_next() / (number)2 + 0.5;
                             if (r <= cha) {
                                 r = rand01();
@@ -3605,15 +3589,13 @@ namespace RNBO {
                         }
                     }
 
-                    __codebox_tilde_01_old_sub_phase = new_sub_phase;
+                    syncphase_old = new_sub_phase;
 
                 }
             }
 
-            this->codebox_tilde_01_newphas = __freerunningphas_new;
-            this->codebox_tilde_01_oldphas = __freerunningphas_old;
-            this->codebox_tilde_01_rdmdel = __codebox_tilde_01_rdmdel;
-            this->codebox_tilde_01_old_sub_phase = __codebox_tilde_01_old_sub_phase;
+            this->gentrggs_freerunphase_old = freerunphase_old;
+            this->gentrggs_syncphase_old = syncphase_old;
         }
 
         void delayRecStop(number in1, number in2, SampleValue* out1, Index n) {     //not sample accurate, shouldn't be a problem
@@ -3651,80 +3633,48 @@ namespace RNBO {
             this->delrecstop_delaysamps = delaysamps;
         }
 
-        void dspexpr_04_perform(const Sample* in1, const Sample* in2, SampleValue* out1, Index n) {
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] + in2[(Index)i];//#map:_###_obj_###_:1
-            }
-        }
-
-        void dspexpr_03_perform(const Sample* in1, number in2, SampleValue* out1, Index n) {
-            RNBO_UNUSED(in2);
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] * 0.71;//#map:_###_obj_###_:1
-            }
-        }
-
-        void dspexpr_06_perform(const Sample* in1, number in2, SampleValue* out1, Index n) {
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
-            }
-        }
-
-        void codebox_tilde_03_perform(
-            number in1,
-            number in2,
+        void revoffsethandler(
+            bool frz,
+            number len,
             SampleValue* out1,
-            SampleValue* out2,
-            SampleValue* out3,
             Index n
         ) {
-            auto __codebox_tilde_03_offs = this->codebox_tilde_03_offs;
-            auto __codebox_tilde_03_reached = this->codebox_tilde_03_reached;
-            auto __codebox_tilde_03_c = this->codebox_tilde_03_c;
-            auto __codebox_tilde_03_len = this->codebox_tilde_03_len;
-            auto __codebox_tilde_03_frz = this->codebox_tilde_03_frz;
-            Index i;
+            auto offset = this->revoffhndlr_offset;
+            auto hit = this->revoffhndlr_hit;
+            auto c = this->revoffhndlr_c;
+			auto glensamps = trunc(this->mstosamps(len)) + 1;               // +1 to be sure that the offset is at least as long as the grain length
 
-            for (i = 0; i < n; i++) {
-                __codebox_tilde_03_frz = in1;//#map:_###_obj_###_:4
-                __codebox_tilde_03_len = this->mstosamps(in2);//#map:_###_obj_###_:6
-
-                if ((bool)(this->codebox_tilde_03_startrec_next(!(bool)(__codebox_tilde_03_frz)))) {
-                    this->codebox_tilde_03_offs_rev_reset();//#map:_###_obj_###_:19
-                    __codebox_tilde_03_c = 0;//#map:_###_obj_###_:20
-                    __codebox_tilde_03_reached = 0;//#map:_###_obj_###_:21
-                }//#map:_###_obj_###_:18
-
-                if ((bool)(!(bool)(__codebox_tilde_03_frz))) {
-                    __codebox_tilde_03_offs = __codebox_tilde_03_len;//#map:_###_obj_###_:25
-                }
-                else {
-                    if ((bool)(!(bool)(__codebox_tilde_03_reached))) {
-                        this->codebox_tilde_03_counterstate = this->codebox_tilde_03_offs_rev_next(1, 0, __codebox_tilde_03_offs);//#map:_###_obj_###_:32
-                        __codebox_tilde_03_reached = this->codebox_tilde_03_counterstate[1];//#map:_###_obj_###_:33
-
-                        if ((bool)(!(bool)(__codebox_tilde_03_reached))) {
-                            __codebox_tilde_03_c = this->codebox_tilde_03_counterstate[0];//#map:_###_obj_###_:36
-                        }//#map:_###_obj_###_:35
-                    }//#map:_###_obj_###_:31
-                }//#map:_###_obj_###_:24
-
-                out3[(Index)i] = this->codebox_tilde_03_done_next(__codebox_tilde_03_reached);//#map:_###_obj_###_:44
-                out2[(Index)i] = __codebox_tilde_03_offs;//#map:_###_obj_###_:45
-                out1[(Index)i] = __codebox_tilde_03_offs - __codebox_tilde_03_c;//#map:_###_obj_###_:46
+            if (frz < this->revoffhndlr_frzhistory) {                       //at scrl pressed               
+                DBG("SCROLL PRESSED, OFFSET: " << offset);
+                c = 0;
+                hit = 0;
             }
 
-            this->codebox_tilde_03_frz = __codebox_tilde_03_frz;
-            this->codebox_tilde_03_len = __codebox_tilde_03_len;
-            this->codebox_tilde_03_c = __codebox_tilde_03_c;
-            this->codebox_tilde_03_reached = __codebox_tilde_03_reached;
-            this->codebox_tilde_03_offs = __codebox_tilde_03_offs;
+            if (!frz) {
+                offset = glensamps;
+            }
+
+            for (Index i = 0; i < n; i++) {
+                if (frz) {
+                    if (!hit) {
+                        if (c == offset) {
+                            DBG("HIT");
+                            hit = 1;
+                        }
+
+                        if (!hit) {
+                            c++;
+                        }
+                    }
+                }
+
+                out1[i] = offset - c;
+            }
+
+            this->revoffhndlr_c = c;
+            this->revoffhndlr_hit = hit;
+            this->revoffhndlr_offset = offset;
+            this->revoffhndlr_frzhistory = frz;
         }
 
         void feedbackreader_01_perform(SampleValue* output, Index n) {
@@ -5563,14 +5513,14 @@ namespace RNBO {
             limi_01_release = 1000;
             dspexpr_01_in1 = 0;
             dspexpr_01_in2 = 1;
-            codebox_tilde_01_in1 = 0;
-            codebox_tilde_01_in2 = 0;
-            codebox_tilde_01_in3 = 0;
-            codebox_tilde_01_in4 = 0;
-            codebox_tilde_01_in5 = 0;
-            codebox_tilde_01_in6 = 0;
-            codebox_tilde_01_in7 = 0;
-            codebox_tilde_01_in8 = 0;
+            mute_for_gentriggs = 0;
+            len_for_gentrggs = 0;
+            den_for_gentrggs = 0;
+            cha_for_gentrggs = 0;
+            rdl_for_gentrggs = 0;
+            syc_for_gentrggs = 0;
+            tmp_for_gentrggs = 0;
+            rtm_for_gentrggs = 0;
             codebox_tilde_01_in9 = 0;
             codebox_tilde_01_in10 = 0;
             codebox_tilde_01_in11 = 0;
@@ -5620,20 +5570,19 @@ namespace RNBO {
             select_01_test1 = 1;
             param_20_value = 3;
             dspexpr_03_in1 = 0;
-            dspexpr_03_in2 = 0.71;
             dspexpr_04_in1 = 0;
             dspexpr_04_in2 = 0;
             dspexpr_05_in1 = 0;
             dspexpr_05_in2 = 0;
             dspexpr_06_in1 = 0;
-            dspexpr_06_in2 = 1;
+            gai_for_process = 1;
             param_21_value = 0;
             dcblock_tilde_01_x = 0;
             dcblock_tilde_01_gain = 0.9997;
             dspexpr_07_in1 = 0;
             dspexpr_07_in2 = 0;
-            codebox_tilde_03_in1 = 0;
-            codebox_tilde_03_in2 = 0;
+            frz_for_revoffhndlr = 0;
+            glength_for_revoffhndlr = 0;
             data_02_sizeout = 0;
             data_02_size = 0;
             data_02_sizems = 0;
@@ -5685,10 +5634,8 @@ namespace RNBO {
             codebox_02_ptc = 0;
             codebox_02_vol = 0;
             codebox_02_pan = 0;
-            codebox_tilde_01_old_sub_phase = 0;
-            codebox_tilde_01_newphas = 0;
-            codebox_tilde_01_oldphas = 0;
-            codebox_tilde_01_rdmdel = 0;
+            gentrggs_syncphase_old = 0;
+            gentrggs_freerunphase_old = 0;
             codebox_tilde_01_n_subd_div = 1;
             codebox_tilde_01_n_subd_nextdiv = 1;
             codebox_tilde_01_n_subd_posstep = 0;
@@ -5734,7 +5681,7 @@ namespace RNBO {
             latch_tilde_01_setupDone = false;
             delrecstop_delaysamps = 0;
             delrecstop_record = 0;
-            delrecstop_scrollhistory = 0;
+            delrecstop_scrollhistory = 1;
             recordtilde_01_wIndex = 0;
             recordtilde_01_lastRecord = 0;
             param_15_lastValue = 0;
@@ -5752,12 +5699,11 @@ namespace RNBO {
             dcblock_tilde_01_ym1 = 0;
             dcblock_tilde_01_setupDone = false;
             feedbacktilde_01_feedbackbuffer = nullptr;
-            codebox_tilde_03_frz = 0;
-            codebox_tilde_03_len = 0;
-            codebox_tilde_03_offs = 0;
+            revoffhndlr_offset = 0;
+            revoffhndlr_frzhistory = 0;
             codebox_tilde_03_counterstate = { 0, 0, 0 };
-            codebox_tilde_03_c = 0;
-            codebox_tilde_03_reached = 0;
+            revoffhndlr_c = 0;
+            revoffhndlr_hit = 0;
             codebox_tilde_03_offs_rev_carry = 0;
             codebox_tilde_03_offs_rev_count = 0;
             codebox_tilde_03_done_active = false;
@@ -5800,14 +5746,14 @@ namespace RNBO {
         list codebox_02_in1;
         list codebox_02_out1;
         list codebox_02_out2;
-        number codebox_tilde_01_in1;
-        number codebox_tilde_01_in2;
-        number codebox_tilde_01_in3;
-        number codebox_tilde_01_in4;
-        number codebox_tilde_01_in5;
-        number codebox_tilde_01_in6;
-        number codebox_tilde_01_in7;
-        number codebox_tilde_01_in8;
+        bool mute_for_gentriggs;
+        number len_for_gentrggs;
+        number den_for_gentrggs;
+        number cha_for_gentrggs;
+        number rdl_for_gentrggs;
+        bool syc_for_gentrggs;
+        int tmp_for_gentrggs;
+        int rtm_for_gentrggs;
         number codebox_tilde_01_in9;
         number codebox_tilde_01_in10;
         number codebox_tilde_01_in11;
@@ -5858,20 +5804,19 @@ namespace RNBO {
         list bufferop_01_channels;
         number param_20_value;
         number dspexpr_03_in1;
-        number dspexpr_03_in2;
         number dspexpr_04_in1;
         number dspexpr_04_in2;
         number dspexpr_05_in1;
         number dspexpr_05_in2;
         number dspexpr_06_in1;
-        number dspexpr_06_in2;
+        number gai_for_process;
         number param_21_value;
         number dcblock_tilde_01_x;
         number dcblock_tilde_01_gain;
         number dspexpr_07_in1;
         number dspexpr_07_in2;
-        number codebox_tilde_03_in1;
-        number codebox_tilde_03_in2;
+        bool frz_for_revoffhndlr;
+        number glength_for_revoffhndlr;
         number data_02_sizeout;
         number data_02_size;
         number data_02_sizems;
@@ -5925,10 +5870,8 @@ namespace RNBO {
         number codebox_02_ptc;
         number codebox_02_vol;
         number codebox_02_pan;
-        number codebox_tilde_01_old_sub_phase;
-        number codebox_tilde_01_newphas;
-        number codebox_tilde_01_oldphas;
-        number codebox_tilde_01_rdmdel;
+        number gentrggs_syncphase_old;
+        number gentrggs_freerunphase_old;
         number codebox_tilde_01_n_subd_div;
         number codebox_tilde_01_n_subd_nextdiv;
         number codebox_tilde_01_n_subd_posstep;
@@ -6010,12 +5953,11 @@ namespace RNBO {
         number dcblock_tilde_01_ym1;
         bool dcblock_tilde_01_setupDone;
         signal feedbacktilde_01_feedbackbuffer;
-        number codebox_tilde_03_frz;
-        number codebox_tilde_03_len;
-        number codebox_tilde_03_offs;
+        SampleIndex revoffhndlr_offset;
+        bool revoffhndlr_frzhistory;
         list codebox_tilde_03_counterstate;
-        number codebox_tilde_03_c;
-        number codebox_tilde_03_reached;
+        SampleIndex revoffhndlr_c;
+        bool revoffhndlr_hit;
         int codebox_tilde_03_offs_rev_carry;
         number codebox_tilde_03_offs_rev_count;
         bool codebox_tilde_03_done_active;
