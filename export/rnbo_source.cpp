@@ -85,8 +85,6 @@ namespace RNBO {
 
         class RTGrainVoice {
 
-            friend class rnbomatic;
-
         public:
 
             RTGrainVoice(rnbomatic* grainsMaster, int voiceIndex) : _grainsMaster(grainsMaster), _voiceIndex(voiceIndex) {}
@@ -215,9 +213,6 @@ namespace RNBO {
                     this->sr = sampleRate;
                     this->invsr = 1 / sampleRate;
                 }
-
-                //if (sampleRateChanged)
-                //    this->onSampleRateChanged(sampleRate);
             }
 
             Index getIsMuted() {
@@ -230,11 +225,11 @@ namespace RNBO {
 
             void processDataViewUpdate(DataRefIndex index, MillisecondTime time) {
                 if (index == 0) {
-                    this->gen_01_rtbuf = new Float32Buffer(this->getPatcher()->borisinrnbo_v01_rtbuf);
+                    this->rtaudiobuf = new Float32Buffer(this->getPatcher()->borisinrnbo_v01_rtbuf);
                 }
 
                 if (index == 1) {
-                    this->gen_01_interpol_env = new Float32Buffer(this->getPatcher()->interpolated_envelope);
+                    this->intrpenvbuf = new Float32Buffer(this->getPatcher()->interpolated_envelope);
                 }
             }
 
@@ -242,16 +237,15 @@ namespace RNBO {
                 for (int i = 0; i < 2; i++) {
                     realtime_grain_out[i] = nullptr;
                 }
-                this->gen_01_rtbuf = new Float32Buffer(this->getPatcher()->borisinrnbo_v01_rtbuf);
-                this->gen_01_interpol_env = new Float32Buffer(this->getPatcher()->interpolated_envelope);
+                this->rtaudiobuf = new Float32Buffer(this->getPatcher()->borisinrnbo_v01_rtbuf);
+                this->intrpenvbuf = new Float32Buffer(this->getPatcher()->interpolated_envelope);
             }
 
-        protected:
             void allocateDataRefs() {                                                                               //mmmmmm
-                this->gen_01_rtbuf = this->gen_01_rtbuf->allocateIfNeeded();
-                this->gen_01_interpol_env = this->gen_01_interpol_env->allocateIfNeeded();
+                this->rtaudiobuf = this->rtaudiobuf->allocateIfNeeded();
+                this->intrpenvbuf = this->intrpenvbuf->allocateIfNeeded();
             }
-         
+
             void initiateVoice(SampleIndex trigatindex, const list& v) {
                 if (v->length > 5) {
                     this->panning_value = v[5];
@@ -265,6 +259,7 @@ namespace RNBO {
                 this->triggerindex = trigatindex;
             }
 
+        protected:
             void processBrain(
                 const Sample in1,
                 const Sample in2,
@@ -279,19 +274,20 @@ namespace RNBO {
                 SampleValue* out2,
                 Index n
             ) {
-                auto& rtbuf = this->gen_01_rtbuf;
+                auto& rtbuf = this->rtaudiobuf;
                 auto rtbuf_dim = rtbuf->getSize();
 
-                auto& envbuf = this->gen_01_interpol_env;
+                auto& envbuf = this->intrpenvbuf;
                 auto envbuf_dim = envbuf->getSize();
 
                 number __trigger_index = in1;
 
-                if (__trigger_index >= 0) {
-                    this->envelope_counter_count = -1;
-                }
+                bool playsound = true;
 
-                bool playsound = (__trigger_index < 0);
+                if (__trigger_index >= 0) {                     //if the grain will start in this block
+                    this->envelope_counter_count = -1;
+                    playsound = false;
+                }
 
                 Index i;
 
@@ -304,18 +300,23 @@ namespace RNBO {
                     number __pitch = (in5 > 4 ? 4 : (in5 < 0.25 ? 0.25 : in5));
                     number g_samps = __trgt_samps / __pitch;
 
-                    number env_counter_hit = 0;
-                    number env_counter_count = 0;
+                    bool env_counter_hit = 0;
+                    SampleIndex env_counter_count = 0;
 
                     //envelope counter
                     {
-                        number carry_flag = 0;
+                        bool carry_flag = 0;
 
                         if (triggernow) {
                             this->envelope_counter_count = 0;
                             playsound = true;
                         }
-                        else if (playsound) {
+                        else if (!playsound) {
+                            out1[(Index)i] = 0;
+                            out2[(Index)i] = 0;
+                            continue;
+                        }
+                        else {
                             this->envelope_counter_count += this->env_inc_history;
 
                             if ((this->env_inc_history > 0 && this->envelope_counter_count >= g_samps)) {
@@ -334,12 +335,13 @@ namespace RNBO {
 
                     if (env_counter_hit) {
                         this->endOfGrain = 0;
-                        this->getPatcher()->muteVoice(this->voice());
+                        this->setIsMuted(true);
                     }
 
+					//envelope value
                     number envelope_value = 0;
                     {
-                        auto& __buffer = gen_01_interpol_env;
+                        auto& __buffer = intrpenvbuf;
 
                         number virtual_index = pos_in_grain * (envbuf_dim - 1);
                         SampleValue virtual_value;
@@ -375,11 +377,12 @@ namespace RNBO {
                     number playstart = (isforw ? this->rel_start_pos_history : rel_end_of_grain);
                     number playend = (isforw ? rel_end_of_grain : this->rel_start_pos_history);
 
-                    number play_counter_count = 0;
-                    number play_counter_hit = 0;
+                    SampleIndex play_counter_count = 0;
+                    bool play_counter_hit = 0;
 
+                    //audio buf counter
                     {
-                        number carry_flag = 0;
+                        bool carry_flag = 0;
 
                         if (triggernow) {
                             this->audio_counter_count = 0;
@@ -398,7 +401,7 @@ namespace RNBO {
                     }
 
                     bool play_counter_incr = ((bool)(play_counter_hit) ? 0 : 1);
-					this->play_inc_history = (triggernow + play_counter_hit) ? play_counter_incr : this->play_inc_history;  // if just triggered +1, if hit max +0
+					this->play_inc_history = (triggernow + play_counter_hit) ? play_counter_incr : this->play_inc_history;
                     number progress_in_grain = (g_samps == 0. ? 0. : play_counter_count / g_samps);
 					this->start_play_pos_history = (triggernow) ? playstart : this->start_play_pos_history;
                     number grain_relsize_wsign = playend - playstart;
@@ -407,9 +410,10 @@ namespace RNBO {
                     number sub_67_62 = playpos - relative_reverse_offset;
                     auto offsettedpos = this->wrap(playpos - relative_reverse_offset, 0, 1);
 
+					//audio samp value
                     number sample_rtbuf = 0;
                     {
-                        auto& __buffer = gen_01_rtbuf;
+                        auto& __buffer = rtaudiobuf;
 
                         number virtual_index = offsettedpos * (rtbuf_dim - 1);
                         SampleValue virtual_value;
@@ -433,13 +437,6 @@ namespace RNBO {
 
                     number outleft = sample_scaled * __pan;
                     number outright = sample_scaled * (1.0 - __pan);
-
-
-                    if (!playsound) {
-                        out1[(Index)i] = 0;
-                        out2[(Index)i] = 0;
-                        continue;
-                    }
 
                     out2[(Index)i] = outright;
                     out1[(Index)i] = outleft;
@@ -469,7 +466,6 @@ namespace RNBO {
             number volume_value = 0;
             number panning_value = 0;
 
-
             signal zeroBuffer = nullptr;
             signal dummyBuffer = nullptr;
             SampleValue* realtime_grain_out[2];
@@ -482,27 +478,19 @@ namespace RNBO {
             SampleIndex triggerindex = -1;
             bool hasGrainInQueue = false;
             SampleIndex endOfGrain = 0;
+            bool isMuted = true;
+            Index _voiceIndex;
 
-            SampleIndex play_inc_history = 0;
-            SampleIndex env_inc_history = 0;
-            Float32BufferRef gen_01_rtbuf;
-            Float32BufferRef gen_01_interpol_env;
-
+            Float32BufferRef rtaudiobuf;
+            Float32BufferRef intrpenvbuf;
+            bool play_inc_history = false;
+            bool env_inc_history = false;
             SampleIndex envelope_counter_count = 0;
-
-
-            number rel_start_pos_history = 0;
-
             SampleIndex audio_counter_count = 0;
-
+            number rel_start_pos_history = 0;
             number start_play_pos_history = 0;
 
             number reverse_offset = 0;
-
-            Index _voiceIndex;
-
-            bool isMuted = true;
-
 
             rnbomatic* _grainsMaster;
 
@@ -843,9 +831,9 @@ namespace RNBO {
                 n
             );
 
-            this->codebox_tilde_02_perform(
-                this->codebox_tilde_02_in1,
-                this->codebox_tilde_02_in2,
+            this->delayRecStop(
+                this->glength_for_delayrecstop,
+                this->scrollvalue_for_delayrecstop,
                 this->signals[3],
                 n
             );
@@ -1056,14 +1044,6 @@ namespace RNBO {
             this->initializeObjects();
             this->allocateDataRefs();
             this->startup();
-        }
-
-        Index getIsMuted() {
-            return this->isMuted;
-        }
-
-        void setIsMuted(Index v) {
-            this->isMuted = v;
         }
 
         Index getPatcherSerial() const {
@@ -2638,7 +2618,7 @@ namespace RNBO {
             }
 
             this->codebox_tilde_03_in2_set(v);
-            this->codebox_tilde_02_in1_set(v);
+            this->glength_for_delayrecstop = v;
             this->codebox_tilde_01_in2_set(v);
         }
 
@@ -2807,7 +2787,11 @@ namespace RNBO {
             }
 
             this->codebox_tilde_03_in1_set(v);
-            this->expr_02_in1_set(v);
+
+            bool scroll = (v == 0);
+            this->empty_audio_buffer(scroll);
+            this->stop_rec_head(scroll);
+            this->scrollvalue_for_delayrecstop = scroll;
         }
 
         void param_19_value_set(number v) {
@@ -2921,10 +2905,6 @@ namespace RNBO {
             this->codebox_tilde_01_n_subd_init();
             this->codebox_tilde_01_rdm_init();
             this->data_01_init();
-            this->codebox_tilde_02_timer_init();
-            this->codebox_tilde_02_redge1_init();
-            this->codebox_tilde_02_redge0_init();
-            this->codebox_tilde_02_trig_init();
             this->codebox_tilde_03_offs_rev_init();
             this->codebox_tilde_03_done_init();
             this->codebox_tilde_03_startrec_init();
@@ -3079,10 +3059,6 @@ namespace RNBO {
             this->codebox_tilde_03_in2 = v;
         }
 
-        void codebox_tilde_02_in1_set(number v) {
-            this->codebox_tilde_02_in1 = v;
-        }
-
         void codebox_tilde_01_in2_set(number v) {
             this->codebox_tilde_01_in2 = v;
         }
@@ -3201,61 +3177,63 @@ namespace RNBO {
             this->codebox_tilde_03_in1 = v;
         }
 
-        void bufferop_01_trigger_bang() {
-            auto& buffer = this->bufferop_01_buffer;
+        //void bufferop_01_trigger_bang() {
+        //    auto& buffer = this->bufferop_01_buffer;
 
+        //    buffer->setZero();
+        //    buffer->setTouched(true);
+        //}
+
+        //void select_01_match1_bang() {
+        //    this->bufferop_01_trigger_bang();
+        //}
+
+        //void select_01_nomatch_number_set(number) {}
+
+        //void select_01_input_number_set(number v) {
+        //    if (v == this->select_01_test1)
+        //        this->select_01_match1_bang();
+        //    else
+        //        this->select_01_nomatch_number_set(v);
+        //}
+
+        void empty_audio_buffer(number v) {
+            auto& buffer = this->bufferop_01_buffer;
             buffer->setZero();
             buffer->setTouched(true);
-        }
-
-        void select_01_match1_bang() {
-            this->bufferop_01_trigger_bang();
-        }
-
-        void select_01_nomatch_number_set(number) {}
-
-        void select_01_input_number_set(number v) {
-            if (v == this->select_01_test1)
-                this->select_01_match1_bang();
-            else
-                this->select_01_nomatch_number_set(v);
-        }
-
-        void trigger_02_out3_set(number v) {
-            this->select_01_input_number_set(v);
         }
 
         void latch_tilde_01_control_set(number v) {
             this->latch_tilde_01_control = v;
         }
 
-        void trigger_02_out2_set(number v) {
+        void stop_rec_head(number v) {
             this->latch_tilde_01_control_set(v);
         }
 
-        void codebox_tilde_02_in2_set(number v) {
-            this->codebox_tilde_02_in2 = v;
-        }
+        //void codebox_tilde_02_in2_set(number v) {
+        //    this->codebox_tilde_02_in2 = v;
+        //}
 
-        void trigger_02_out1_set(number v) {
-            this->codebox_tilde_02_in2_set(v);
-        }
+        //void handle_freeze_delay(number v) {
+        //    this->codebox_tilde_02_in2 = v;
+        //}
 
-        void trigger_02_input_number_set(number v) {
-            this->trigger_02_out3_set(trunc(v));
-            this->trigger_02_out2_set(trunc(v));
-            this->trigger_02_out1_set(trunc(v));
-        }
+        //void trigger_02_input_number_set(number v) {
+        //    this->trigger_02_out3_set(trunc(v));
+        //    this->trigger_02_out2_set(trunc(v));
+        //    this->trigger_02_out1_set(trunc(v));
+        //}
 
-        void expr_02_out1_set(number v) {
-            this->expr_02_out1 = v;
-            this->trigger_02_input_number_set(this->expr_02_out1);
-        }
+        //void expr_02_out1_set(number v) {                                           
+        //    this->expr_02_out1 = v;
+        //    this->trigger_02_input_number_set(this->expr_02_out1);
+        //}
 
-        void expr_02_in1_set(number in1) {
-            this->expr_02_in1 = in1;
-            this->expr_02_out1_set(this->expr_02_in1 == 0);//#map:!_obj-60:1
-        }
+        //void expr_02_in1_set(number in1) {                                          //negation
+        //    this->expr_02_in1 = in1;
+        //    this->expr_02_out1_set(this->expr_02_in1 == 0);//#map:!_obj-60:1        
+        //}
 
         static number param_19_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0 ? 0 : v));
@@ -3308,29 +3286,6 @@ namespace RNBO {
             this->codebox_tilde_01_in8 = v;
         }
 
-        void p_01_mute_set(const list& v) {
-            Index voiceNumber = (Index)(v[0]);
-            Index muteState = (Index)(v[1]);
-
-            if (voiceNumber == 0) {
-                for (Index i = 0; i < 24; i++) {
-                    this->rtgrainvoice[(Index)i]->setIsMuted(muteState);
-                }
-            }
-            else {
-                Index subpatcherIndex = voiceNumber - 1;
-
-                if (subpatcherIndex >= 0 && subpatcherIndex < 24) {
-                    this->rtgrainvoice[(Index)subpatcherIndex]->setIsMuted(muteState);
-                }
-            }
-        }
-
-        void setVoiceMuteState(const list& v) {
-            this->codebox_02_out2 = jsCreateListCopy(v);
-            this->p_01_mute_set(this->codebox_02_out2);
-        }
-
         void setGrainProperties(SampleIndex trigatindex) {
             number len = getParameterValue(3);
             number rle = getParameterNormalized(4);
@@ -3365,9 +3320,7 @@ namespace RNBO {
             int target = this->findtargetvoice(trigatindex);
 
             if (target >= 0) {
-                this->p_01_target = target;
-                this->setVoiceMuteState({ target, 0 });
-                this->rtgrainvoice[this->p_01_target - 1]->initiateVoice(trigatindex, grainprops);
+                this->rtgrainvoice[target - 1]->initiateVoice(trigatindex, grainprops);
             }
         }
 
@@ -3431,18 +3384,6 @@ namespace RNBO {
                 this->ctlin_01_value_set(data[2]);
                 this->ctlin_01_status = 0;
             }
-        }
-
-        void muteVoice(number voicenumber) {        // this is only called from processCore, so from the voice itself
-            Index voiceIndex = voicenumber - 1;
-
-            //voice_state[voiceIndex] = false;
-            
-			voiceStates[voiceIndex].isActive = false;
-			voiceStates[voiceIndex].hasGrainInQueue = false;
-			voiceStates[voiceIndex].endOfGrain = 0;
-            
-            this->setVoiceMuteState({ voicenumber, 1 });
         }
 
         void phasor_01_perform(number freq, SampleValue* out, Index n) {
@@ -3580,22 +3521,23 @@ namespace RNBO {
             auto __codebox_tilde_01_rdmdel = this->codebox_tilde_01_rdmdel;
             auto __freerunningphas_old = this->codebox_tilde_01_oldphas;
             auto __freerunningphas_new = this->codebox_tilde_01_newphas;
-            number temposel = in7;
-            Index i;
 
-            for (i = 0; i < n; i++) {
-                number mut = in1;
-                number len = in2;
-                number den = in3;
-                number cha = in4;
-                number rdl = in5;
-                number syc = in6;
-                number notevaluesel = in8;
+            number mut = in1;
+            number len = in2;
+            number den = in3;
+            number cha = in4;
+            number rdl = in5;
+            number syc = in6;
+            number temposel = in7;
+            number notevaluesel = in8;
+
+            number maxdelay = 0;
+            number frq = 0;
+
+            for (Index i = 0; i < n; i++) {
                 number sync_n_phase = in9[(Index)i];
                 number sync_nd_phase = in10[(Index)i];
                 number sync_nt_phase = in11[(Index)i];
-                number maxdelay = 0;
-                number frq = 0;
 
                 if (syc == 0) {
                     frq = (-0.60651 + 41.4268 * rnbo_exp(-0.001 * len)) * den * (1 - mut);
@@ -3674,41 +3616,39 @@ namespace RNBO {
             this->codebox_tilde_01_old_sub_phase = __codebox_tilde_01_old_sub_phase;
         }
 
-        void codebox_tilde_02_perform(number in1, number in2, SampleValue* out1, Index n) {
-            auto __codebox_tilde_02_stoppin_time = this->codebox_tilde_02_stoppin_time;
-            auto __codebox_tilde_02_gonow = this->codebox_tilde_02_gonow;
-            auto __codebox_tilde_02_record = this->codebox_tilde_02_record;
-            auto __codebox_tilde_02_len = this->codebox_tilde_02_len;
-            Index i;
+        void delayRecStop(number in1, number in2, SampleValue* out1, Index n) {     //not sample accurate, shouldn't be a problem
+            auto delaysamps = this->delrecstop_delaysamps;
+            bool record = this->delrecstop_record;
+                    
+            number glength = in1;
+            bool scroll = in2;
 
-            for (i = 0; i < n; i++) {
-                __codebox_tilde_02_len = in1;//#map:_###_obj_###_:3
-                number r1 = this->codebox_tilde_02_redge1_next(in2);
-                number r0 = this->codebox_tilde_02_redge0_next(!(bool)(in2));
-
-                if ((bool)(r1)) {
-                    __codebox_tilde_02_record = true;//#map:_###_obj_###_:19
+            if (scroll != this->delrecstop_scrollhistory) {
+                if (scroll) {
+                    this->delrecstop_inc = 0;
+                    record = true;
                 }
-                else if ((bool)(r0)) {
-                    __codebox_tilde_02_gonow = 0;//#map:_###_obj_###_:22
-                    this->codebox_tilde_02_timer_reset();//#map:_###_obj_###_:23
-                    __codebox_tilde_02_stoppin_time = this->mstosamps(__codebox_tilde_02_len);//#map:_###_obj_###_:24
-                }//#map:_###_obj_###_:21//#map:_###_obj_###_:19
-
-                if ((bool)(!(bool)(in2)) && (bool)(!(bool)(__codebox_tilde_02_gonow))) {
-                    __codebox_tilde_02_gonow = this->codebox_tilde_02_timer_next(1, 0, __codebox_tilde_02_stoppin_time)[1];//#map:_###_obj_###_:28
-                }//#map:_###_obj_###_:27
-
-                if ((bool)(this->codebox_tilde_02_trig_next(__codebox_tilde_02_gonow)))
-                    __codebox_tilde_02_record = false;//#map:_###_obj_###_:31;//#map:_###_obj_###_:31
-
-                out1[(Index)i] = __codebox_tilde_02_record;//#map:_###_obj_###_:33
+                else {
+                    this->delrecstop_count = 0;
+                    delrecstop_inc = 1;
+                    delaysamps = this->mstosamps(glength);
+                }
             }
 
-            this->codebox_tilde_02_len = __codebox_tilde_02_len;
-            this->codebox_tilde_02_record = __codebox_tilde_02_record;
-            this->codebox_tilde_02_gonow = __codebox_tilde_02_gonow;
-            this->codebox_tilde_02_stoppin_time = __codebox_tilde_02_stoppin_time;
+            for (Index i = 0; i < n; i++) {
+                this->delrecstop_count += this->delrecstop_inc;
+
+                if (this->delrecstop_inc && this->delrecstop_count >= delaysamps) {
+                    this->delrecstop_inc = 0;
+                    record = false;
+                }
+
+                out1[(Index)i] = record;
+            }
+
+			this->delrecstop_scrollhistory = scroll;
+            this->delrecstop_record = record;
+            this->delrecstop_delaysamps = delaysamps;
         }
 
         void dspexpr_04_perform(const Sample* in1, const Sample* in2, SampleValue* out1, Index n) {
@@ -5042,95 +4982,6 @@ namespace RNBO {
             this->latch_tilde_01_setupDone = true;
         }
 
-        array<number, 3> codebox_tilde_02_timer_next(number a, number reset, number limit) {
-            number carry_flag = 0;
-
-            if (reset != 0) {
-                this->codebox_tilde_02_timer_count = 0;
-                this->codebox_tilde_02_timer_carry = 0;
-            }
-            else {
-                this->codebox_tilde_02_timer_count += a;
-
-                if (limit != 0) {
-                    if ((a > 0 && this->codebox_tilde_02_timer_count >= limit) || (a < 0 && this->codebox_tilde_02_timer_count <= limit)) {
-                        this->codebox_tilde_02_timer_count = 0;
-                        this->codebox_tilde_02_timer_carry += 1;
-                        carry_flag = 1;
-                    }
-                }
-            }
-
-            return {
-                this->codebox_tilde_02_timer_count,
-                carry_flag,
-                this->codebox_tilde_02_timer_carry
-            };
-        }
-
-        void codebox_tilde_02_timer_init() {
-            this->codebox_tilde_02_timer_count = 0;
-        }
-
-        void codebox_tilde_02_timer_reset() {
-            this->codebox_tilde_02_timer_carry = 0;
-            this->codebox_tilde_02_timer_count = 0;
-        }
-
-        number codebox_tilde_02_redge1_next(number val) {
-            if ((0 == 0 && val <= 0) || (0 == 1 && val > 0)) {
-                this->codebox_tilde_02_redge1_active = false;
-            }
-            else if ((bool)(!(bool)(this->codebox_tilde_02_redge1_active))) {
-                this->codebox_tilde_02_redge1_active = true;
-                return 1.0;
-            }
-
-            return 0.0;
-        }
-
-        void codebox_tilde_02_redge1_init() {}
-
-        void codebox_tilde_02_redge1_reset() {
-            this->codebox_tilde_02_redge1_active = false;
-        }
-
-        number codebox_tilde_02_redge0_next(number val) {
-            if ((0 == 0 && val <= 0) || (0 == 1 && val > 0)) {
-                this->codebox_tilde_02_redge0_active = false;
-            }
-            else if ((bool)(!(bool)(this->codebox_tilde_02_redge0_active))) {
-                this->codebox_tilde_02_redge0_active = true;
-                return 1.0;
-            }
-
-            return 0.0;
-        }
-
-        void codebox_tilde_02_redge0_init() {}
-
-        void codebox_tilde_02_redge0_reset() {
-            this->codebox_tilde_02_redge0_active = false;
-        }
-
-        number codebox_tilde_02_trig_next(number val) {
-            if ((0 == 0 && val <= 0) || (0 == 1 && val > 0)) {
-                this->codebox_tilde_02_trig_active = false;
-            }
-            else if ((bool)(!(bool)(this->codebox_tilde_02_trig_active))) {
-                this->codebox_tilde_02_trig_active = true;
-                return 1.0;
-            }
-
-            return 0.0;
-        }
-
-        void codebox_tilde_02_trig_init() {}
-
-        void codebox_tilde_02_trig_reset() {
-            this->codebox_tilde_02_trig_active = false;
-        }
-
         number recordtilde_01_calcSync(
             number writeIndex,
             number loopMin,
@@ -5712,7 +5563,6 @@ namespace RNBO {
             limi_01_release = 1000;
             dspexpr_01_in1 = 0;
             dspexpr_01_in2 = 1;
-            p_01_target = 0;
             codebox_tilde_01_in1 = 0;
             codebox_tilde_01_in2 = 0;
             codebox_tilde_01_in3 = 0;
@@ -5750,8 +5600,8 @@ namespace RNBO {
             param_14_value = 1;
             latch_tilde_01_x = 0;
             latch_tilde_01_control = 0;
-            codebox_tilde_02_in1 = 0;
-            codebox_tilde_02_in2 = 0;
+            glength_for_delayrecstop = 0;
+            scrollvalue_for_delayrecstop = 0;
             recordtilde_01_record = 0;
             recordtilde_01_begin = 0;
             recordtilde_01_end = -1;
@@ -5882,15 +5732,9 @@ namespace RNBO {
             param_14_lastValue = 0;
             latch_tilde_01_value = 0;
             latch_tilde_01_setupDone = false;
-            codebox_tilde_02_len = 0;
-            codebox_tilde_02_stoppin_time = 0;
-            codebox_tilde_02_gonow = 0;
-            codebox_tilde_02_record = 0;
-            codebox_tilde_02_timer_carry = 0;
-            codebox_tilde_02_timer_count = 0;
-            codebox_tilde_02_redge1_active = false;
-            codebox_tilde_02_redge0_active = false;
-            codebox_tilde_02_trig_active = false;
+            delrecstop_delaysamps = 0;
+            delrecstop_record = 0;
+            delrecstop_scrollhistory = 0;
             recordtilde_01_wIndex = 0;
             recordtilde_01_lastRecord = 0;
             param_15_lastValue = 0;
@@ -5938,7 +5782,7 @@ namespace RNBO {
             stackprotect_count = 0;
             _voiceIndex = 0;
             _noteNumber = 0;
-            isMuted = 1;
+            //isMuted = 1;
         }
 
         // member variables
@@ -5953,7 +5797,6 @@ namespace RNBO {
         number dspexpr_01_in1;
         number dspexpr_01_in2;
         list codebox_01_out1;
-        Index p_01_target;
         list codebox_02_in1;
         list codebox_02_out1;
         list codebox_02_out2;
@@ -5994,8 +5837,8 @@ namespace RNBO {
         number param_14_value;
         number latch_tilde_01_x;
         number latch_tilde_01_control;
-        number codebox_tilde_02_in1;
-        number codebox_tilde_02_in2;
+        number glength_for_delayrecstop;
+        number scrollvalue_for_delayrecstop;
         number recordtilde_01_record;
         number recordtilde_01_begin;
         number recordtilde_01_end;
@@ -6142,15 +5985,11 @@ namespace RNBO {
         number param_14_lastValue;
         number latch_tilde_01_value;
         bool latch_tilde_01_setupDone;
-        number codebox_tilde_02_len;
-        number codebox_tilde_02_stoppin_time;
-        number codebox_tilde_02_gonow;
-        number codebox_tilde_02_record;
-        int codebox_tilde_02_timer_carry;
-        number codebox_tilde_02_timer_count;
-        bool codebox_tilde_02_redge1_active;
-        bool codebox_tilde_02_redge0_active;
-        bool codebox_tilde_02_trig_active;
+        number delrecstop_delaysamps;
+        bool delrecstop_record;
+        bool delrecstop_scrollhistory;
+        SampleIndex delrecstop_count;
+        bool delrecstop_inc;
         Float32BufferRef recordtilde_01_buffer;
         SampleIndex recordtilde_01_wIndex;
         number recordtilde_01_lastRecord;
@@ -6206,7 +6045,7 @@ namespace RNBO {
         DataRef inter_databuf_01;
         Index _voiceIndex;
         Int _noteNumber;
-        Index isMuted;
+        //Index isMuted;
         indexlist paramInitIndices;
         indexlist paramInitOrder;
         RTGrainVoice* rtgrainvoice[24];
