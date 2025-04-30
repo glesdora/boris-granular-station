@@ -510,7 +510,7 @@ namespace RNBO {
             free(this->phasor_01_sigbuf);
             free(this->phasor_02_sigbuf);
             free(this->phasor_03_sigbuf);
-            free(this->feedbacktilde_01_feedbackbuffer);
+            free(this->feedbackbuffer);
             free(this->globaltransport_tempo);
             free(this->globaltransport_state);
             free(this->zeroBuffer);
@@ -851,9 +851,10 @@ namespace RNBO {
                 n
             );
 
-            this->feedbackreader_01_perform(this->signals[0], n);                                       //fills signal0 with audio buf values
-			this->dspexpr_07_perform(this->signals[0], this->dspexpr_07_in2, this->signals[4], n);      //multiplies signal0 with feedback ratio, and reports output to signal4
-			this->dspexpr_05_perform(this->signals[2], this->signals[4], this->signals[0], n);          //sums signal2 and signal4, and reports output to signal0
+            //feedback
+            for (Index i = 0; i < n; i++) {
+                this->signals[0][i] = this->feedbackbuffer[i] * this->feedb_for_process + this->signals[2][i];
+            }
 
             this->recordtilde_01_perform(
                 this->signals[3],
@@ -878,7 +879,11 @@ namespace RNBO {
             }
 
             this->dcblock_tilde_01_perform(this->signals[4], this->dcblock_tilde_01_gain, this->signals[2], n);
-            this->feedbackwriter_01_perform(this->signals[2], n);
+
+            for (Index i = 0; i < n; i++) {
+                this->feedbackbuffer[i] = this->signals[2][i];
+            }
+
             this->limi_01_perform(this->signals[4], this->signals[5], this->signals[2], this->signals[1], n);
             this->dspexpr_01_perform(this->signals[2], this->dspexpr_01_in2, out1, n);
             this->dspexpr_02_perform(this->signals[1], this->dspexpr_02_in2, out2, n);
@@ -908,7 +913,7 @@ namespace RNBO {
                 this->phasor_01_sigbuf = resizeSignal(this->phasor_01_sigbuf, this->maxvs, maxBlockSize);
                 this->phasor_02_sigbuf = resizeSignal(this->phasor_02_sigbuf, this->maxvs, maxBlockSize);
                 this->phasor_03_sigbuf = resizeSignal(this->phasor_03_sigbuf, this->maxvs, maxBlockSize);
-                this->feedbacktilde_01_feedbackbuffer = resizeSignal(this->feedbacktilde_01_feedbackbuffer, this->maxvs, maxBlockSize);
+                this->feedbackbuffer = resizeSignal(this->feedbackbuffer, this->maxvs, maxBlockSize);
                 this->globaltransport_tempo = resizeSignal(this->globaltransport_tempo, this->maxvs, maxBlockSize);
                 this->globaltransport_state = resizeSignal(this->globaltransport_state, this->maxvs, maxBlockSize);
                 this->zeroBuffer = resizeSignal(this->zeroBuffer, this->maxvs, maxBlockSize);
@@ -1055,9 +1060,7 @@ namespace RNBO {
         void setState() {
             for (int i = 0; i < 24; i++) {
                 this->rtgrainvoice[i] = new RTGrainVoice(this, i + 1);
-                //this->rtgrainvoice[i]->setEngineAndPatcher(this->getEngine(), this);
                 this->rtgrainvoice[i]->initialize();
-                //this->rtgrainvoice[i]->setParameterOffset(this->getParameterOffset(this->rtgrainvoice[0]));
             }
         }
 
@@ -1084,9 +1087,6 @@ namespace RNBO {
             this->param_19_getPresetValue(getSubState(preset, "syc"));
             this->param_20_getPresetValue(getSubState(preset, "tmp"));
             this->param_21_getPresetValue(getSubState(preset, "rtm"));
-
-            //for (Index i = 0; i < 24; i++)
-            //    this->rtgrainvoice[i]->getPreset(getSubStateAt(getSubState(preset, "__sps"), "rtgrains", i));
         }
 
         void setPreset(MillisecondTime time, PatcherStateInterface& preset) {
@@ -1118,10 +1118,6 @@ namespace RNBO {
             this->updateTime(time);
 
             if (this->globaltransport_setTempo(this->_currentTime, tempo, false)) {
-                //for (Index i = 0; i < 24; i++) {
-                //    this->rtgrainvoice[i]->processTempoEvent(time, tempo);
-                //}
-
                 this->timevalue_01_onTempoChanged(tempo);
                 this->timevalue_02_onTempoChanged(tempo);
                 this->timevalue_03_onTempoChanged(tempo);
@@ -1130,22 +1126,10 @@ namespace RNBO {
 
         void processTransportEvent(MillisecondTime time, TransportState state) {
             this->updateTime(time);
-
-            //if (this->globaltransport_setState(this->_currentTime, state, false)) {
-            //    for (Index i = 0; i < 24; i++) {
-            //        this->rtgrainvoice[i]->processTransportEvent(time, state);
-            //    }
-            //}
         }
 
         void processBeatTimeEvent(MillisecondTime time, BeatTime beattime) {
             this->updateTime(time);
-
-            //if (this->globaltransport_setBeatTime(this->_currentTime, beattime, false)) {
-            //    for (Index i = 0; i < 24; i++) {
-            //        this->rtgrainvoice[i]->processBeatTimeEvent(time, beattime);
-            //    }
-            //}
         }
 
         void onSampleRateChanged(double samplerate) {
@@ -1159,10 +1143,6 @@ namespace RNBO {
 
             if (this->globaltransport_setTimeSignature(this->_currentTime, numerator, denominator, false)) {
                 this->timevalue_01_onTimeSignatureChanged(numerator, denominator);
-                //for (Index i = 0; i < 24; i++) {
-                //    this->rtgrainvoice[i]->processTimeSignatureEvent(time, numerator, denominator);
-                //}
-
                 this->timevalue_02_onTimeSignatureChanged(numerator, denominator);
                 this->timevalue_03_onTimeSignatureChanged(numerator, denominator);
             }
@@ -1279,11 +1259,6 @@ namespace RNBO {
             }
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters())
-                    //this->rtgrainvoice[0]->setPolyParameterValue((PatcherInterface**)this->rtgrainvoice, index, v, time);
-
                 break;
             }
             }
@@ -1389,11 +1364,6 @@ namespace RNBO {
             }
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters())
-                //    return this->rtgrainvoice[0]->getPolyParameterValue((PatcherInterface**)this->rtgrainvoice, index);
-
                 return 0;
             }
             }
@@ -1408,7 +1378,6 @@ namespace RNBO {
         }
 
         ParameterIndex getNumParameters() const {
-            //return 21 + this->rtgrainvoice[0]->getNumParameters();
             return 21;
         }
 
@@ -1500,14 +1469,6 @@ namespace RNBO {
             }
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                //    {
-                //        return this->rtgrainvoice[0]->getParameterName(index);
-                //    }
-                //}
-
                 return "bogus";
             }
             }
@@ -1601,14 +1562,6 @@ namespace RNBO {
             }
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                //    {
-                //        return this->rtgrainvoice[0]->getParameterId(index);
-                //    }
-                //}
-
                 return "bogus";
             }
             }
@@ -2028,14 +1981,6 @@ namespace RNBO {
                 }
                 default:
                 {
-                    index -= 21;
-
-                    //if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                    //    for (Index i = 0; i < 24; i++) {
-                    //        this->rtgrainvoice[i]->getParameterInfo(index, info);
-                    //    }
-                    //}
-
                     break;
                 }
                 }
@@ -2205,14 +2150,6 @@ namespace RNBO {
             }
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                //    {
-                //        return this->rtgrainvoice[0]->convertToNormalizedParameterValue(index, value);
-                //    }
-                //}
-
                 return value;
             }
             }
@@ -2346,14 +2283,6 @@ namespace RNBO {
 
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                //    {
-                //        return this->rtgrainvoice[0]->convertFromNormalizedParameterValue(index, value);
-                //    }
-                //}
-
                 return value;
             }
             }
@@ -2447,14 +2376,6 @@ namespace RNBO {
             }
             default:
             {
-                index -= 21;
-
-                //if (index < this->rtgrainvoice[0]->getNumParameters()) {
-                //    {
-                //        return this->rtgrainvoice[0]->constrainParameterValue(index, value);
-                //    }
-                //}
-
                 return value;
             }
             }
@@ -2493,36 +2414,16 @@ namespace RNBO {
             this->processOutletAtCurrentTime(sender, index, value);
         }
 
-        void processNumMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, number payload) {
-            this->updateTime(time);
-
-            //for (Index i = 0; i < 24; i++) {
-            //    this->rtgrainvoice[i]->processNumMessage(tag, objectId, time, payload);
-            //}
-        }
+        void processNumMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, number payload) {}
 
         void processListMessage(
             MessageTag tag,
             MessageTag objectId,
             MillisecondTime time,
             const list& payload
-        ) {
-            RNBO_UNUSED(objectId);
-            this->updateTime(time);
+        ) {}
 
-            //for (Index i = 0; i < 24; i++) {
-            //    this->rtgrainvoice[i]->processListMessage(tag, objectId, time, payload);
-            //}
-        }
-
-        void processBangMessage(MessageTag tag, MessageTag objectId, MillisecondTime time) {
-            RNBO_UNUSED(objectId);
-            this->updateTime(time);
-
-            //for (Index i = 0; i < 24; i++) {
-            //    this->rtgrainvoice[i]->processBangMessage(tag, objectId, time);
-            //}
-        }
+        void processBangMessage(MessageTag tag, MessageTag objectId, MillisecondTime time) {}
 
         MessageTagInfo resolveTag(MessageTag tag) const {
             switch (tag) {
@@ -2536,25 +2437,12 @@ namespace RNBO {
             }
             }
 
-            //auto subpatchResult_0 = this->rtgrainvoice[0]->resolveTag(tag);
-
-            //if (subpatchResult_0)
-            //    return subpatchResult_0;
-
             return "";
         }
 
-        MessageIndex getNumMessages() const {
-            return 0;
-        }
+        MessageIndex getNumMessages() const { return 0; }
 
-        const MessageInfo& getMessageInfo(MessageIndex index) const {
-            switch (index) {
-
-            }
-
-            return NullMessageInfo;
-        }
+        const MessageInfo& getMessageInfo(MessageIndex index) const { return NullMessageInfo; }
 
     protected:
 
@@ -2903,7 +2791,6 @@ namespace RNBO {
         }
 
         void initializeObjects() {
-            this->codebox_tilde_01_rdm_init();
             this->data_01_init();
             this->data_02_init();
             this->data_03_init();
@@ -3116,7 +3003,7 @@ namespace RNBO {
         }
 
         void dspexpr_07_in2_set(number v) {
-            this->dspexpr_07_in2 = v;
+            this->feedb_for_process = v;
         }
 
         void param_15_normalized_set(number v) {
@@ -3576,7 +3463,7 @@ namespace RNBO {
 
                     if (!mut) {
                         if (new_sub_phase < syncphase_old) {
-                            number r = this->codebox_tilde_01_rdm_next() / (number)2 + 0.5;
+                            number r = rand01();
                             if (r <= cha) {
                                 r = rand01();
                                 auto delayedtrig = i + r * maxdelay;
@@ -3668,30 +3555,6 @@ namespace RNBO {
             this->revoffhndlr_hit = hit;
             this->revoffhndlr_offset = offset;
             this->revoffhndlr_frzhistory = frz;
-        }
-
-        void feedbackreader_01_perform(SampleValue* output, Index n) {
-            auto& buffer = this->feedbacktilde_01_feedbackbuffer;
-
-            for (Index i = 0; i < n; i++) {
-                output[(Index)i] = buffer[(Index)i];
-            }
-        }
-
-        void dspexpr_07_perform(const Sample* in1, number in2, SampleValue* out1, Index n) {
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
-            }
-        }
-
-        void dspexpr_05_perform(const Sample* in1, const Sample* in2, SampleValue* out1, Index n) {
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] + in2[(Index)i];//#map:_###_obj_###_:1
-            }
         }
 
         void recordtilde_01_perform(
@@ -3794,14 +3657,6 @@ namespace RNBO {
 
             this->dcblock_tilde_01_xm1 = __dcblock_tilde_01_xm1;
             this->dcblock_tilde_01_ym1 = __dcblock_tilde_01_ym1;
-        }
-
-        void feedbackwriter_01_perform(const SampleValue* input, Index n) {
-            auto& buffer = this->feedbacktilde_01_feedbackbuffer;
-
-            for (Index i = 0; i < n; i++) {
-                buffer[(Index)i] = input[(Index)i];
-            }
         }
 
         void limi_01_perform(
@@ -4316,25 +4171,6 @@ namespace RNBO {
 
         void codebox_tilde_01_mphasor_dspsetup() {
             this->codebox_tilde_01_mphasor_conv = (this->sr == 0. ? 0. : (number)1 / this->sr);
-        }
-
-        void codebox_tilde_01_rdm_reset() {
-            xoshiro_reset(
-                systemticks() + this->voice() + this->random(0, 10000),
-                this->codebox_tilde_01_rdm_state
-            );
-        }
-
-        void codebox_tilde_01_rdm_init() {
-            this->codebox_tilde_01_rdm_reset();
-        }
-
-        void codebox_tilde_01_rdm_seed(number v) {
-            xoshiro_reset(v, this->codebox_tilde_01_rdm_state);
-        }
-
-        number codebox_tilde_01_rdm_next() {
-            return xoshiro_next(this->codebox_tilde_01_rdm_state);
         }
 
         void codebox_tilde_01_dspsetup(bool force) {
@@ -5149,7 +4985,7 @@ namespace RNBO {
             dcblock_tilde_01_x = 0;
             dcblock_tilde_01_gain = 0.9997;
             dspexpr_07_in1 = 0;
-            dspexpr_07_in2 = 0;
+            feedb_for_process = 0;
             frz_for_revoffhndlr = 0;
             glength_for_revoffhndlr = 0;
             data_02_sizeout = 0;
@@ -5257,7 +5093,7 @@ namespace RNBO {
             dcblock_tilde_01_xm1 = 0;
             dcblock_tilde_01_ym1 = 0;
             dcblock_tilde_01_setupDone = false;
-            feedbacktilde_01_feedbackbuffer = nullptr;
+            feedbackbuffer = nullptr;
             revoffhndlr_offset = 0;
             revoffhndlr_frzhistory = 0;
             revoffhndlr_c = 0;
@@ -5368,7 +5204,7 @@ namespace RNBO {
         number dcblock_tilde_01_x;
         number dcblock_tilde_01_gain;
         number dspexpr_07_in1;
-        number dspexpr_07_in2;
+        number feedb_for_process;
         bool frz_for_revoffhndlr;
         number glength_for_revoffhndlr;
         number data_02_sizeout;
@@ -5428,7 +5264,6 @@ namespace RNBO {
         number gentrggs_freerunphase_old;
         number codebox_tilde_01_mphasor_currentPhase;
         number codebox_tilde_01_mphasor_conv;
-        UInt codebox_tilde_01_rdm_state[4] = { };
         bool codebox_tilde_01_setupDone;
         number param_01_lastValue;
         number param_02_lastValue;
@@ -5485,7 +5320,7 @@ namespace RNBO {
         number dcblock_tilde_01_xm1;
         number dcblock_tilde_01_ym1;
         bool dcblock_tilde_01_setupDone;
-        signal feedbacktilde_01_feedbackbuffer;
+        signal feedbackbuffer;
         SampleIndex revoffhndlr_offset;
         bool revoffhndlr_frzhistory;
         SampleIndex revoffhndlr_c;
