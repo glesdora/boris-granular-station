@@ -765,8 +765,12 @@ namespace RNBO {
             }
 
             this->limi_01_perform(this->signals[4], this->signals[5], this->signals[2], this->signals[1], n);
-            this->dspexpr_01_perform(this->signals[2], this->dspexpr_01_in2, out1, n);
-            this->dspexpr_02_perform(this->signals[1], this->dspexpr_02_in2, out2, n);
+
+            //volume
+			for (Index i = 0; i < n; i++) {
+                out2[i] = this->signals[1][i] * this->volume;
+				out1[i] = this->signals[2][i] * this->volume;
+			}
 
             this->recordtilde_02_perform(
                 this->signals[3],
@@ -812,14 +816,10 @@ namespace RNBO {
                 this->invsr = 1 / sampleRate;
             }
 
-            //this->data_01_dspsetup(forceDSPSetup);
             this->phasor_01_dspsetup(forceDSPSetup);
             this->phasor_02_dspsetup(forceDSPSetup);
             this->phasor_03_dspsetup(forceDSPSetup);
             this->codebox_tilde_01_dspsetup(forceDSPSetup);
-            this->edge_02_dspsetup(forceDSPSetup);
-            //this->data_02_dspsetup(forceDSPSetup);
-            //this->data_03_dspsetup(forceDSPSetup);
             this->dcblock_tilde_01_dspsetup(forceDSPSetup);
             this->limi_01_dspsetup(forceDSPSetup);
             this->globaltransport_dspsetup(forceDSPSetup);
@@ -889,20 +889,14 @@ namespace RNBO {
             if (index == 0) {
                 this->recordtilde_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
                 this->bufferop_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
-                //this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
-                //this->data_03_bufferUpdated();
             }
 
             if (index == 1) {
-                //this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
-                //this->data_01_bufferUpdated();
             }
 
 
             if (index == 2) {
                 this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
-                //this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
-                //this->data_02_bufferUpdated();
             }
 
             for (Index i = 0; i < 24; i++) {
@@ -919,13 +913,9 @@ namespace RNBO {
             this->borisinrnbo_v01_rtbuf->setIndex(0);
             this->recordtilde_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->bufferop_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
-            //this->data_03_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             this->interpolated_envelope->setIndex(1);
-            //this->data_01_buffer = new Float32Buffer(this->interpolated_envelope);
             this->inter_databuf_01->setIndex(2);
             this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
-            //this->data_02_buffer = new Float32Buffer(this->inter_databuf_01);
-            this->initializeObjects();
             this->allocateDataRefs();
             this->startup();
         }
@@ -2515,8 +2505,7 @@ namespace RNBO {
                 this->param_16_lastValue = this->param_16_value;
             }
 
-            this->dspexpr_02_in2_set(v);
-            this->dspexpr_01_in2_set(v);
+            this->volume = v;
         }
 
         void param_17_value_set(number v) {
@@ -2623,15 +2612,13 @@ namespace RNBO {
                 this->rtgrainvoice[i]->allocateDataRefs();
             }
 
-            //this->data_03_buffer->requestSize(this->mstosamps(20000), 1);
-            //this->data_03_buffer->setSampleRate(this->sr);
 			this->recordtilde_01_buffer->requestSize(this->mstosamps(20000), 1);
 			this->recordtilde_01_buffer->setSampleRate(this->sr);
-            //this->data_01_buffer->requestSize(100, 1);
-            //this->data_01_buffer->setSampleRate(this->sr);
             this->recordtilde_01_buffer = this->recordtilde_01_buffer->allocateIfNeeded();
             this->bufferop_01_buffer = this->bufferop_01_buffer->allocateIfNeeded();
-            //this->data_03_buffer = this->data_03_buffer->allocateIfNeeded();
+			this->recordtilde_02_buffer->requestSize(this->mstosamps(20000), 1);
+			this->recordtilde_02_buffer->setSampleRate(this->sr);
+			this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
 
             if (this->borisinrnbo_v01_rtbuf->hasRequestedSize()) {
                 if (this->borisinrnbo_v01_rtbuf->wantsFill())
@@ -2640,7 +2627,6 @@ namespace RNBO {
                 this->getEngine()->sendDataRefUpdated(0);
             }
 
-            //this->data_01_buffer = this->data_01_buffer->allocateIfNeeded();
 
             if (this->interpolated_envelope->hasRequestedSize()) {
                 if (this->interpolated_envelope->wantsFill())
@@ -2650,20 +2636,13 @@ namespace RNBO {
             }
 
             this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
-            //this->data_02_buffer = this->data_02_buffer->allocateIfNeeded();
 
             if (this->inter_databuf_01->hasRequestedSize()) {
                 if (this->inter_databuf_01->wantsFill())
                     this->zeroDataRef(this->inter_databuf_01);
 
-                this->getEngine()->sendDataRefUpdated(3);
+                this->getEngine()->sendDataRefUpdated(2);
             }
-        }
-
-        void initializeObjects() {
-            //this->data_01_init();
-            //this->data_02_init();
-            //this->data_03_init();
         }
 
         void sendOutlet(OutletIndex index, ParameterValue value) {
@@ -2851,14 +2830,6 @@ namespace RNBO {
         static number param_16_value_constrain(number v) {
             v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
             return v;
-        }
-
-        void dspexpr_02_in2_set(number v) {
-            this->dspexpr_02_in2 = v;
-        }
-
-        void dspexpr_01_in2_set(number v) {
-            this->dspexpr_01_in2 = v;
         }
 
         static number param_17_value_constrain(number v) {
@@ -3516,22 +3487,6 @@ namespace RNBO {
             this->limi_01_last = __limi_01_last;
         }
 
-        void dspexpr_01_perform(const Sample* in1, number in2, SampleValue* out1, Index n) {
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
-            }
-        }
-
-        void dspexpr_02_perform(const Sample* in1, number in2, SampleValue* out1, Index n) {
-            Index i;
-
-            for (i = 0; i < n; i++) {
-                out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
-            }
-        }
-
         void recordtilde_02_perform(
             const Sample* record,
             number begin,
@@ -3621,31 +3576,7 @@ namespace RNBO {
             __stackprotect_count = 0;
             this->stackprotect_count = __stackprotect_count;
         }
-
-        //void data_01_srout_set(number) {}
-
-        //void data_01_chanout_set(number) {}
-
-        //void data_01_sizeout_set(number v) {
-        //    this->data_01_sizeout = v;
-        //}
-
-        //void data_02_srout_set(number) {}
-
-        //void data_02_chanout_set(number) {}
-
-        //void data_02_sizeout_set(number v) {
-        //    this->data_02_sizeout = v;
-        //}
-
-        //void data_03_srout_set(number) {}
-
-        //void data_03_chanout_set(number) {}
-
-        //void data_03_sizeout_set(number v) {
-        //    this->data_03_sizeout = v;
-        //}
-
+        //LIMITER
         void limi_01_lookahead_setter(number v) {
             this->limi_01_lookahead = (v > 128 ? 128 : (v < 0 ? 0 : v));
             this->limi_01_lookaheadInv = (number)1 / this->limi_01_lookahead;
@@ -3661,13 +3592,6 @@ namespace RNBO {
 
         void limi_01_threshold_setter(number v) {
             this->limi_01_threshold = rnbo_pow(10., v * 0.05);
-        }
-
-        void edge_02_dspsetup(bool force) {
-            if ((bool)(this->edge_02_setupDone) && (bool)(!(bool)(force)))
-                return;
-
-            this->edge_02_setupDone = true;
         }
 
         number limi_01_dc1_next(number x, number gain) {
@@ -3760,6 +3684,7 @@ namespace RNBO {
             this->limi_01_dc1_dspsetup();
             this->limi_01_dc2_dspsetup();
         }
+        //~LIMITER
 
         number codebox_01_mphasor_next(number freq, number reset) {
             {
@@ -3868,8 +3793,6 @@ namespace RNBO {
         int findtargetvoice(SampleIndex ti)     //VOICE MANAGER
         {
             for (int i = 0; i < 24; i++) {
-                //bool candidate_state = voice_state[i];
-
                 auto candidate_isActive = voiceStates[i].isActive;
 				auto candidate_hasGrainInQueue = voiceStates[i].hasGrainInQueue;
 				auto candidate_endOfGrain = voiceStates[i].endOfGrain;
@@ -3979,43 +3902,6 @@ namespace RNBO {
 
             this->param_05_value_set(preset["value"]);
         }
-
-        //void data_01_init() {
-        //    this->data_01_buffer->setWantsFill(true);
-        //}
-
-        //Index data_01_evaluateSizeExpr(number samplerate, number vectorsize) {
-        //    RNBO_UNUSED(vectorsize);
-        //    RNBO_UNUSED(samplerate);
-        //    number size = 0;
-        //    return (Index)(size);
-        //}
-
-        //void data_01_dspsetup(bool force) {
-        //    if ((bool)(this->data_01_setupDone) && (bool)(!(bool)(force)))
-        //        return;
-
-        //    if (this->data_01_sizemode == 2) {
-        //        this->data_01_buffer = this->data_01_buffer->setSize((Index)(this->mstosamps(this->data_01_sizems)));
-        //        updateDataRef(this, this->data_01_buffer);
-        //    }
-        //    else if (this->data_01_sizemode == 3) {
-        //        this->data_01_buffer = this->data_01_buffer->setSize(this->data_01_evaluateSizeExpr(this->samplerate(), this->vectorsize()));
-        //        updateDataRef(this, this->data_01_buffer);
-        //    }
-
-        //    this->data_01_setupDone = true;
-        //}
-
-        //void data_01_bufferUpdated() {
-        //    this->data_01_report();
-        //}
-
-        //void data_01_report() {
-        //    this->data_01_srout_set(this->data_01_buffer->getSampleRate());
-        //    this->data_01_chanout_set(this->data_01_buffer->getChannels());
-        //    this->data_01_sizeout_set(this->data_01_buffer->getSize());
-        //}
 
         void phasor_01_dspsetup(bool force) {
             if ((bool)(this->phasor_01_setupDone) && (bool)(!(bool)(force)))
@@ -4244,91 +4130,6 @@ namespace RNBO {
             this->dcblock_tilde_01_reset();
             this->dcblock_tilde_01_setupDone = true;
         }
-
-       /* void data_02_init() {
-            {
-                this->data_02_buffer->requestSize(
-                    this->data_02_evaluateSizeExpr(this->samplerate(), this->vectorsize()),
-                    this->data_02_channels
-                );
-            }
-
-            this->data_02_buffer->setWantsFill(true);
-        }
-
-        Index data_02_evaluateSizeExpr(number samplerate, number vectorsize) {
-            RNBO_UNUSED(samplerate);
-            number size = 0;
-
-            {
-                size = vectorsize;
-            }
-
-            return (Index)(size);
-        }
-
-        void data_02_dspsetup(bool force) {
-            if ((bool)(this->data_02_setupDone) && (bool)(!(bool)(force)))
-                return;
-
-            if (this->data_02_sizemode == 2) {
-                this->data_02_buffer = this->data_02_buffer->setSize((Index)(this->mstosamps(this->data_02_sizems)));
-                updateDataRef(this, this->data_02_buffer);
-            }
-            else if (this->data_02_sizemode == 3) {
-                this->data_02_buffer = this->data_02_buffer->setSize(this->data_02_evaluateSizeExpr(this->samplerate(), this->vectorsize()));
-                updateDataRef(this, this->data_02_buffer);
-            }
-
-            this->data_02_setupDone = true;
-        }
-
-        void data_02_bufferUpdated() {
-            this->data_02_report();
-        }
-
-        void data_02_report() {
-            this->data_02_srout_set(this->data_02_buffer->getSampleRate());
-            this->data_02_chanout_set(this->data_02_buffer->getChannels());
-            this->data_02_sizeout_set(this->data_02_buffer->getSize());
-        }*/
-
-        /*void data_03_init() {
-            this->data_03_buffer->setWantsFill(true);
-        }
-
-        Index data_03_evaluateSizeExpr(number samplerate, number vectorsize) {
-            RNBO_UNUSED(vectorsize);
-            RNBO_UNUSED(samplerate);
-            number size = 0;
-            return (Index)(size);
-        }
-
-        void data_03_dspsetup(bool force) {
-            if ((bool)(this->data_03_setupDone) && (bool)(!(bool)(force)))
-                return;
-
-            if (this->data_03_sizemode == 2) {
-                this->data_03_buffer = this->data_03_buffer->setSize((Index)(this->mstosamps(this->data_03_sizems)));
-                updateDataRef(this, this->data_03_buffer);
-            }
-            else if (this->data_03_sizemode == 3) {
-                this->data_03_buffer = this->data_03_buffer->setSize(this->data_03_evaluateSizeExpr(this->samplerate(), this->vectorsize()));
-                updateDataRef(this, this->data_03_buffer);
-            }
-
-            this->data_03_setupDone = true;
-        }
-
-        void data_03_bufferUpdated() {
-            this->data_03_report();
-        }
-
-        void data_03_report() {
-            this->data_03_srout_set(this->data_03_buffer->getSampleRate());
-            this->data_03_chanout_set(this->data_03_buffer->getChannels());
-            this->data_03_sizeout_set(this->data_03_buffer->getSize());
-        }*/
 
         void timevalue_01_sendValue() {
             {
@@ -4648,8 +4449,6 @@ namespace RNBO {
             limi_01_threshold = 0;
             limi_01_threshold_setter(limi_01_threshold);
             limi_01_release = 1000;
-            dspexpr_01_in1 = 0;
-            dspexpr_01_in2 = 1;
             mute_for_gentriggs = 0;
             len_for_gentrggs = 0;
             den_for_gentrggs = 0;
@@ -4658,21 +4457,12 @@ namespace RNBO {
             syc_for_gentrggs = 0;
             tmp_for_gentrggs = 0;
             rtm_for_gentrggs = 0;
-            codebox_tilde_01_in9 = 0;
-            codebox_tilde_01_in10 = 0;
-            codebox_tilde_01_in11 = 0;
             param_01_value = 0.52;
             param_02_value = 100;
-            dspexpr_02_in1 = 0;
-            dspexpr_02_in2 = 1;
+            volume = 1;
             param_03_value = 0;
             param_04_value = 200;
             param_05_value = 0;
-            //data_01_sizeout = 0;
-            //data_01_size = 100;
-            //data_01_sizems = 0;
-            //data_01_normalize = 0.995;
-            //data_01_channels = 1;
             phasor_01_freq = 0;
             param_06_value = 1;
             param_07_value = 0;
@@ -4701,34 +4491,14 @@ namespace RNBO {
             param_17_value = 0;
             param_18_value = 0;
             param_19_value = 0;
-            expr_02_in1 = 0;
-            expr_02_out1 = 0;
-            select_01_test1 = 1;
             param_20_value = 3;
-            dspexpr_03_in1 = 0;
-            dspexpr_04_in1 = 0;
-            dspexpr_04_in2 = 0;
-            dspexpr_05_in1 = 0;
-            dspexpr_05_in2 = 0;
-            dspexpr_06_in1 = 0;
             gai_for_process = 1;
             param_21_value = 0;
             dcblock_tilde_01_x = 0;
             dcblock_tilde_01_gain = 0.9997;
-            dspexpr_07_in1 = 0;
             feedb_for_process = 0;
             frz_for_revoffhndlr = 0;
             glength_for_revoffhndlr = 0;
-            //data_02_sizeout = 0;
-            //data_02_size = 0;
-            //data_02_sizems = 0;
-            //data_02_normalize = 0.995;
-            //data_02_channels = 1;
-            //data_03_sizeout = 0;
-            //data_03_size = 0;
-            //data_03_sizems = 20000;
-            //data_03_normalize = 0.995;
-            //data_03_channels = 1;
             ctlin_01_input = 0;
             ctlin_01_controller = 2;
             ctlin_01_channel = -1;
@@ -4750,7 +4520,6 @@ namespace RNBO {
             maxvs = 0;
             sr = 44100;
             invsr = 0.00002267573696;
-            edge_02_setupDone = false;
             limi_01_last = 0;
             limi_01_lookaheadIndex = 0;
             limi_01_recover = 0;
@@ -4760,16 +4529,8 @@ namespace RNBO {
             limi_01_dc2_xm1 = 0;
             limi_01_dc2_ym1 = 0;
             limi_01_setupDone = false;
-            codebox_01_newphas = 0;
-            codebox_01_oldphas = 0;
             codebox_01_mphasor_currentPhase = 0;
             codebox_01_mphasor_conv = 0;
-            codebox_02_pos = 0;
-            codebox_02_len = 0;
-            codebox_02_f_r = 0;
-            codebox_02_ptc = 0;
-            codebox_02_vol = 0;
-            codebox_02_pan = 0;
             gentrggs_syncphase_old = 0;
             gentrggs_freerunphase_old = 0;
             codebox_tilde_01_mphasor_currentPhase = 0;
@@ -4780,8 +4541,6 @@ namespace RNBO {
             param_03_lastValue = 0;
             param_04_lastValue = 0;
             param_05_lastValue = 0;
-            //data_01_sizemode = 1;
-            //data_01_setupDone = false;
             phasor_01_sigbuf = nullptr;
             phasor_01_lastLockedPhase = 0;
             phasor_01_conv = 0;
@@ -4828,10 +4587,6 @@ namespace RNBO {
             revoffhndlr_frzhistory = 0;
             revoffhndlr_c = 0;
             revoffhndlr_hit = 0;
-            //data_02_sizemode = 3;
-            //data_02_setupDone = false;
-            //data_03_sizemode = 2;
-            //data_03_setupDone = false;
             ctlin_01_status = 0;
             ctlin_01_byte1 = -1;
             ctlin_01_inchan = 0;
@@ -4848,7 +4603,6 @@ namespace RNBO {
             stackprotect_count = 0;
             _voiceIndex = 0;
             _noteNumber = 0;
-            //isMuted = 1;
         }
 
         // member variables
@@ -4860,12 +4614,6 @@ namespace RNBO {
         number limi_01_postamp;
         number limi_01_threshold;
         number limi_01_release;
-        number dspexpr_01_in1;
-        number dspexpr_01_in2;
-        list codebox_01_out1;
-        list codebox_02_in1;
-        list codebox_02_out1;
-        list codebox_02_out2;
         bool mute_for_gentriggs;
         number len_for_gentrggs;
         number den_for_gentrggs;
@@ -4874,21 +4622,12 @@ namespace RNBO {
         bool syc_for_gentrggs;
         int tmp_for_gentrggs;
         int rtm_for_gentrggs;
-        number codebox_tilde_01_in9;
-        number codebox_tilde_01_in10;
-        number codebox_tilde_01_in11;
         number param_01_value;
         number param_02_value;
-        number dspexpr_02_in1;
-        number dspexpr_02_in2;
+        number volume;
         number param_03_value;
         number param_04_value;
         number param_05_value;
-        //number data_01_sizeout;
-        //number data_01_size;
-        //number data_01_sizems;
-        //number data_01_normalize;
-        //number data_01_channels;
         number phasor_01_freq;
         number param_06_value;
         number param_07_value;
@@ -4917,35 +4656,14 @@ namespace RNBO {
         number param_17_value;
         number param_18_value;
         number param_19_value;
-        number expr_02_in1;
-        number expr_02_out1;
-        number select_01_test1;
-        list bufferop_01_channels;
         number param_20_value;
-        number dspexpr_03_in1;
-        number dspexpr_04_in1;
-        number dspexpr_04_in2;
-        number dspexpr_05_in1;
-        number dspexpr_05_in2;
-        number dspexpr_06_in1;
         number gai_for_process;
         number param_21_value;
         number dcblock_tilde_01_x;
         number dcblock_tilde_01_gain;
-        number dspexpr_07_in1;
         number feedb_for_process;
         bool frz_for_revoffhndlr;
         number glength_for_revoffhndlr;
-        //number data_02_sizeout;
-        //number data_02_size;
-        //number data_02_sizems;
-        //number data_02_normalize;
-        //number data_02_channels;
-        //number data_03_sizeout;
-        //number data_03_size;
-        //number data_03_sizems;
-        //number data_03_normalize;
-        //number data_03_channels;
         number ctlin_01_input;
         number ctlin_01_controller;
         number ctlin_01_channel;
@@ -4962,8 +4680,6 @@ namespace RNBO {
         Index maxvs;
         number sr;
         number invsr;
-        number edge_02_currentState;
-        bool edge_02_setupDone;
         SampleValue limi_01_lookaheadBuffers[2][128] = { };
         SampleValue limi_01_gainBuffer[128] = { };
         number limi_01_last;
@@ -4975,20 +4691,11 @@ namespace RNBO {
         number limi_01_dc2_xm1;
         number limi_01_dc2_ym1;
         bool limi_01_setupDone;
-        number codebox_01_newphas;
-        number codebox_01_oldphas;
         number codebox_01_mphasor_currentPhase;
         number codebox_01_mphasor_conv;
-        //bool voice_state[24] = { };
 
 		voiceState voiceStates[24] = { };
 
-        number codebox_02_pos;
-        number codebox_02_len;
-        number codebox_02_f_r;
-        number codebox_02_ptc;
-        number codebox_02_vol;
-        number codebox_02_pan;
         number gentrggs_syncphase_old;
         number gentrggs_freerunphase_old;
         number codebox_tilde_01_mphasor_currentPhase;
@@ -4999,9 +4706,6 @@ namespace RNBO {
         number param_03_lastValue;
         number param_04_lastValue;
         number param_05_lastValue;
-        //Float32BufferRef data_01_buffer;
-        //Int data_01_sizemode;
-        //bool data_01_setupDone;
         signal phasor_01_sigbuf;
         number phasor_01_lastLockedPhase;
         number phasor_01_conv;
@@ -5053,12 +4757,6 @@ namespace RNBO {
         bool revoffhndlr_frzhistory;
         SampleIndex revoffhndlr_c;
         bool revoffhndlr_hit;
-        //Float32BufferRef data_02_buffer;
-        //Int data_02_sizemode;
-        //bool data_02_setupDone;
-        //Float32BufferRef data_03_buffer;
-        //Int data_03_sizemode;
-        //bool data_03_setupDone;
         int ctlin_01_status;
         int ctlin_01_byte1;
         int ctlin_01_inchan;
@@ -5078,7 +4776,6 @@ namespace RNBO {
         DataRef inter_databuf_01;
         Index _voiceIndex;
         Int _noteNumber;
-        //Index isMuted;
         indexlist paramInitIndices;
         indexlist paramInitOrder;
         RTGrainVoice* rtgrainvoice[24];
