@@ -691,14 +691,14 @@ namespace RNBO {
             this->phasor_03_perform(this->phasor_03_freq, this->signals[2], n);
 
             this->generate_triggers(
-                this->mute_for_gentriggs,
-                this->len_for_gentrggs,
-                this->den_for_gentrggs,
-                this->cha_for_gentrggs,
-                this->rdl_for_gentrggs,
-                this->syc_for_gentrggs,
-                this->tmp_for_gentrggs,
-                this->rtm_for_gentrggs,
+                this->mut_17_value,
+                this->len_04_value,
+                this->den_01_value,
+                this->cha_02_norm_value,
+                this->rdl_03_norm_value,
+                this->syc_19_value,
+                this->tmp_20_value,
+                this->rtm_21_value,
                 this->signals[0],
                 this->signals[1],
                 this->signals[2],
@@ -706,27 +706,27 @@ namespace RNBO {
             );
 
             this->delayRecStop(
-                this->glength_for_delayrecstop,
-                this->scrollvalue_for_delayrecstop,
+                this->len_04_value,
+                this->scroll_value,
                 this->signals[3],
                 n
             );
 
             //mixdown chans + gain
             for (Index i = 0; i < n; i++) {
-                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * this->gai_for_process;
+                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * this->gai_14_value;
             }
 
             this->revoffsethandler(
-                this->frz_for_revoffhndlr,
-                this->glength_for_revoffhndlr,
+                this->frz_18_value,
+                this->len_04_value,
                 this->signals[1],
                 n
             );
 
             //feedback
             for (Index i = 0; i < n; i++) {
-                this->signals[0][i] = this->feedbackbuffer[i] * this->feedb_for_process + this->signals[2][i];
+                this->signals[0][i] = this->feedbackbuffer[i] * this->fdb_15_norm_value + this->signals[2][i];
             }
 
             this->recordtilde_01_perform(
@@ -740,7 +740,7 @@ namespace RNBO {
 
             auto rp = this->recpointer_at_scroll;
             for (Index i = 0; i < n; i++) {
-                if (this->scrollvalue_for_getrecpointeratscroll)
+                if (this->scroll_value)
                     rp = signals[4][i];
 
                 this->signals[2][i] = rp;
@@ -768,8 +768,8 @@ namespace RNBO {
 
             //volume
 			for (Index i = 0; i < n; i++) {
-                out2[i] = this->signals[1][i] * this->volume;
-				out1[i] = this->signals[2][i] * this->volume;
+                out2[i] = this->signals[1][i] * this->wet_16_value;
+				out1[i] = this->signals[2][i] * this->wet_16_value;
 			}
 
             this->recordtilde_02_perform(
@@ -1023,113 +1023,111 @@ namespace RNBO {
             switch (index) {
             case 0:
             {
-                this->param_01_value_set(v);
+                this->den_01_value_set(v);
                 break;
             }
             case 1:
             {
-                this->param_02_value_set(v);
+                this->cha_02_value_set(v);
                 break;
             }
             case 2:
             {
-                this->param_03_value_set(v);
+                this->rdl_03_value_set(v);
                 break;
             }
             case 3:
             {
-                this->param_04_value_set(v);
+                this->len_04_value_set(v);
                 break;
             }
             case 4:
             {
-                this->param_05_value_set(v);
+                this->rle_05_value_set(v);
                 break;
             }
             case 5:
             {
-                this->param_06_value_set(v);
+                this->psh_06_value_set(v);
                 break;
             }
             case 6:
             {
-                this->param_07_value_set(v);
+                this->rpt_07_value_set(v);
                 break;
             }
             case 7:
             {
-                this->param_08_value_set(v);
+                this->env_08_value_set(v);
                 break;
             }
             case 8:
             {
-                this->param_09_value_set(v);
+                this->frp_09_value_set(v);
                 break;
             }
             case 9:
             {
-                this->param_10_value_set(v);
+                this->cpo_10_value_set(v);
                 break;
             }
             case 10:
             {
-                this->param_11_value_set(v);
+                this->drf_11_value_set(v);
                 break;
             }
             case 11:
             {
-                this->param_12_value_set(v);
+                this->pwi_12_value_set(v);
                 break;
             }
             case 12:
             {
-                this->param_13_value_set(v);
+                this->rvo_13_value_set(v);
                 break;
             }
             case 13:
             {
-                this->param_14_value_set(v);
+                this->gai_14_value_set(v);
                 break;
             }
             case 14:
             {
-                this->param_15_value_set(v);
+                this->fdb_15_value_set(v);
                 break;
             }
             case 15:
             {
-                this->param_16_value_set(v);
+                this->wet_16_value_set(v);
                 break;
             }
             case 16:
             {
-                this->param_17_value_set(v);
+                this->mut_17_value_set(v);
                 break;
             }
             case 17:
             {
-                this->param_18_value_set(v);
+                this->frz_18_value_set(v);
                 break;
             }
             case 18:
             {
-                this->param_19_value_set(v);
+                this->syc_19_value_set(v);
                 break;
             }
             case 19:
             {
-                this->param_20_value_set(v);
+                this->tmp_20_value_set(v);
                 break;
             }
             case 20:
             {
-                this->param_21_value_set(v);
+                this->rtm_21_value_set(v);
                 break;
             }
             default:
-            {
                 break;
-            }
             }
         }
 
@@ -1149,87 +1147,87 @@ namespace RNBO {
             switch (index) {
             case 0:
             {
-                return this->param_01_value;
+                return this->den_01_value;
             }
             case 1:
             {
-                return this->param_02_value;
+                return this->cha_02_value;
             }
             case 2:
             {
-                return this->param_03_value;
+                return this->rdl_03_value;
             }
             case 3:
             {
-                return this->param_04_value;
+                return this->len_04_value;
             }
             case 4:
             {
-                return this->param_05_value;
+                return this->rle_05_value;
             }
             case 5:
             {
-                return this->param_06_value;
+                return this->psh_06_value;
             }
             case 6:
             {
-                return this->param_07_value;
+                return this->rpt_07_value;
             }
             case 7:
             {
-                return this->param_08_value;
+                return this->env_08_value;
             }
             case 8:
             {
-                return this->param_09_value;
+                return this->frp_09_value;
             }
             case 9:
             {
-                return this->param_10_value;
+                return this->cpo_10_value;
             }
             case 10:
             {
-                return this->param_11_value;
+                return this->drf_11_value;
             }
             case 11:
             {
-                return this->param_12_value;
+                return this->pwi_12_value;
             }
             case 12:
             {
-                return this->param_13_value;
+                return this->rvo_13_value;
             }
             case 13:
             {
-                return this->param_14_value;
+                return this->gai_14_value;
             }
             case 14:
             {
-                return this->param_15_value;
+                return this->fdb_15_value;
             }
             case 15:
             {
-                return this->param_16_value;
+                return this->wet_16_value;
             }
             case 16:
             {
-                return this->param_17_value;
+                return this->mut_17_value;
             }
             case 17:
             {
-                return this->param_18_value;
+                return this->frz_18_value;
             }
             case 18:
             {
-                return this->param_19_value;
+                return this->syc_19_value;
             }
             case 19:
             {
-                return this->param_20_value;
+                return this->tmp_20_value;
             }
             case 20:
             {
-                return this->param_21_value;
+                return this->rtm_21_value;
             }
             default:
             {
@@ -1252,187 +1250,55 @@ namespace RNBO {
 
         ConstCharPointer getParameterName(ParameterIndex index) const {
             switch (index) {
-            case 0:
-            {
-                return "den";
-            }
-            case 1:
-            {
-                return "cha";
-            }
-            case 2:
-            {
-                return "rdl";
-            }
-            case 3:
-            {
-                return "len";
-            }
-            case 4:
-            {
-                return "rle";
-            }
-            case 5:
-            {
-                return "psh";
-            }
-            case 6:
-            {
-                return "rpt";
-            }
-            case 7:
-            {
-                return "env";
-            }
-            case 8:
-            {
-                return "frp";
-            }
-            case 9:
-            {
-                return "cpo";
-            }
-            case 10:
-            {
-                return "drf";
-            }
-            case 11:
-            {
-                return "pwi";
-            }
-            case 12:
-            {
-                return "rvo";
-            }
-            case 13:
-            {
-                return "gai";
-            }
-            case 14:
-            {
-                return "fdb";
-            }
-            case 15:
-            {
-                return "wet";
-            }
-            case 16:
-            {
-                return "mut";
-            }
-            case 17:
-            {
-                return "frz";
-            }
-            case 18:
-            {
-                return "syc";
-            }
-            case 19:
-            {
-                return "tmp";
-            }
-            case 20:
-            {
-                return "rtm";
-            }
-            default:
-            {
-                return "bogus";
-            }
+            case 0: return "den";
+            case 1: return "cha";
+            case 2: return "rdl";
+            case 3: return "len";
+            case 4: return "rle";
+            case 5: return "psh";
+            case 6: return "rpt";
+            case 7: return "env";
+            case 8: return "frp";
+            case 9: return "cpo";
+            case 10: return "drf";
+            case 11: return "pwi";
+            case 12: return "rvo";
+            case 13: return "gai";
+            case 14: return "fdb";
+            case 15: return "wet";
+            case 16: return "mut";
+            case 17: return "frz";
+            case 18: return "syc";
+            case 19: return "tmp";
+            case 20: return "rtm";
+            default: return "bogus";
             }
         }
 
         ConstCharPointer getParameterId(ParameterIndex index) const {
-            switch (index) {
-            case 0:
-            {
-                return "den";       // "linear" -> exp handled internally
-            }
-            case 1:
-            {
-                return "cha";       // linear
-            }
-            case 2:
-            {
-                return "rdl";       // linear
-            }
-            case 3:
-            {
-                return "len";       // JUCE skew
-            }
-            case 4:
-            {
-                return "rle";       // linear
-            }
-            case 5:
-            {
-                return "psh";       // pitch pow
-            }
-            case 6:
-            {
-                return "rpt";       // linear
-            }
-            case 7:
-            {
-                return "env";       // linear
-            }
-            case 8:
-            {
-                return "frp";       // linear
-            }
-            case 9:
-            {
-                return "cpo";       // linear
-            }
-            case 10:
-            {
-                return "drf";       // linear
-            }
-            case 11:
-            {
-                return "pwi";       // linear
-            }
-            case 12:
-            {
-                return "rvo";       // linear
-            }
-            case 13:
-            {
-                return "gai";       // ??
-            }
-            case 14:
-            {
-                return "fdb";       // linear
-            }
-            case 15:
-            {
-                return "wet";       // ??
-            }
-            case 16:
-            {
-                return "mut";       // tog
-            }
-            case 17:
-            {
-                return "frz";       // tog
-            }
-            case 18:
-            {
-                return "syc";       // tog
-            }
-            case 19:
-            {
-                return "tmp";       // discrete steps but linear
-            }
-            case 20:
-            {
-                return "rtm";       // 3tog
-            }
-            default:
-            {
-                return "bogus";
-            }
+            switch (index) {            //  RANGE           SKEW (TYPE)
+			case 0: return "den";       //  0.04 - 1.00     1.00
+			case 1: return "cha";       //  0.00 - 100.00   1.00
+			case 2: return "rdl";       //  0.00 - 100.00   1.00
+			case 3: return "len";       //  0.20 - 2000.00  0.42 (JUCE)
+			case 4: return "rle";       //  0.00 - 100.00   1.00
+			case 5: return "psh";       //  0.25 - 4.00     log (pow(2.0, 1.0 / sm*12.0))
+			case 6: return "rpt";       //  0.00 - 100.00   1.00
+			case 7: return "env";       //  0.00 - 3.00     1.00
+			case 8: return "frp";       //  0.00 - 100.00   1.00
+			case 9: return "cpo";       //
+			case 10: return "drf";      //  0.00 - 100.00   
+			case 11: return "pwi";      //  0.00 - 100.00   1.00
+			case 12: return "rvo";      //  0.00 - 100.00   1.00
+			case 13: return "gai";      //  
+			case 14: return "fdb";      //  0.00 - 100.00   1.00
+            case 15: return "wet";      //  
+			case 16: return "mut";      //  0 - 1
+			case 17: return "frz";      //  0 - 1
+			case 18: return "syc";      //  0 - 1
+            case 19: return "tmp";      //  0 - 6
+			case 20: return "rtm";      //  0 - 2
+            default: return "bogus";
             }
         }
 
@@ -1908,58 +1774,38 @@ namespace RNBO {
             switch (index) {
             case 9:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-                    ParameterValue normalizedValue = (value - 0) / (1 - 0);
-                    return normalizedValue;
-                }
+                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
+                ParameterValue normalizedValue = (value - 0) / (1 - 0);
+                return normalizedValue;
             }
             case 16:
             case 17:
             case 18:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-                    ParameterValue normalizedValue = (value - 0) / (1 - 0);
+                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
+                ParameterValue normalizedValue = (value - 0) / (1 - 0);
 
-                    {
-                        normalizedValue = this->applyStepsToNormalizedParameterValue(normalizedValue, 2);
-                    }
-
-                    return normalizedValue;
-                }
+                return this->applyStepsToNormalizedParameterValue(normalizedValue, 2);
             }
             case 20:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 2 ? 2 : value));
-                    ParameterValue normalizedValue = (value - 0) / (2 - 0);
+                value = (value < 0 ? 0 : (value > 2 ? 2 : value));
+                ParameterValue normalizedValue = (value - 0) / (2 - 0);
 
-                    {
-                        normalizedValue = this->applyStepsToNormalizedParameterValue(normalizedValue, 3);
-                    }
-
-                    return normalizedValue;
-                }
+                return this->applyStepsToNormalizedParameterValue(normalizedValue, 3);
             }
             case 7:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 3 ? 3 : value));
-                    ParameterValue normalizedValue = (value - 0) / (3 - 0);
-                    return normalizedValue;
-                }
+                value = (value < 0 ? 0 : (value > 3 ? 3 : value));
+                ParameterValue normalizedValue = (value - 0) / (3 - 0);
+                return normalizedValue;
             }
             case 19:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 6 ? 6 : value));
-                    ParameterValue normalizedValue = (value - 0) / (6 - 0);
+                value = (value < 0 ? 0 : (value > 6 ? 6 : value));
+                ParameterValue normalizedValue = (value - 0) / (6 - 0);
 
-                    normalizedValue = this->applyStepsToNormalizedParameterValue(normalizedValue, 7);
-
-                    return normalizedValue;
-                }
+                return this->applyStepsToNormalizedParameterValue(normalizedValue, 7);
             }
             case 1:
             case 2:
@@ -1971,20 +1817,16 @@ namespace RNBO {
             case 12:
             case 14:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 100 ? 100 : value));
-                    ParameterValue normalizedValue = (value - 0) / (100 - 0);
-                    return normalizedValue;
-                }
+                value = (value < 0 ? 0 : (value > 100 ? 100 : value));
+                ParameterValue normalizedValue = (value - 0) / (100 - 0);
+                return normalizedValue;
             }
             case 13:
             case 15:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1.5 ? 1.5 : value));
-                    ParameterValue normalizedValue = (value - 0) / (1.5 - 0);
-                    return normalizedValue;
-                }
+                value = (value < 0 ? 0 : (value > 1.5 ? 1.5 : value));
+                ParameterValue normalizedValue = (value - 0) / (1.5 - 0);
+                return normalizedValue;
             }
             case 3:
             {
@@ -1997,11 +1839,9 @@ namespace RNBO {
             }
             case 0:
             {
-                {
-                    value = (value < 0.04 ? 0.04 : (value > 1 ? 1 : value));
-                    ParameterValue normalizedValue = (value - 0.04) / (1 - 0.04);
-                    return normalizedValue;
-                }
+				value = (value < 0.04 ? 0.04 : (value > 1 ? 1 : value));    // I have constrictions here, isn't it redundant?
+                ParameterValue normalizedValue = (value - 0.04) / (1 - 0.04);
+                return normalizedValue;
             }
             case 5:
             {
@@ -2013,9 +1853,7 @@ namespace RNBO {
                 return this->applyPitchNormalization(value, pinfo.min, pinfo.max);
             }
             default:
-            {
                 return value;
-            }
             }
         }
 
@@ -2025,67 +1863,27 @@ namespace RNBO {
             switch (index) {
             case 9:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        return 0 + value * (1 - 0);
-                    }
-                }
+                return value;
             }
             case 16:
             case 17:
             case 18:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        value = this->applyStepsToNormalizedParameterValue(value, 2);
-                    }
-
-                    {
-                        return 0 + value * (1 - 0);
-                    }
-                }
+                return  this->applyStepsToNormalizedParameterValue(value, 2);
             }
             case 20:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        value = this->applyStepsToNormalizedParameterValue(value, 3);
-                    }
-
-                    {
-                        return 0 + value * (2 - 0);
-                    }
-                }
+                value = this->applyStepsToNormalizedParameterValue(value, 3);
+                return 2 * value;
             }
             case 7:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        return 0 + value * (3 - 0);
-                    }
-                }
+                return 3 * value;
             }
             case 19:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        value = this->applyStepsToNormalizedParameterValue(value, 7);
-                    }
-
-                    {
-                        return 0 + value * (6 - 0);
-                    }
-                }
+                value = this->applyStepsToNormalizedParameterValue(value, 7);
+                return 6 * value;
             }
             case 1:
             case 2:
@@ -2097,29 +1895,15 @@ namespace RNBO {
             case 12:
             case 14:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        return round(value * 100);
-                    }
-                }
+                return round(value * 100);
             }
             case 13:
             case 15:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        return 0 + value * (1.5 - 0);
-                    }
-                }
+                return 1.5 * value;
             }
             case 3:
             {
-                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
                 ParameterInfo pinfo;
                 this->getParameterInfo(3, &pinfo);
 
@@ -2127,18 +1911,10 @@ namespace RNBO {
             }
             case 0:
             {
-                {
-                    value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
-                    {
-                        return 0.04 + value * (1 - 0.04);
-                    }
-                }
+                return 0.04 + value * 0.96;
             }
             case 5:
             {
-                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-
                 ParameterInfo pinfo;
                 this->getParameterInfo(5, &pinfo);
 
@@ -2146,102 +1922,9 @@ namespace RNBO {
             }
 
             default:
-            {
                 return value;
-            }
-            }
-        }
 
-        ParameterValue constrainParameterValue(ParameterIndex index, ParameterValue value) const {
-            switch (index) {
-            case 0:
-            {
-                return this->param_01_value_constrain(value);
-            }
-            case 1:
-            {
-                return this->param_02_value_constrain(value);
-            }
-            case 2:
-            {
-                return this->param_03_value_constrain(value);
-            }
-            case 3:
-            {
-                return this->param_04_value_constrain(value);
-            }
-            case 4:
-            {
-                return this->param_05_value_constrain(value);
-            }
-            case 5:
-            {
-                return this->param_06_value_constrain(value);
-            }
-            case 6:
-            {
-                return this->param_07_value_constrain(value);
-            }
-            case 7:
-            {
-                return this->param_08_value_constrain(value);
-            }
-            case 8:
-            {
-                return this->param_09_value_constrain(value);
-            }
-            case 9:
-            {
-                return this->param_10_value_constrain(value);
-            }
-            case 10:
-            {
-                return this->param_11_value_constrain(value);
-            }
-            case 11:
-            {
-                return this->param_12_value_constrain(value);
-            }
-            case 12:
-            {
-                return this->param_13_value_constrain(value);
-            }
-            case 13:
-            {
-                return this->param_14_value_constrain(value);
-            }
-            case 14:
-            {
-                return this->param_15_value_constrain(value);
-            }
-            case 15:
-            {
-                return this->param_16_value_constrain(value);
-            }
-            case 16:
-            {
-                return this->param_17_value_constrain(value);
-            }
-            case 17:
-            {
-                return this->param_18_value_constrain(value);
-            }
-            case 18:
-            {
-                return this->param_19_value_constrain(value);
-            }
-            case 19:
-            {
-                return this->param_20_value_constrain(value);
-            }
-            case 20:
-            {
-                return this->param_21_value_constrain(value);
-            }
-            default:
-            {
-                return value;
-            }
+
             }
         }
 
@@ -2316,267 +1999,245 @@ namespace RNBO {
 			voiceStates[voiceindex] = voicestate;
         }
 
-        void param_01_value_set(number v) {
-            v = this->param_01_value_constrain(v);
-            this->param_01_value = v;
+        void den_01_value_set(number v) {
+            v = this->density_value_constrain(v);
+            this->den_01_value = v;
             this->sendParameter(0, false);
 
-            if (this->param_01_value != this->param_01_lastValue) {
+            if (this->den_01_value != this->den_01_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_01_lastValue = this->param_01_value;
+                this->den_01_lastValue = this->den_01_value;
             }
-
-            this->den_for_gentrggs = v;
         }
 
-        void param_02_value_set(number v) {
-            v = this->param_02_value_constrain(v);
-            this->param_02_value = v;
+        void cha_02_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->cha_02_value = v;
             this->sendParameter(1, false);
 
-            this->cha_for_gentrggs = this->tonormalized(1, this->param_02_value);
+            this->cha_02_norm_value = this->tonormalized(1, this->cha_02_value);
 
-            if (this->param_02_value != this->param_02_lastValue) {
+            if (this->cha_02_value != this->cha_02_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_02_lastValue = this->param_02_value;
+                this->cha_02_lastValue = this->cha_02_value;
             }
         }
 
-        void param_03_value_set(number v) {
-            v = this->param_03_value_constrain(v);
-            this->param_03_value = v;
+        void rdl_03_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->rdl_03_value = v;
             this->sendParameter(2, false);
 
-            this->rdl_for_gentrggs = this->tonormalized(2, this->param_03_value);
+            this->rdl_03_norm_value = this->tonormalized(2, this->rdl_03_value);
 
-            if (this->param_03_value != this->param_03_lastValue) {
+            if (this->rdl_03_value != this->rdl_03_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_03_lastValue = this->param_03_value;
+                this->rdl_03_lastValue = this->rdl_03_value;
             }
         }
 
-        void param_04_value_set(number v) {
-            v = this->param_04_value_constrain(v);
-            this->param_04_value = v;
+        void len_04_value_set(number v) {
+            v = this->length_value_constrain(v);
+            this->len_04_value = v;
             this->sendParameter(3, false);
 
-            if (this->param_04_value != this->param_04_lastValue) {
+            if (this->len_04_value != this->len_04_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_04_lastValue = this->param_04_value;
+                this->len_04_lastValue = this->len_04_value;
             }
-
-            this->glength_for_revoffhndlr = v;
-            this->glength_for_delayrecstop = v;
-            this->codebox_tilde_01_in2_set(v);
         }
 
-        void param_05_value_set(number v) {
-            v = this->param_05_value_constrain(v);
-            this->param_05_value = v;
+        void rle_05_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->rle_05_value = v;
             this->sendParameter(4, false);
 
-            if (this->param_05_value != this->param_05_lastValue) {
+            if (this->rle_05_value != this->rle_05_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_05_lastValue = this->param_05_value;
+                this->rle_05_lastValue = this->rle_05_value;
             }
         }
 
-        void param_06_value_set(number v) {
-            v = this->param_06_value_constrain(v);
-            this->param_06_value = v;
+        void psh_06_value_set(number v) {
+            v = this->pitchshift_value_constrain(v);
+            this->psh_06_value = v;
             this->sendParameter(5, false);
 
-            if (this->param_06_value != this->param_06_lastValue) {
+            if (this->psh_06_value != this->psh_06_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_06_lastValue = this->param_06_value;
+                this->psh_06_lastValue = this->psh_06_value;
             }
         }
 
-        void param_07_value_set(number v) {
-            v = this->param_07_value_constrain(v);
-            this->param_07_value = v;
+        void rpt_07_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->rpt_07_value = v;
             this->sendParameter(6, false);
 
-            if (this->param_07_value != this->param_07_lastValue) {
+            if (this->rpt_07_value != this->rpt_07_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_07_lastValue = this->param_07_value;
+                this->rpt_07_lastValue = this->rpt_07_value;
             }
         }
 
-        void param_08_value_set(number v) {
-            v = this->param_08_value_constrain(v);
-            this->param_08_value = v;
+        void env_08_value_set(number v) {
+            v = this->envelope_value_constrain(v);
+            this->env_08_value = v;
             this->sendParameter(7, false);
 
-            if (this->param_08_value != this->param_08_lastValue) {
+            if (this->env_08_value != this->env_08_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_08_lastValue = this->param_08_value;
+                this->env_08_lastValue = this->env_08_value;
             }
         }
 
-        void param_09_value_set(number v) {
-            v = this->param_09_value_constrain(v);
-            this->param_09_value = v;
+        void frp_09_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->frp_09_value = v;
             this->sendParameter(8, false);
 
-            if (this->param_09_value != this->param_09_lastValue) {
+            if (this->frp_09_value != this->frp_09_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_09_lastValue = this->param_09_value;
+                this->frp_09_lastValue = this->frp_09_value;
             }
         }
 
-        void param_10_value_set(number v) {
-            v = this->param_10_value_constrain(v);
-            this->param_10_value = v;
+        void cpo_10_value_set(number v) {
+            v = this->normalized_value_constrain(v);
+            this->cpo_10_value = v;
             this->sendParameter(9, false);
 
-            if (this->param_10_value != this->param_10_lastValue) {
+            if (this->cpo_10_value != this->cpo_10_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_10_lastValue = this->param_10_value;
+                this->cpo_10_lastValue = this->cpo_10_value;
             }
         }
 
-        void param_11_value_set(number v) {
-            v = this->param_11_value_constrain(v);
-            this->param_11_value = v;
+        void drf_11_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->drf_11_value = v;
             this->sendParameter(10, false);
 
-            if (this->param_11_value != this->param_11_lastValue) {
+            if (this->drf_11_value != this->drf_11_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_11_lastValue = this->param_11_value;
+                this->drf_11_lastValue = this->drf_11_value;
             }
         }
 
-        void param_12_value_set(number v) {
-            v = this->param_12_value_constrain(v);
-            this->param_12_value = v;
+        void pwi_12_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->pwi_12_value = v;
             this->sendParameter(11, false);
 
-            if (this->param_12_value != this->param_12_lastValue) {
+            if (this->pwi_12_value != this->pwi_12_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_12_lastValue = this->param_12_value;
+                this->pwi_12_lastValue = this->pwi_12_value;
             }
         }
 
-        void param_13_value_set(number v) {
-            v = this->param_13_value_constrain(v);
-            this->param_13_value = v;
+        void rvo_13_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->rvo_13_value = v;
             this->sendParameter(12, false);
 
-            if (this->param_13_value != this->param_13_lastValue) {
+            if (this->rvo_13_value != this->rvo_13_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_13_lastValue = this->param_13_value;
+                this->rvo_13_lastValue = this->rvo_13_value;
             }
         }
 
-        void param_14_value_set(number v) {
-            v = this->param_14_value_constrain(v);
-            this->param_14_value = v;
+        void gai_14_value_set(number v) {
+            v = this->volume_value_constrain(v);
+            this->gai_14_value = v;
             this->sendParameter(13, false);
 
-            if (this->param_14_value != this->param_14_lastValue) {
+            if (this->gai_14_value != this->gai_14_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_14_lastValue = this->param_14_value;
+                this->gai_14_lastValue = this->gai_14_value;
             }
-
-            this->gai_for_process = v;
         }
 
-        void param_15_value_set(number v) {
-            v = this->param_15_value_constrain(v);
-            this->param_15_value = v;
+        void fdb_15_value_set(number v) {
+            v = this->percent_value_constrain(v);
+            this->fdb_15_value = v;
             this->sendParameter(14, false);
 
-            this->feedb_for_process = this->tonormalized(14, this->param_15_value);
+            this->fdb_15_norm_value = this->tonormalized(14, this->fdb_15_value);
 
-            if (this->param_15_value != this->param_15_lastValue) {
+            if (this->fdb_15_value != this->fdb_15_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_15_lastValue = this->param_15_value;
+                this->fdb_15_lastValue = this->fdb_15_value;
             }
         }
 
-        void param_16_value_set(number v) {
-            v = this->param_16_value_constrain(v);
-            this->param_16_value = v;
+        void wet_16_value_set(number v) {
+            v = this->volume_value_constrain(v);
+            this->wet_16_value = v;
             this->sendParameter(15, false);
 
-            if (this->param_16_value != this->param_16_lastValue) {
+            if (this->wet_16_value != this->wet_16_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_16_lastValue = this->param_16_value;
+                this->wet_16_lastValue = this->wet_16_value;
             }
-
-            this->volume = v;
         }
 
-        void param_17_value_set(number v) {
-            v = this->param_17_value_constrain(v);
-            this->param_17_value = v;
+        void mut_17_value_set(number v) {
+            v = this->toggle_value_constrain(v);
+            this->mut_17_value = v;
             this->sendParameter(16, false);
 
-            if (this->param_17_value != this->param_17_lastValue) {
+            if (this->mut_17_value != this->mut_17_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_17_lastValue = this->param_17_value;
+                this->mut_17_lastValue = this->mut_17_value;
             }
-
-            this->mute_for_gentriggs = v;
         }
 
-        void param_18_value_set(number v) {
-            v = this->param_18_value_constrain(v);
-            this->param_18_value = v;
+        void frz_18_value_set(number v) {
+            v = this->toggle_value_constrain(v);
+            this->frz_18_value = v;
             this->sendParameter(17, false);
 
-            if (this->param_18_value != this->param_18_lastValue) {
+            if (this->frz_18_value != this->frz_18_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_18_lastValue = this->param_18_value;
+                this->frz_18_lastValue = this->frz_18_value;
             }
 
-            this->frz_for_revoffhndlr = static_cast<bool>(v);
-
-            bool scroll = (v == 0);
-            if (scroll)
+            this->scroll_value = (v == 0);
+			if (this->scroll_value)
                 this->empty_audio_buffer();
-            this->scrollvalue_for_getrecpointeratscroll = scroll;
-            this->scrollvalue_for_delayrecstop = scroll;
         }
 
-        void param_19_value_set(number v) {
-            v = this->param_19_value_constrain(v);
-            this->param_19_value = v;
+        void syc_19_value_set(number v) {
+            v = this->toggle_value_constrain(v);
+            this->syc_19_value = v;
             this->sendParameter(18, false);
 
-            if (this->param_19_value != this->param_19_lastValue) {
+            if (this->syc_19_value != this->syc_19_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_19_lastValue = this->param_19_value;
+                this->syc_19_lastValue = this->syc_19_value;
             }
-
-            this->syc_for_gentrggs = v;
         }
 
-        void param_20_value_set(number v) {
-            v = this->param_20_value_constrain(v);
-            this->param_20_value = v;
+        void tmp_20_value_set(number v) {
+            v = this->tmp_value_constrain(v);
+            this->tmp_20_value = v;
             this->sendParameter(19, false);
 
-            if (this->param_20_value != this->param_20_lastValue) {
+            if (this->tmp_20_value != this->tmp_20_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_20_lastValue = this->param_20_value;
+                this->tmp_20_lastValue = this->tmp_20_value;
             }
-
-            this->tmp_for_gentrggs = v;
         }
 
-        void param_21_value_set(number v) {
-            v = this->param_21_value_constrain(v);
-            this->param_21_value = v;
+        void rtm_21_value_set(number v) {
+            v = this->rtm_value_constrain(v);
+            this->rtm_21_value = v;
             this->sendParameter(20, false);
 
-            if (this->param_21_value != this->param_21_lastValue) {
+            if (this->rtm_21_value != this->rtm_21_lastValue) {
                 this->getEngine()->presetTouched();
-                this->param_21_lastValue = this->param_21_value;
+                this->rtm_21_lastValue = this->rtm_21_value;
             }
-
-            this->rtm_for_gentrggs = v;
         }
 
         number msToSamps(MillisecondTime ms, number sampleRate) {
@@ -2748,159 +2409,61 @@ namespace RNBO {
             this->processParamInitEvents();
         }
 
-        static number param_01_value_constrain(number v) {
+        static number density_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0.04 ? 0.04 : v));
             return v;
         }
 
-        static number param_02_value_constrain(number v) {
+        static number percent_value_constrain(number v) {
             v = (v > 100 ? 100 : (v < 0 ? 0 : v));
             return v;
         }
 
-        static number param_03_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_04_value_constrain(number v) {
+        static number length_value_constrain(number v) {
             v = (v > 2000 ? 2000 : (v < 20 ? 20 : v));
             return v;
         }
 
-        void codebox_tilde_01_in2_set(number v) {
-            this->len_for_gentrggs = v;
-        }
-
-        static number param_05_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_06_value_constrain(number v) {
+        static number pitchshift_value_constrain(number v) {
             v = (v > 4 ? 4 : (v < 0.25 ? 0.25 : v));
             return v;
         }
 
-        static number param_07_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_08_value_constrain(number v) {
+        static number envelope_value_constrain(number v) {
             v = (v > 3 ? 3 : (v < 0 ? 0 : v));
             return v;
         }
 
-        static number param_09_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_10_value_constrain(number v) {
+        static number normalized_value_constrain(number v) {
             v = (v > 1 ? 1 : (v < 0 ? 0 : v));
             return v;
         }
 
-        static number param_11_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_12_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_13_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number param_14_value_constrain(number v) {
+        static number volume_value_constrain(number v) {
             v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
             return v;
         }
 
-        static number param_15_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
+        static number toggle_value_constrain(number v) {
+            return (v != 0);
         }
 
-        static number param_16_value_constrain(number v) {
-            v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
-            return v;
+        static number tmp_value_constrain(number v) {
+            v = (v > 6 ? 6 : (v < 0 ? 0 : v));
+
+            return rnbo_fround(v);
         }
 
-        static number param_17_value_constrain(number v) {
-            v = (v > 1 ? 1 : (v < 0 ? 0 : v));
+        static number rtm_value_constrain(number v) {
+            v = (v > 2 ? 2 : (v < 0 ? 0 : v));
 
-            {
-                number oneStep = (number)1 / (number)1;
-                number oneStepInv = (oneStep != 0 ? (number)1 / oneStep : 0);
-                number numberOfSteps = rnbo_fround(v * oneStepInv * 1 / (number)1) * 1;
-                v = numberOfSteps * oneStep;
-            }
-
-            return v;
-        }
-
-        static number param_18_value_constrain(number v) {
-            v = (v > 1 ? 1 : (v < 0 ? 0 : v));
-
-            {
-                number oneStep = (number)1 / (number)1;
-                number oneStepInv = (oneStep != 0 ? (number)1 / oneStep : 0);
-                number numberOfSteps = rnbo_fround(v * oneStepInv * 1 / (number)1) * 1;
-                v = numberOfSteps * oneStep;
-            }
-
-            return v;
+            return rnbo_fround(v);
         }
 
         void empty_audio_buffer() {
             auto& buffer = this->bufferop_01_buffer;
             buffer->setZero();
             buffer->setTouched(true);
-        }
-
-        static number param_19_value_constrain(number v) {
-            v = (v > 1 ? 1 : (v < 0 ? 0 : v));
-
-            {
-                number oneStep = (number)1 / (number)1;
-                number oneStepInv = (oneStep != 0 ? (number)1 / oneStep : 0);
-                number numberOfSteps = rnbo_fround(v * oneStepInv * 1 / (number)1) * 1;
-                v = numberOfSteps * oneStep;
-            }
-
-            return v;
-        }
-
-        static number param_20_value_constrain(number v) {
-            v = (v > 6 ? 6 : (v < 0 ? 0 : v));
-
-            {
-                number oneStep = (number)6 / (number)6;
-                number oneStepInv = (oneStep != 0 ? (number)1 / oneStep : 0);
-                number numberOfSteps = rnbo_fround(v * oneStepInv * 1 / (number)1) * 1;
-                v = numberOfSteps * oneStep;
-            }
-
-            return v;
-        }
-
-        static number param_21_value_constrain(number v) {
-            v = (v > 2 ? 2 : (v < 0 ? 0 : v));
-
-            {
-                number oneStep = (number)2 / (number)2;
-                number oneStepInv = (oneStep != 0 ? (number)1 / oneStep : 0);
-                number numberOfSteps = rnbo_fround(v * oneStepInv * 1 / (number)1) * 1;
-                v = numberOfSteps * oneStep;
-            }
-
-            return v;
         }
 
         void setGrainProperties(SampleIndex trigatindex) {
@@ -2970,7 +2533,7 @@ namespace RNBO {
         void ctlin_01_outcontroller_set(number) {}
 
         void fromnormalized_01_output_set(number v) {
-            this->param_17_value_set(v);
+            this->mut_17_value_set(v);
         }
 
         void fromnormalized_01_input_set(number v) {
@@ -3346,7 +2909,7 @@ namespace RNBO {
                             }
 
                             {
-                                sync[(Index)i] = this->recordtilde_01_calcSync(__recordtilde_01_wIndex, loopBegin, loopEnd - loopBegin, bufferSize, srInv);
+                                sync[(Index)i] = (__recordtilde_01_wIndex - loopBegin) / (loopEnd - loopBegin);
                             }
                         }
                         else {
@@ -3717,11 +3280,12 @@ namespace RNBO {
 
         number setGrainSize(number len, number rle)
         {
-            number newlen = (1 - (rand01() * 0.5 + 0.5) * rle) * len;
-            return newlen;//#map:_###_obj_###_:77
+            number newlen = (1 - rand01() * rle) * len;
+			newlen = this->clip(newlen, 1, len);        // sets 1 ms as the minimum length
+            return newlen;
         }
 
-        number clip(number v, number inf, number sup) /*#map:_###_obj_###_:28*/
+        number clip(number v, number inf, number sup)
         {
             if (v < inf)
                 v = inf;
@@ -3775,7 +3339,7 @@ namespace RNBO {
         number setGrainVol(number rvo)
         {
             number r = rand01();
-            number vol = 1 - r * rvo;
+            number vol = 1. - r * rvo;
             return vol;
         }
 
@@ -3849,58 +3413,58 @@ namespace RNBO {
         }
 
         void param_01_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_01_value;
+            preset["value"] = static_cast<number>(this->den_01_value);
         }
 
         void param_01_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_01_value_set(preset["value"]);
+            this->den_01_value_set(preset["value"]);
         }
 
         void param_02_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_02_value;
+            preset["value"] = static_cast<number>(this->cha_02_value);
         }
 
         void param_02_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_02_value_set(preset["value"]);
+            this->cha_02_value_set(preset["value"]);
         }
 
         void param_03_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_03_value;
+            preset["value"] = static_cast<number>(this->rdl_03_value);
         }
 
         void param_03_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_03_value_set(preset["value"]);
+            this->rdl_03_value_set(preset["value"]);
         }
 
         void param_04_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_04_value;
+            preset["value"] = static_cast<number>(this->len_04_value);
         }
 
         void param_04_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_04_value_set(preset["value"]);
+            this->len_04_value_set(preset["value"]);
         }
 
         void param_05_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_05_value;
+            preset["value"] = static_cast<number>(this->rle_05_value);
         }
 
         void param_05_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_05_value_set(preset["value"]);
+            this->rle_05_value_set(preset["value"]);
         }
 
         void phasor_01_dspsetup(bool force) {
@@ -3912,25 +3476,25 @@ namespace RNBO {
         }
 
         void param_06_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_06_value;
+            preset["value"] = static_cast<number>(this->psh_06_value);
         }
 
         void param_06_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_06_value_set(preset["value"]);
+            this->psh_06_value_set(preset["value"]);
         }
 
         void param_07_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_07_value;
+            preset["value"] = static_cast<number>(this->rpt_07_value);
         }
 
         void param_07_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_07_value_set(preset["value"]);
+            this->rpt_07_value_set(preset["value"]);
         }
 
         void phasor_02_dspsetup(bool force) {
@@ -3942,25 +3506,25 @@ namespace RNBO {
         }
 
         void param_08_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_08_value;
+            preset["value"] = static_cast<number>(this->env_08_value);
         }
 
         void param_08_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_08_value_set(preset["value"]);
+            this->env_08_value_set(preset["value"]);
         }
 
         void param_09_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_09_value;
+            preset["value"] = static_cast<number>(this->frp_09_value);
         }
 
         void param_09_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_09_value_set(preset["value"]);
+            this->frp_09_value_set(preset["value"]);
         }
 
         void phasor_03_dspsetup(bool force) {
@@ -3972,150 +3536,135 @@ namespace RNBO {
         }
 
         void param_10_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_10_value;
+            preset["value"] = static_cast<number>(this->cpo_10_value);
         }
 
         void param_10_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_10_value_set(preset["value"]);
+            this->cpo_10_value_set(preset["value"]);
         }
 
         void param_11_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_11_value;
+            preset["value"] = static_cast<number>(this->drf_11_value);
         }
 
         void param_11_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_11_value_set(preset["value"]);
+            this->drf_11_value_set(preset["value"]);
         }
 
         void param_12_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_12_value;
+            preset["value"] = static_cast<number>(this->pwi_12_value);
         }
 
         void param_12_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_12_value_set(preset["value"]);
+            this->pwi_12_value_set(preset["value"]);
         }
 
         void param_13_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_13_value;
+            preset["value"] = static_cast<number>(this->rvo_13_value);
         }
 
         void param_13_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_13_value_set(preset["value"]);
+            this->rvo_13_value_set(preset["value"]);
         }
 
         void param_14_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_14_value;
+            preset["value"] = static_cast<number>(this->gai_14_value);
         }
 
         void param_14_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_14_value_set(preset["value"]);
-        }
-
-        number recordtilde_01_calcSync(
-            number writeIndex,
-            number loopMin,
-            number loopLength,
-            SampleIndex bufferLength,
-            number srInv
-        ) {
-            RNBO_UNUSED(srInv);
-            RNBO_UNUSED(bufferLength);
-
-            {
-                return (writeIndex - loopMin) / loopLength;
-            }
+            this->gai_14_value_set(preset["value"]);
         }
 
         void param_15_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_15_value;
+            preset["value"] = static_cast<number>(this->fdb_15_value);
         }
 
         void param_15_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_15_value_set(preset["value"]);
+            this->fdb_15_value_set(preset["value"]);
         }
 
         void param_16_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_16_value;
+            preset["value"] = static_cast<number>(this->wet_16_value);
         }
 
         void param_16_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_16_value_set(preset["value"]);
+            this->wet_16_value_set(preset["value"]);
         }
 
         void param_17_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_17_value;
+            preset["value"] = static_cast<number>(this->mut_17_value);
         }
 
         void param_17_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_17_value_set(preset["value"]);
+            this->mut_17_value_set(preset["value"]);
         }
 
         void param_18_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_18_value;
+            preset["value"] = static_cast<number>(this->frz_18_value);
         }
 
         void param_18_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_18_value_set(preset["value"]);
+            this->frz_18_value_set(preset["value"]);
         }
 
         void param_19_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_19_value;
+            preset["value"] = static_cast<number>(this->syc_19_value);
         }
 
         void param_19_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_19_value_set(preset["value"]);
+            this->syc_19_value_set(preset["value"]);
         }
 
         void param_20_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_20_value;
+            preset["value"] = static_cast<number>(this->tmp_20_value);
         }
 
         void param_20_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_20_value_set(preset["value"]);
+            this->tmp_20_value_set(preset["value"]);
         }
 
         void param_21_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = this->param_21_value;
+            preset["value"] = static_cast<number>(this->rtm_21_value);
         }
 
         void param_21_setPresetValue(PatcherStateInterface& preset) {
             if ((bool)(stateIsEmpty(preset)))
                 return;
 
-            this->param_21_value_set(preset["value"]);
+            this->rtm_21_value_set(preset["value"]);
         }
 
         void dcblock_tilde_01_reset() {
@@ -4449,56 +3998,42 @@ namespace RNBO {
             limi_01_threshold = 0;
             limi_01_threshold_setter(limi_01_threshold);
             limi_01_release = 1000;
-            mute_for_gentriggs = 0;
-            len_for_gentrggs = 0;
-            den_for_gentrggs = 0;
-            cha_for_gentrggs = 0;
-            rdl_for_gentrggs = 0;
-            syc_for_gentrggs = 0;
-            tmp_for_gentrggs = 0;
-            rtm_for_gentrggs = 0;
-            param_01_value = 0.52;
-            param_02_value = 100;
-            volume = 1;
-            param_03_value = 0;
-            param_04_value = 200;
-            param_05_value = 0;
+
+            den_01_value = 0.52;
+            cha_02_value = 100;
+            rdl_03_value = 0;
+            len_04_value = 200;
+            rle_05_value = 0;
             phasor_01_freq = 0;
-            param_06_value = 1;
-            param_07_value = 0;
+            psh_06_value = 1;
+            rpt_07_value = 0;
             phasor_02_freq = 0;
-            param_08_value = 1;
-            param_09_value = 0;
+            env_08_value = 1;
+            frp_09_value = 0;
             phasor_03_freq = 0;
-            param_10_value = 0;
-            param_11_value = 0;
-            param_12_value = 0;
-            param_13_value = 0;
-            param_14_value = 1;
-            scrollvalue_for_getrecpointeratscroll = 0;
-            glength_for_delayrecstop = 0;
-            scrollvalue_for_delayrecstop = 0;
+            cpo_10_value = 0;
+            drf_11_value = 0;
+            pwi_12_value = 0;
+            rvo_13_value = 0;
+            gai_14_value = 1;
+
             recordtilde_01_record = 0;
             recordtilde_01_begin = 0;
             recordtilde_01_end = -1;
             recordtilde_01_loop = 1;
-            param_15_value = 0;
+            fdb_15_value = 0;
             recordtilde_02_record = 0;
             recordtilde_02_begin = 0;
             recordtilde_02_end = -1;
             recordtilde_02_loop = 0;
-            param_16_value = 1;
-            param_17_value = 0;
-            param_18_value = 0;
-            param_19_value = 0;
-            param_20_value = 3;
-            gai_for_process = 1;
-            param_21_value = 0;
+            wet_16_value = 1;
+            mut_17_value = 0;
+            frz_18_value = 0;
+            syc_19_value = 0;
+            tmp_20_value = 3;
+            rtm_21_value = 0;
             dcblock_tilde_01_x = 0;
             dcblock_tilde_01_gain = 0.9997;
-            feedb_for_process = 0;
-            frz_for_revoffhndlr = 0;
-            glength_for_revoffhndlr = 0;
             ctlin_01_input = 0;
             ctlin_01_controller = 2;
             ctlin_01_channel = -1;
@@ -4536,49 +4071,47 @@ namespace RNBO {
             codebox_tilde_01_mphasor_currentPhase = 0;
             codebox_tilde_01_mphasor_conv = 0;
             codebox_tilde_01_setupDone = false;
-            param_01_lastValue = 0;
-            param_02_lastValue = 0;
-            param_03_lastValue = 0;
-            param_04_lastValue = 0;
-            param_05_lastValue = 0;
+            den_01_lastValue = 0;
+            cha_02_lastValue = 0;
+            rdl_03_lastValue = 0;
+            len_04_lastValue = 0;
+            rle_05_lastValue = 0;
             phasor_01_sigbuf = nullptr;
             phasor_01_lastLockedPhase = 0;
             phasor_01_conv = 0;
             phasor_01_setupDone = false;
-            param_06_lastValue = 0;
-            param_07_lastValue = 0;
+            psh_06_lastValue = 0;
+            rpt_07_lastValue = 0;
             phasor_02_sigbuf = nullptr;
             phasor_02_lastLockedPhase = 0;
             phasor_02_conv = 0;
             phasor_02_setupDone = false;
-            param_08_lastValue = 0;
-            param_09_lastValue = 0;
+            env_08_lastValue = 0;
+            frp_09_lastValue = 0;
             phasor_03_sigbuf = nullptr;
             phasor_03_lastLockedPhase = 0;
             phasor_03_conv = 0;
             phasor_03_setupDone = false;
-            param_10_lastValue = 0;
-            param_11_lastValue = 0;
-            param_12_lastValue = 0;
-            param_13_lastValue = 0;
-            param_14_lastValue = 0;
+            cpo_10_lastValue = 0;
+            drf_11_lastValue = 0;
+            pwi_12_lastValue = 0;
+            rvo_13_lastValue = 0;
+            gai_14_lastValue = 0;
             recpointer_at_scroll = 0;
             delrecstop_delaysamps = 0;
             delrecstop_record = 0;
             delrecstop_scrollhistory = 1;
             recordtilde_01_wIndex = 0;
             recordtilde_01_lastRecord = 0;
-            param_15_lastValue = 0;
+            fdb_15_lastValue = 0;
             recordtilde_02_wIndex = 0;
             recordtilde_02_lastRecord = 0;
-            param_16_lastValue = 0;
-            param_17_lastValue = 0;
-            param_18_lastValue = 0;
-            param_19_lastValue = 0;
-            dial_17_lastValue = 0;
-            param_20_lastValue = 0;
-            dial_18_lastValue = 0;
-            param_21_lastValue = 0;
+            wet_16_lastValue = 0;
+            mut_17_lastValue = 0;
+            frz_18_lastValue = 0;
+            syc_19_lastValue = 0;
+            tmp_20_lastValue = 0;
+            rtm_21_lastValue = 0;
             dcblock_tilde_01_xm1 = 0;
             dcblock_tilde_01_ym1 = 0;
             dcblock_tilde_01_setupDone = false;
@@ -4614,56 +4147,67 @@ namespace RNBO {
         number limi_01_postamp;
         number limi_01_threshold;
         number limi_01_release;
-        bool mute_for_gentriggs;
-        number len_for_gentrggs;
-        number den_for_gentrggs;
-        number cha_for_gentrggs;
-        number rdl_for_gentrggs;
-        bool syc_for_gentrggs;
-        int tmp_for_gentrggs;
-        int rtm_for_gentrggs;
-        number param_01_value;
-        number param_02_value;
-        number volume;
-        number param_03_value;
-        number param_04_value;
-        number param_05_value;
+
+        number den_01_value;
+        number den_01_lastValue;
+        Index cha_02_value;
+        number cha_02_norm_value;
+        Index cha_02_lastValue;
+        Index rdl_03_value;
+		number rdl_03_norm_value;
+        Index rdl_03_lastValue;
+        number len_04_value;
+        number len_04_lastValue;
+        Index rle_05_value;
+        Index rle_05_lastValue;
+        Index psh_06_value;
+        Index psh_06_lastValue;
+        Index rpt_07_value;
+        Index rpt_07_lastValue;
+        number env_08_value;
+        number env_08_lastValue;
+        Index frp_09_value;
+        Index frp_09_lastValue;
+        number cpo_10_value;
+        number cpo_10_lastValue;
+        number drf_11_value;
+        number drf_11_lastValue;
+        Index pwi_12_value;
+        Index pwi_12_lastValue;
+        Index rvo_13_value;
+        Index rvo_13_lastValue;
+        number gai_14_value;
+        number gai_14_lastValue;
+        Index fdb_15_value;
+        number fdb_15_norm_value;
+        Index fdb_15_lastValue;
+        number wet_16_value;
+        number wet_16_lastValue;
+        bool mut_17_value;
+        bool mut_17_lastValue;
+        bool frz_18_value;
+        bool frz_18_lastValue;
+        bool scroll_value;
+        bool syc_19_value;
+        bool syc_19_lastValue;
+        Index tmp_20_value;
+        Index tmp_20_lastValue;
+        Index rtm_21_value;
+        Index rtm_21_lastValue;
+
         number phasor_01_freq;
-        number param_06_value;
-        number param_07_value;
         number phasor_02_freq;
-        number param_08_value;
-        number param_09_value;
         number phasor_03_freq;
-        number param_10_value;
-        number param_11_value;
-        number param_12_value;
-        number param_13_value;
-        number param_14_value;
-        bool scrollvalue_for_getrecpointeratscroll;
-        SampleIndex glength_for_delayrecstop;
-        bool scrollvalue_for_delayrecstop;
         number recordtilde_01_record;
         number recordtilde_01_begin;
         number recordtilde_01_end;
         number recordtilde_01_loop;
-        number param_15_value;
         number recordtilde_02_record;
         number recordtilde_02_begin;
         number recordtilde_02_end;
         number recordtilde_02_loop;
-        number param_16_value;
-        number param_17_value;
-        number param_18_value;
-        number param_19_value;
-        number param_20_value;
-        number gai_for_process;
-        number param_21_value;
         number dcblock_tilde_01_x;
         number dcblock_tilde_01_gain;
-        number feedb_for_process;
-        bool frz_for_revoffhndlr;
-        number glength_for_revoffhndlr;
         number ctlin_01_input;
         number ctlin_01_controller;
         number ctlin_01_channel;
@@ -4701,32 +4245,18 @@ namespace RNBO {
         number codebox_tilde_01_mphasor_currentPhase;
         number codebox_tilde_01_mphasor_conv;
         bool codebox_tilde_01_setupDone;
-        number param_01_lastValue;
-        number param_02_lastValue;
-        number param_03_lastValue;
-        number param_04_lastValue;
-        number param_05_lastValue;
         signal phasor_01_sigbuf;
         number phasor_01_lastLockedPhase;
         number phasor_01_conv;
         bool phasor_01_setupDone;
-        number param_06_lastValue;
-        number param_07_lastValue;
         signal phasor_02_sigbuf;
         number phasor_02_lastLockedPhase;
         number phasor_02_conv;
         bool phasor_02_setupDone;
-        number param_08_lastValue;
-        number param_09_lastValue;
         signal phasor_03_sigbuf;
         number phasor_03_lastLockedPhase;
         number phasor_03_conv;
         bool phasor_03_setupDone;
-        number param_10_lastValue;
-        number param_11_lastValue;
-        number param_12_lastValue;
-        number param_13_lastValue;
-        number param_14_lastValue;
         number recpointer_at_scroll;
         SampleIndex delrecstop_delaysamps;
         bool delrecstop_record;
@@ -4736,19 +4266,10 @@ namespace RNBO {
         Float32BufferRef recordtilde_01_buffer;
         SampleIndex recordtilde_01_wIndex;
         number recordtilde_01_lastRecord;
-        number param_15_lastValue;
         Float32BufferRef recordtilde_02_buffer;
         SampleIndex recordtilde_02_wIndex;
         number recordtilde_02_lastRecord;
-        number param_16_lastValue;
-        number param_17_lastValue;
-        number param_18_lastValue;
-        number param_19_lastValue;
         Float32BufferRef bufferop_01_buffer;
-        number dial_17_lastValue;
-        number param_20_lastValue;
-        number dial_18_lastValue;
-        number param_21_lastValue;
         number dcblock_tilde_01_xm1;
         number dcblock_tilde_01_ym1;
         bool dcblock_tilde_01_setupDone;

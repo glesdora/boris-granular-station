@@ -8,3 +8,4 @@ juce
 *.filters
 notes.txt
 delayrecstop_notes.txt
+export/src/*
