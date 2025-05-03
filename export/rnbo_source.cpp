@@ -935,61 +935,32 @@ namespace RNBO {
 
         void getPreset(PatcherStateInterface& preset) {
             preset["__presetid"] = "rnbo";
-            this->param_01_getPresetValue(getSubState(preset, "den"));
-            this->param_02_getPresetValue(getSubState(preset, "cha"));
-            this->param_03_getPresetValue(getSubState(preset, "rdl"));
-            this->param_04_getPresetValue(getSubState(preset, "len"));
-            this->param_05_getPresetValue(getSubState(preset, "rle"));
-            this->param_06_getPresetValue(getSubState(preset, "psh"));
-            this->param_07_getPresetValue(getSubState(preset, "rpt"));
-            this->param_08_getPresetValue(getSubState(preset, "env"));
-            this->param_09_getPresetValue(getSubState(preset, "frp"));
-            this->param_10_getPresetValue(getSubState(preset, "cpo"));
-            this->param_11_getPresetValue(getSubState(preset, "drf"));
-            this->param_12_getPresetValue(getSubState(preset, "pwi"));
-            this->param_13_getPresetValue(getSubState(preset, "rvo"));
-            this->param_14_getPresetValue(getSubState(preset, "gai"));
-            this->param_15_getPresetValue(getSubState(preset, "fdb"));
-            this->param_16_getPresetValue(getSubState(preset, "wet"));
-            this->param_17_getPresetValue(getSubState(preset, "mut"));
-            this->param_18_getPresetValue(getSubState(preset, "frz"));
-            this->param_19_getPresetValue(getSubState(preset, "syc"));
-            this->param_20_getPresetValue(getSubState(preset, "tmp"));
-            this->param_21_getPresetValue(getSubState(preset, "rtm"));
+
+            for (Index i = 0; i < getNumParameters(); i++) {
+				this->param_getPresetValue(preset, i);
+            }
         }
 
         void setPreset(MillisecondTime time, PatcherStateInterface& preset) {
             this->updateTime(time);
-            this->param_14_setPresetValue(getSubState(preset, "gai"));
-            this->param_19_setPresetValue(getSubState(preset, "syc"));
-            this->param_20_setPresetValue(getSubState(preset, "tmp"));
-            this->param_21_setPresetValue(getSubState(preset, "rtm"));
-            this->param_17_setPresetValue(getSubState(preset, "mut"));
-            this->param_02_setPresetValue(getSubState(preset, "cha"));
-            this->param_01_setPresetValue(getSubState(preset, "den"));
-            this->param_04_setPresetValue(getSubState(preset, "len"));
-            this->param_10_setPresetValue(getSubState(preset, "cpo"));
-            this->param_11_setPresetValue(getSubState(preset, "drf"));
-            this->param_06_setPresetValue(getSubState(preset, "psh"));
-            this->param_03_setPresetValue(getSubState(preset, "rdl"));
-            this->param_05_setPresetValue(getSubState(preset, "rle"));
-            this->param_07_setPresetValue(getSubState(preset, "rpt"));
-            this->param_08_setPresetValue(getSubState(preset, "env"));
-            this->param_09_setPresetValue(getSubState(preset, "frp"));
-            this->param_13_setPresetValue(getSubState(preset, "rvo"));
-            this->param_12_setPresetValue(getSubState(preset, "pwi"));
-            this->param_18_setPresetValue(getSubState(preset, "frz"));
-            this->param_15_setPresetValue(getSubState(preset, "fdb"));
-            this->param_16_setPresetValue(getSubState(preset, "wet"));
+
+			for (Index i = 0; i < getNumParameters(); i++) {
+                this->param_setPresetValue(preset, i, time);
+			}
         }
 
         void processTempoEvent(MillisecondTime time, Tempo tempo) {
             this->updateTime(time);
 
             if (this->globaltransport_setTempo(this->_currentTime, tempo, false)) {
-                this->timevalue_01_onTempoChanged(tempo);
-                this->timevalue_02_onTempoChanged(tempo);
-                this->timevalue_03_onTempoChanged(tempo);
+
+                this->timevalue_01_sendValue();
+				this->timevalue_02_sendValue();
+				this->timevalue_03_sendValue();
+
+                //this->timevalue_01_onTempoChanged(tempo);
+                //this->timevalue_02_onTempoChanged(tempo);
+                //this->timevalue_03_onTempoChanged(tempo);
             }
         }
 
@@ -1002,19 +973,19 @@ namespace RNBO {
         }
 
         void onSampleRateChanged(double samplerate) {
-            this->timevalue_01_onSampleRateChanged(samplerate);
-            this->timevalue_02_onSampleRateChanged(samplerate);
-            this->timevalue_03_onSampleRateChanged(samplerate);
+            //this->timevalue_01_onSampleRateChanged(samplerate);
+            //this->timevalue_02_onSampleRateChanged(samplerate);
+            //this->timevalue_03_onSampleRateChanged(samplerate);
         }
 
         void processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator) {
             this->updateTime(time);
 
-            if (this->globaltransport_setTimeSignature(this->_currentTime, numerator, denominator, false)) {
-                this->timevalue_01_onTimeSignatureChanged(numerator, denominator);
-                this->timevalue_02_onTimeSignatureChanged(numerator, denominator);
-                this->timevalue_03_onTimeSignatureChanged(numerator, denominator);
-            }
+            //if (this->globaltransport_setTimeSignature(this->_currentTime, numerator, denominator, false)) {
+            //    //this->timevalue_01_onTimeSignatureChanged(numerator, denominator);
+            //    //this->timevalue_02_onTimeSignatureChanged(numerator, denominator);
+            //    //this->timevalue_03_onTimeSignatureChanged(numerator, denominator);
+            //}
         }
 
         void setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime time) {
@@ -1249,30 +1220,7 @@ namespace RNBO {
         }
 
         ConstCharPointer getParameterName(ParameterIndex index) const {
-            switch (index) {
-            case 0: return "den";
-            case 1: return "cha";
-            case 2: return "rdl";
-            case 3: return "len";
-            case 4: return "rle";
-            case 5: return "psh";
-            case 6: return "rpt";
-            case 7: return "env";
-            case 8: return "frp";
-            case 9: return "cpo";
-            case 10: return "drf";
-            case 11: return "pwi";
-            case 12: return "rvo";
-            case 13: return "gai";
-            case 14: return "fdb";
-            case 15: return "wet";
-            case 16: return "mut";
-            case 17: return "frz";
-            case 18: return "syc";
-            case 19: return "tmp";
-            case 20: return "rtm";
-            default: return "bogus";
-            }
+			return getParameterId(index);
         }
 
         ConstCharPointer getParameterId(ParameterIndex index) const {
@@ -1774,38 +1722,25 @@ namespace RNBO {
             switch (index) {
             case 9:
             {
-                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-                ParameterValue normalizedValue = (value - 0) / (1 - 0);
-                return normalizedValue;
+                return value;
             }
             case 16:
             case 17:
             case 18:
             {
-                value = (value < 0 ? 0 : (value > 1 ? 1 : value));
-                ParameterValue normalizedValue = (value - 0) / (1 - 0);
-
-                return this->applyStepsToNormalizedParameterValue(normalizedValue, 2);
+                return this->applyStepsToNormalizedParameterValue(value, 2);
             }
             case 20:
             {
-                value = (value < 0 ? 0 : (value > 2 ? 2 : value));
-                ParameterValue normalizedValue = (value - 0) / (2 - 0);
-
-                return this->applyStepsToNormalizedParameterValue(normalizedValue, 3);
+                return this->applyStepsToNormalizedParameterValue(value / 2., 3);
             }
             case 7:
             {
-                value = (value < 0 ? 0 : (value > 3 ? 3 : value));
-                ParameterValue normalizedValue = (value - 0) / (3 - 0);
-                return normalizedValue;
+                return value / 3.;
             }
             case 19:
             {
-                value = (value < 0 ? 0 : (value > 6 ? 6 : value));
-                ParameterValue normalizedValue = (value - 0) / (6 - 0);
-
-                return this->applyStepsToNormalizedParameterValue(normalizedValue, 7);
+                return this->applyStepsToNormalizedParameterValue(value / 6., 7);
             }
             case 1:
             case 2:
@@ -1817,16 +1752,12 @@ namespace RNBO {
             case 12:
             case 14:
             {
-                value = (value < 0 ? 0 : (value > 100 ? 100 : value));
-                ParameterValue normalizedValue = (value - 0) / (100 - 0);
-                return normalizedValue;
+                return value / 100.;
             }
             case 13:
             case 15:
             {
-                value = (value < 0 ? 0 : (value > 1.5 ? 1.5 : value));
-                ParameterValue normalizedValue = (value - 0) / (1.5 - 0);
-                return normalizedValue;
+                return value / 1.5;
             }
             case 3:
             {
@@ -1839,9 +1770,7 @@ namespace RNBO {
             }
             case 0:
             {
-				value = (value < 0.04 ? 0.04 : (value > 1 ? 1 : value));    // I have constrictions here, isn't it redundant?
-                ParameterValue normalizedValue = (value - 0.04) / (1 - 0.04);
-                return normalizedValue;
+                return (value - 0.04) / 0.96;
             }
             case 5:
             {
@@ -2322,89 +2251,27 @@ namespace RNBO {
             this->timevalue_02_sendValue();
             this->timevalue_03_sendValue();
 
-            {
-                this->scheduleParamInit(0, 3);
-            }
-
-            {
-                this->scheduleParamInit(1, 2);
-            }
-
-            {
-                this->scheduleParamInit(2, 10);
-            }
-
-            {
-                this->scheduleParamInit(3, 5);
-            }
-
-            {
-                this->scheduleParamInit(4, 10);
-            }
-
-            {
-                this->scheduleParamInit(5, 9);
-            }
-
-            {
-                this->scheduleParamInit(6, 10);
-            }
-
-            {
-                this->scheduleParamInit(7, 11);
-            }
-
-            {
-                this->scheduleParamInit(8, 12);
-            }
-
-            {
-                this->scheduleParamInit(9, 7);
-            }
-
-            {
-                this->scheduleParamInit(10, 8);
-            }
-
-            {
-                this->scheduleParamInit(11, 14);
-            }
-
-            {
-                this->scheduleParamInit(12, 13);
-            }
-
-            {
-                this->scheduleParamInit(13, 0);
-            }
-
-            {
-                this->scheduleParamInit(14, 17);
-            }
-
-            {
-                this->scheduleParamInit(15, 19);
-            }
-
-            {
-                this->scheduleParamInit(16, 1);
-            }
-
-            {
-                this->scheduleParamInit(17, 16);
-            }
-
-            {
-                this->scheduleParamInit(18, 0);
-            }
-
-            {
-                this->scheduleParamInit(19, 0);
-            }
-
-            {
-                this->scheduleParamInit(20, 0);
-            }
+            this->scheduleParamInit(0, 3);
+            this->scheduleParamInit(1, 2);
+            this->scheduleParamInit(2, 10);
+            this->scheduleParamInit(3, 5);
+            this->scheduleParamInit(4, 10);
+            this->scheduleParamInit(5, 9);
+            this->scheduleParamInit(6, 10);
+            this->scheduleParamInit(7, 11);
+            this->scheduleParamInit(8, 12);
+            this->scheduleParamInit(9, 7);
+            this->scheduleParamInit(10, 8);
+            this->scheduleParamInit(11, 14);
+            this->scheduleParamInit(12, 13);
+            this->scheduleParamInit(13, 0);
+            this->scheduleParamInit(14, 17);
+            this->scheduleParamInit(15, 19);
+            this->scheduleParamInit(16, 1);
+            this->scheduleParamInit(17, 16);
+            this->scheduleParamInit(18, 0);
+            this->scheduleParamInit(19, 0);
+            this->scheduleParamInit(20, 0);
 
             this->processParamInitEvents();
         }
@@ -2504,64 +2371,12 @@ namespace RNBO {
             }
         }
 
-        void phasor_01_freq_set(number v) {
-            this->phasor_01_freq = v;
-        }
-
-        void timevalue_01_out_set(number v) {
-            this->phasor_01_freq_set(v);
-        }
-
-        void phasor_02_freq_set(number v) {
-            this->phasor_02_freq = v;
-        }
-
-        void timevalue_02_out_set(number v) {
-            this->phasor_02_freq_set(v);
-        }
-
-        void phasor_03_freq_set(number v) {
-            this->phasor_03_freq = v;
-        }
-
-        void timevalue_03_out_set(number v) {
-            this->phasor_03_freq_set(v);
-        }
-
-        void ctlin_01_outchannel_set(number) {}
-
-        void ctlin_01_outcontroller_set(number) {}
-
-        void fromnormalized_01_output_set(number v) {
-            this->mut_17_value_set(v);
-        }
-
-        void fromnormalized_01_input_set(number v) {
-            this->fromnormalized_01_output_set(this->fromnormalized(16, v));
-        }
-
-        void expr_01_out1_set(number v) {
-            this->expr_01_out1 = v;
-            this->fromnormalized_01_input_set(this->expr_01_out1);
-        }
-
-        void expr_01_in1_set(number in1) {
-            this->expr_01_in1 = in1;
-            this->expr_01_out1_set(this->expr_01_in1 * this->expr_01_in2);//#map:expr_01:1
-        }
-
-        void ctlin_01_value_set(number v) {
-            this->expr_01_in1_set(v);
-        }
-
         void ctlin_01_midihandler(int status, int channel, int port, ConstByteArray data, Index length) {
             RNBO_UNUSED(length);
             RNBO_UNUSED(port);
 
             if (status == 0xB0 && (channel == this->ctlin_01_channel || this->ctlin_01_channel == -1) && (data[1] == this->ctlin_01_controller || this->ctlin_01_controller == -1)) {
-                this->ctlin_01_outchannel_set(channel);
-                this->ctlin_01_outcontroller_set(data[1]);
-                this->ctlin_01_value_set(data[2]);
+                this->mut_17_value_set(this->fromnormalized(16, data[2] * 0.007874015748));
                 this->ctlin_01_status = 0;
             }
         }
@@ -3412,60 +3227,18 @@ namespace RNBO {
             this->codebox_tilde_01_mphasor_dspsetup();
         }
 
-        void param_01_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->den_01_value);
-        }
+		void param_getPresetValue(PatcherStateInterface& preset, Index paramIndex) {
+			preset["value"] = this->getParameterValue(paramIndex);
+		}
 
-        void param_01_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
+		void param_setPresetValue(PatcherStateInterface& preset, Index paramIndex, MillisecondTime time) {
+            auto& sub = getSubState(preset, getParameterId(paramIndex));
 
-            this->den_01_value_set(preset["value"]);
-        }
+			if ((bool)(stateIsEmpty(sub)))
+				return;
 
-        void param_02_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->cha_02_value);
-        }
-
-        void param_02_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->cha_02_value_set(preset["value"]);
-        }
-
-        void param_03_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->rdl_03_value);
-        }
-
-        void param_03_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->rdl_03_value_set(preset["value"]);
-        }
-
-        void param_04_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->len_04_value);
-        }
-
-        void param_04_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->len_04_value_set(preset["value"]);
-        }
-
-        void param_05_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->rle_05_value);
-        }
-
-        void param_05_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->rle_05_value_set(preset["value"]);
-        }
+			this->setParameterValue(paramIndex, sub["value"], time);
+		}
 
         void phasor_01_dspsetup(bool force) {
             if ((bool)(this->phasor_01_setupDone) && (bool)(!(bool)(force)))
@@ -3473,28 +3246,6 @@ namespace RNBO {
 
             this->phasor_01_conv = (number)1 / this->samplerate();
             this->phasor_01_setupDone = true;
-        }
-
-        void param_06_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->psh_06_value);
-        }
-
-        void param_06_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->psh_06_value_set(preset["value"]);
-        }
-
-        void param_07_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->rpt_07_value);
-        }
-
-        void param_07_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->rpt_07_value_set(preset["value"]);
         }
 
         void phasor_02_dspsetup(bool force) {
@@ -3505,166 +3256,12 @@ namespace RNBO {
             this->phasor_02_setupDone = true;
         }
 
-        void param_08_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->env_08_value);
-        }
-
-        void param_08_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->env_08_value_set(preset["value"]);
-        }
-
-        void param_09_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->frp_09_value);
-        }
-
-        void param_09_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->frp_09_value_set(preset["value"]);
-        }
-
         void phasor_03_dspsetup(bool force) {
             if ((bool)(this->phasor_03_setupDone) && (bool)(!(bool)(force)))
                 return;
 
             this->phasor_03_conv = (number)1 / this->samplerate();
             this->phasor_03_setupDone = true;
-        }
-
-        void param_10_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->cpo_10_value);
-        }
-
-        void param_10_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->cpo_10_value_set(preset["value"]);
-        }
-
-        void param_11_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->drf_11_value);
-        }
-
-        void param_11_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->drf_11_value_set(preset["value"]);
-        }
-
-        void param_12_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->pwi_12_value);
-        }
-
-        void param_12_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->pwi_12_value_set(preset["value"]);
-        }
-
-        void param_13_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->rvo_13_value);
-        }
-
-        void param_13_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->rvo_13_value_set(preset["value"]);
-        }
-
-        void param_14_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->gai_14_value);
-        }
-
-        void param_14_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->gai_14_value_set(preset["value"]);
-        }
-
-        void param_15_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->fdb_15_value);
-        }
-
-        void param_15_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->fdb_15_value_set(preset["value"]);
-        }
-
-        void param_16_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->wet_16_value);
-        }
-
-        void param_16_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->wet_16_value_set(preset["value"]);
-        }
-
-        void param_17_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->mut_17_value);
-        }
-
-        void param_17_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->mut_17_value_set(preset["value"]);
-        }
-
-        void param_18_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->frz_18_value);
-        }
-
-        void param_18_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->frz_18_value_set(preset["value"]);
-        }
-
-        void param_19_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->syc_19_value);
-        }
-
-        void param_19_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->syc_19_value_set(preset["value"]);
-        }
-
-        void param_20_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->tmp_20_value);
-        }
-
-        void param_20_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->tmp_20_value_set(preset["value"]);
-        }
-
-        void param_21_getPresetValue(PatcherStateInterface& preset) {
-            preset["value"] = static_cast<number>(this->rtm_21_value);
-        }
-
-        void param_21_setPresetValue(PatcherStateInterface& preset) {
-            if ((bool)(stateIsEmpty(preset)))
-                return;
-
-            this->rtm_21_value_set(preset["value"]);
         }
 
         void dcblock_tilde_01_reset() {
@@ -3681,88 +3278,16 @@ namespace RNBO {
         }
 
         void timevalue_01_sendValue() {
-            {
-                {
-                    {
-                        {
-                            {
-                                {
-                                    this->timevalue_01_out_set(this->tickstohz(1920));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+			this->phasor_01_freq = this->tickstohz(1920);
         }
-
-        void timevalue_01_onTempoChanged(number tempo) {
-            RNBO_UNUSED(tempo);
-
-            {
-                this->timevalue_01_sendValue();
-            }
-        }
-
-        void timevalue_01_onSampleRateChanged(number) {}
-
-        void timevalue_01_onTimeSignatureChanged(number, number) {}
 
         void timevalue_02_sendValue() {
-            {
-                {
-                    {
-                        {
-                            {
-                                {
-                                    this->timevalue_02_out_set(this->tickstohz(2880));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            this->phasor_02_freq = this->tickstohz(2880);
         }
-
-        void timevalue_02_onTempoChanged(number tempo) {
-            RNBO_UNUSED(tempo);
-
-            {
-                this->timevalue_02_sendValue();
-            }
-        }
-
-        void timevalue_02_onSampleRateChanged(number) {}
-
-        void timevalue_02_onTimeSignatureChanged(number, number) {}
 
         void timevalue_03_sendValue() {
-            {
-                {
-                    {
-                        {
-                            {
-                                {
-                                    this->timevalue_03_out_set(this->tickstohz(1280));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            this->phasor_03_freq = this->tickstohz(1280);
         }
-
-        void timevalue_03_onTempoChanged(number tempo) {
-            RNBO_UNUSED(tempo);
-
-            {
-                this->timevalue_03_sendValue();
-            }
-        }
-
-        void timevalue_03_onSampleRateChanged(number) {}
-
-        void timevalue_03_onTimeSignatureChanged(number, number) {}
 
         Index globaltransport_getSampleOffset(MillisecondTime time) {
             return this->mstosamps(this->maximum(0, time - this->getEngine()->getCurrentTime()));
@@ -4058,9 +3583,7 @@ namespace RNBO {
             ctlin_01_input = 0;
             ctlin_01_controller = 2;
             ctlin_01_channel = -1;
-            expr_01_in1 = 0;
-            expr_01_in2 = 0.007874015748;
-            expr_01_out1 = 0;
+
             _currentTime = 0;
             audioProcessSampleCount = 0;
             zeroBuffer = nullptr;
@@ -4221,9 +3744,7 @@ namespace RNBO {
         number ctlin_01_input;
         number ctlin_01_controller;
         number ctlin_01_channel;
-        number expr_01_in1;
-        number expr_01_in2;
-        number expr_01_out1;
+        
         MillisecondTime _currentTime;
         SampleIndex audioProcessSampleCount;
         signal zeroBuffer;
