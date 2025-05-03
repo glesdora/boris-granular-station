@@ -4148,52 +4148,52 @@ namespace RNBO {
         number limi_01_threshold;
         number limi_01_release;
 
-        number den_01_value;
-        number den_01_lastValue;
-        Index cha_02_value;
-        number cha_02_norm_value;
-        Index cha_02_lastValue;
-        Index rdl_03_value;
-		number rdl_03_norm_value;
-        Index rdl_03_lastValue;
-        number len_04_value;
-        number len_04_lastValue;
-        Index rle_05_value;
-        Index rle_05_lastValue;
-        Index psh_06_value;
-        Index psh_06_lastValue;
-        Index rpt_07_value;
-        Index rpt_07_lastValue;
-        number env_08_value;
-        number env_08_lastValue;
-        Index frp_09_value;
-        Index frp_09_lastValue;
-        number cpo_10_value;
-        number cpo_10_lastValue;
-        number drf_11_value;
-        number drf_11_lastValue;
-        Index pwi_12_value;
-        Index pwi_12_lastValue;
-        Index rvo_13_value;
-        Index rvo_13_lastValue;
-        number gai_14_value;
-        number gai_14_lastValue;
-        Index fdb_15_value;
-        number fdb_15_norm_value;
-        Index fdb_15_lastValue;
-        number wet_16_value;
-        number wet_16_lastValue;
-        bool mut_17_value;
-        bool mut_17_lastValue;
-        bool frz_18_value;
-        bool frz_18_lastValue;
-        bool scroll_value;
-        bool syc_19_value;
-        bool syc_19_lastValue;
-        Index tmp_20_value;
-        Index tmp_20_lastValue;
-        Index rtm_21_value;
-        Index rtm_21_lastValue;
+        number den_01_value;          // number  
+        number den_01_lastValue;      // number  
+        number cha_02_value;          // Index  
+        number cha_02_norm_value;     // number  
+        number cha_02_lastValue;      // Index  
+        number rdl_03_value;          // Index  
+        number rdl_03_norm_value;     // number  
+        number rdl_03_lastValue;      // Index  
+        number len_04_value;          // number  
+        number len_04_lastValue;      // number  
+        number rle_05_value;          // Index  
+        number rle_05_lastValue;      // Index  
+        number psh_06_value;          // Index  
+        number psh_06_lastValue;      // Index  
+        number rpt_07_value;          // Index  
+        number rpt_07_lastValue;      // Index  
+        number env_08_value;          // number  
+        number env_08_lastValue;      // number  
+        number frp_09_value;          // Index  
+        number frp_09_lastValue;      // Index  
+        number cpo_10_value;          // number  
+        number cpo_10_lastValue;      // number  
+        number drf_11_value;          // number  
+        number drf_11_lastValue;      // number  
+        number pwi_12_value;          // Index  
+        number pwi_12_lastValue;      // Index  
+        number rvo_13_value;          // Index  
+        number rvo_13_lastValue;      // Index  
+        number gai_14_value;          // number  
+        number gai_14_lastValue;      // number  
+        number fdb_15_value;          // Index  
+        number fdb_15_norm_value;     // number  
+        number fdb_15_lastValue;      // Index  
+        number wet_16_value;          // number  
+        number wet_16_lastValue;      // number  
+        number mut_17_value;          // bool  
+        number mut_17_lastValue;      // bool  
+        number frz_18_value;          // bool  
+        number frz_18_lastValue;      // bool  
+        number scroll_value;          // bool  
+        number syc_19_value;          // bool  
+        number syc_19_lastValue;      // bool  
+        number tmp_20_value;          // Index  
+        number tmp_20_lastValue;      // Index  
+        number rtm_21_value;          // Index  
+        number rtm_21_lastValue;      // Index
 
         number phasor_01_freq;
         number phasor_02_freq;
