@@ -4004,34 +4004,55 @@ namespace RNBO {
             rdl_03_value = 0;
             len_04_value = 200;
             rle_05_value = 0;
-            phasor_01_freq = 0;
             psh_06_value = 1;
             rpt_07_value = 0;
-            phasor_02_freq = 0;
             env_08_value = 1;
             frp_09_value = 0;
-            phasor_03_freq = 0;
             cpo_10_value = 0;
             drf_11_value = 0;
             pwi_12_value = 0;
             rvo_13_value = 0;
             gai_14_value = 1;
-
-            recordtilde_01_record = 0;
-            recordtilde_01_begin = 0;
-            recordtilde_01_end = -1;
-            recordtilde_01_loop = 1;
             fdb_15_value = 0;
-            recordtilde_02_record = 0;
-            recordtilde_02_begin = 0;
-            recordtilde_02_end = -1;
-            recordtilde_02_loop = 0;
             wet_16_value = 1;
             mut_17_value = 0;
             frz_18_value = 0;
             syc_19_value = 0;
             tmp_20_value = 3;
             rtm_21_value = 0;
+
+            den_01_lastValue = 0;
+            cha_02_lastValue = 0;
+            rdl_03_lastValue = 0;
+            len_04_lastValue = 0;
+            rle_05_lastValue = 0;
+            psh_06_lastValue = 0;
+            rpt_07_lastValue = 0;
+            env_08_lastValue = 0;
+            frp_09_lastValue = 0;
+            cpo_10_lastValue = 0;
+            drf_11_lastValue = 0;
+            pwi_12_lastValue = 0;
+            rvo_13_lastValue = 0;
+            gai_14_lastValue = 0;
+            fdb_15_lastValue = 0;
+            wet_16_lastValue = 0;
+            mut_17_lastValue = 0;
+            frz_18_lastValue = 0;
+            syc_19_lastValue = 0;
+            tmp_20_lastValue = 0;
+            rtm_21_lastValue = 0;
+
+            recordtilde_01_record = 0;
+            recordtilde_01_begin = 0;
+            recordtilde_01_end = -1;
+            recordtilde_01_loop = 1;
+            
+            recordtilde_02_record = 0;
+            recordtilde_02_begin = 0;
+            recordtilde_02_end = -1;
+            recordtilde_02_loop = 0;
+
             dcblock_tilde_01_x = 0;
             dcblock_tilde_01_gain = 0.9997;
             ctlin_01_input = 0;
@@ -4071,47 +4092,36 @@ namespace RNBO {
             codebox_tilde_01_mphasor_currentPhase = 0;
             codebox_tilde_01_mphasor_conv = 0;
             codebox_tilde_01_setupDone = false;
-            den_01_lastValue = 0;
-            cha_02_lastValue = 0;
-            rdl_03_lastValue = 0;
-            len_04_lastValue = 0;
-            rle_05_lastValue = 0;
+
+            phasor_01_freq = 0;
+            phasor_02_freq = 0;
+            phasor_03_freq = 0;
+            
             phasor_01_sigbuf = nullptr;
             phasor_01_lastLockedPhase = 0;
             phasor_01_conv = 0;
             phasor_01_setupDone = false;
-            psh_06_lastValue = 0;
-            rpt_07_lastValue = 0;
+            
             phasor_02_sigbuf = nullptr;
             phasor_02_lastLockedPhase = 0;
             phasor_02_conv = 0;
             phasor_02_setupDone = false;
-            env_08_lastValue = 0;
-            frp_09_lastValue = 0;
+            
             phasor_03_sigbuf = nullptr;
             phasor_03_lastLockedPhase = 0;
             phasor_03_conv = 0;
             phasor_03_setupDone = false;
-            cpo_10_lastValue = 0;
-            drf_11_lastValue = 0;
-            pwi_12_lastValue = 0;
-            rvo_13_lastValue = 0;
-            gai_14_lastValue = 0;
+            
             recpointer_at_scroll = 0;
             delrecstop_delaysamps = 0;
             delrecstop_record = 0;
-            delrecstop_scrollhistory = 1;
+            delrecstop_scrollhistory = 0;
             recordtilde_01_wIndex = 0;
             recordtilde_01_lastRecord = 0;
-            fdb_15_lastValue = 0;
+
             recordtilde_02_wIndex = 0;
             recordtilde_02_lastRecord = 0;
-            wet_16_lastValue = 0;
-            mut_17_lastValue = 0;
-            frz_18_lastValue = 0;
-            syc_19_lastValue = 0;
-            tmp_20_lastValue = 0;
-            rtm_21_lastValue = 0;
+        
             dcblock_tilde_01_xm1 = 0;
             dcblock_tilde_01_ym1 = 0;
             dcblock_tilde_01_setupDone = false;
