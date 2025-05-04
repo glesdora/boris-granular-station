@@ -624,10 +624,6 @@ namespace RNBO {
             return this->safediv(this->tempo(), beattime * 60);
         }
 
-        number __wrapped_op_round(number in1, number in2) {
-            return (in2 == 0 ? 0 : rnbo_fround(in1 * 1 / in2) * in2);
-        }
-
         ParameterValue tonormalized(ParameterIndex index, ParameterValue value) {
             return this->convertToNormalizedParameterValue(index, value);
         }
@@ -1049,30 +1045,10 @@ namespace RNBO {
         }
 
         ConstCharPointer getParameterId(ParameterIndex index) const {
-            switch (index) {            //  RANGE           SKEW (TYPE)
-			case 0: return "den";       //  0.04 - 1.00     1.00
-			case 1: return "cha";       //  0.00 - 100.00   1.00
-			case 2: return "rdl";       //  0.00 - 100.00   1.00
-			case 3: return "len";       //  0.20 - 2000.00  0.42 (JUCE)
-			case 4: return "rle";       //  0.00 - 100.00   1.00
-			case 5: return "psh";       //  0.25 - 4.00     log (pow(2.0, 1.0 / sm*12.0))
-			case 6: return "rpt";       //  0.00 - 100.00   1.00
-			case 7: return "env";       //  0.00 - 3.00     1.00
-			case 8: return "frp";       //  0.00 - 100.00   1.00
-			case 9: return "cpo";       //
-			case 10: return "drf";      //  0.00 - 100.00   
-			case 11: return "pwi";      //  0.00 - 100.00   1.00
-			case 12: return "rvo";      //  0.00 - 100.00   1.00
-			case 13: return "gai";      //  
-			case 14: return "fdb";      //  0.00 - 100.00   1.00
-            case 15: return "wet";      //  
-			case 16: return "mut";      //  0 - 1
-			case 17: return "frz";      //  0 - 1
-			case 18: return "syc";      //  0 - 1
-            case 19: return "tmp";      //  0 - 6
-			case 20: return "rtm";      //  0 - 2
-            default: return "bogus";
-            }
+            ParameterInfo pinfo;
+			this->getParameterInfo(index, &pinfo);
+
+			return pinfo.displayName;
         }
 
         void getParameterInfo(ParameterIndex index, ParameterInfo* info) const {
@@ -1091,7 +1067,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "den";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1110,7 +1086,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "cha";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1129,7 +1105,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "rdl";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1148,7 +1124,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "len";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1167,7 +1143,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "rle";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1186,7 +1162,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "psh";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1205,7 +1181,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "rpt";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1224,7 +1200,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "env";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1243,7 +1219,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "frp";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1262,7 +1238,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "cpo";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1281,7 +1257,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "drf";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1300,7 +1276,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "pwi";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1319,7 +1295,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "rvo";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1338,7 +1314,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "gai";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1357,7 +1333,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "fdb";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1376,7 +1352,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "wet";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1397,7 +1373,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "mut";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1418,7 +1394,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "frz";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1439,7 +1415,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "syc";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1460,7 +1436,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "tmp";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
@@ -1481,7 +1457,7 @@ namespace RNBO {
                     info->transmittable = true;
                     info->initialized = true;
                     info->visible = true;
-                    info->displayName = "";
+                    info->displayName = "rtm";
                     info->unit = "";
                     info->ioType = IOTypeUndefined;
                     info->signalIndex = INVALID_INDEX;
