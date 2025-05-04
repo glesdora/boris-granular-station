@@ -1,0 +1,98 @@
+[
+  {
+    "name": "realtime_grains",
+    "preset": {
+      "__sps": {
+        "rtgrains": [
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {}
+        ]
+      },
+      "cha": {
+        "value": 99
+      },
+      "cpo": {
+        "value": 0.5
+      },
+      "den": {
+        "value": 0.05
+      },
+      "drf": {
+        "value": 0
+      },
+      "env": {
+        "value": 0
+      },
+      "fdb": {
+        "value": 0
+      },
+      "frp": {
+        "value": 0
+      },
+      "frz": {
+        "value": 0
+      },
+      "gai": {
+        "value": 1
+      },
+      "len": {
+        "value": 713
+      },
+      "mut": {
+        "value": 0
+      },
+      "psh": {
+        "value": 1
+      },
+      "pwi": {
+        "value": 0
+      },
+      "rdl": {
+        "value": 0
+      },
+      "rle": {
+        "value": 0
+      },
+      "rpt": {
+        "value": 0
+      },
+      "rtm": {
+        "value": 0
+      },
+      "rvo": {
+        "value": 0
+      },
+      "syc": {
+        "value": 0
+      },
+      "tmp": {
+        "value": 0
+      },
+      "wet": {
+        "value": 1
+      }
+    }
+  }
+]

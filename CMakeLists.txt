@@ -13,15 +13,15 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 set(RNBO_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/export/rnbo/" CACHE FILEPATH "The path to the the RNBO c++ source directory")
 set(RNBO_EXPORT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/export/" CACHE FILEPATH "path to your export directory")
-set(RNBO_CLASS_FILE_NAME "rnbo_source.cpp" CACHE STRING "the name of your rnbo class file")
+set(RNBO_CLASS_FILE_NAME "Granulator.cpp" CACHE STRING "the name of your rnbo class file")
 mark_as_advanced(RNBO_CLASS_FILE_NAME)
 
-set(RNBO_CLASS_NAME "rnbomatic")
-set(RNBO_CLASS_FILE "${RNBO_EXPORT_DIR}/${RNBO_CLASS_FILE_NAME}")
-set(RNBO_DESCRIPTION_FILE "${RNBO_EXPORT_DIR}/description.json")
-set(RNBO_PRESETS_FILE "${RNBO_EXPORT_DIR}/presets.json")
-set(RNBO_BINARY_DATA_FILE "${RNBO_EXPORT_DIR}/${RNBO_CLASS_NAME}_binary.cpp")
-set(RNBO_BINARY_DATA_STORAGE_NAME "${RNBO_CLASS_NAME}_binary")
+set(RNBO_CLASS_NAME "Granulator")
+set(RNBO_CLASS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dsp/${RNBO_CLASS_FILE_NAME}")
+set(RNBO_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dsp/description.json")
+set(RNBO_PRESETS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dsp/presets.json")
+#set(RNBO_BINARY_DATA_FILE "${RNBO_EXPORT_DIR}/${RNBO_CLASS_NAME}_binary.cpp")
+#set(RNBO_BINARY_DATA_STORAGE_NAME "${RNBO_CLASS_NAME}_binary")
 set(PLUGIN_PARAM_DEFAULT_NOTIFY ON CACHE BOOL "Should parameter changes from inside your rnbo patch send output by default?")
 
 #write description header file if description.json exists, sets RNBO_INCLUDE_DESCRIPTION_FILE if the file exists

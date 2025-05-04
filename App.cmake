@@ -49,8 +49,10 @@ target_sources(BorisGranularStation
   ui/Source/guicomponents/ComponentPanel.cpp
   ui/MoonjellyKnob/MoonJKnob.cpp
   ui/MoonjellyKnob/MoonJDisplay.cpp
+  dsp/Granulator.cpp
+ # dsp/RTGrainVoice.cpp
 
-  ${RNBO_CLASS_FILE}
+ # ${RNBO_CLASS_FILE}
 
   ${RNBO_CPP_DIR}/RNBO.cpp
   ${RNBO_CPP_DIR}/adapters/juce/RNBO_JuceAudioProcessorUtils.cpp
@@ -72,6 +74,7 @@ target_include_directories(BorisGranularStation
   ui/Source
   ui/Source/guicomponents
   ui/MoonjellyKnob
+  dsp
 )
 
 target_compile_definitions(BorisGranularStation
