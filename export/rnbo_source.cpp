@@ -666,8 +666,6 @@ namespace RNBO {
 
         void processMidiEvent(MillisecondTime time, int port, ConstByteArray data, Index length) {
             this->updateTime(time);
-            //this->ctlin_01_midihandler(data[0] & 240, (data[0] & 15) + 1, port, data, length);
-
 			auto status = data[0] & 240;
 			auto channel = (data[0] & 15) + 1;
 
@@ -739,19 +737,19 @@ namespace RNBO {
 
             //mixdown chans + gain
             for (Index i = 0; i < n; i++) {
-                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * gai /*this->gai_14_value*/;
+                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * gai;
             }
 
             this->revoffsethandler(
-                /*this->frz_18_value*/frz,
-                /*this->len_04_value*/len,
+                frz,
+                len,
                 this->signals[1],
                 n
             );
 
             //feedback
             for (Index i = 0; i < n; i++) {
-                this->signals[0][i] = this->feedbackbuffer[i] * fdb /*this->fdb_15_norm_value*/ + this->signals[2][i];
+                this->signals[0][i] = this->feedbackbuffer[i] * fdb + this->signals[2][i];
             }
 
             this->recordtilde_01_perform(
@@ -765,7 +763,7 @@ namespace RNBO {
 
             auto rp = this->recpointer_at_scroll;
             for (Index i = 0; i < n; i++) {
-                if (/*this->scroll_value*/scroll)
+                if (scroll)
                     rp = signals[4][i];
 
                 this->signals[2][i] = rp;
@@ -793,8 +791,8 @@ namespace RNBO {
 
             //volume
 			for (Index i = 0; i < n; i++) {
-                out2[i] = this->signals[1][i] * /*this->wet_16_value*/wet;
-				out1[i] = this->signals[2][i] * /*this->wet_16_value*/wet;
+                out2[i] = this->signals[1][i] * wet;
+				out1[i] = this->signals[2][i] * wet;
 			}
 
             this->recordtilde_02_perform(
@@ -916,10 +914,6 @@ namespace RNBO {
                 this->bufferop_01_buffer = new Float32Buffer(this->borisinrnbo_v01_rtbuf);
             }
 
-            if (index == 1) {
-            }
-
-
             if (index == 2) {
                 this->recordtilde_02_buffer = new Float32Buffer(this->inter_databuf_01);
             }
@@ -962,16 +956,16 @@ namespace RNBO {
             preset["__presetid"] = "rnbo";
 
             for (Index i = 0; i < getNumParameters(); i++) {
-				this->param_getPresetValue(preset, i);
+                this->param_getPresetValue((getSubState(preset, getParameterId(i))), i);
             }
         }
 
         void setPreset(MillisecondTime time, PatcherStateInterface& preset) {
             this->updateTime(time);
 
-			for (Index i = 0; i < getNumParameters(); i++) {
-                this->param_setPresetValue(preset, i, time);
-			}
+            for (Index i = 0; i < getNumParameters(); i++) {
+                this->param_setPresetValue(getSubState(preset, getParameterId(i)), i, time);
+            }
         }
 
         void processTempoEvent(MillisecondTime time, Tempo tempo) {
@@ -1020,116 +1014,6 @@ namespace RNBO {
 
             if (index == 17 && v == 0)
                 this->empty_audio_buffer();
-
-            //switch (index) {
-            //case 0:
-            //{
-            //    this->den_01_value_set(v);
-            //    break;
-            //}
-            //case 1:
-            //{
-            //    this->cha_02_value_set(v);
-            //    break;
-            //}
-            //case 2:
-            //{
-            //    this->rdl_03_value_set(v);
-            //    break;
-            //}
-            //case 3:
-            //{
-            //    this->len_04_value_set(v);
-            //    break;
-            //}
-            //case 4:
-            //{
-            //    this->rle_05_value_set(v);
-            //    break;
-            //}
-            //case 5:
-            //{
-            //    this->psh_06_value_set(v);
-            //    break;
-            //}
-            //case 6:
-            //{
-            //    this->rpt_07_value_set(v);
-            //    break;
-            //}
-            //case 7:
-            //{
-            //    this->env_08_value_set(v);
-            //    break;
-            //}
-            //case 8:
-            //{
-            //    this->frp_09_value_set(v);
-            //    break;
-            //}
-            //case 9:
-            //{
-            //    this->cpo_10_value_set(v);
-            //    break;
-            //}
-            //case 10:
-            //{
-            //    this->drf_11_value_set(v);
-            //    break;
-            //}
-            //case 11:
-            //{
-            //    this->pwi_12_value_set(v);
-            //    break;
-            //}
-            //case 12:
-            //{
-            //    this->rvo_13_value_set(v);
-            //    break;
-            //}
-            //case 13:
-            //{
-            //    this->gai_14_value_set(v);
-            //    break;
-            //}
-            //case 14:
-            //{
-            //    this->fdb_15_value_set(v);
-            //    break;
-            //}
-            //case 15:
-            //{
-            //    this->wet_16_value_set(v);
-            //    break;
-            //}
-            //case 16:
-            //{
-            //    this->mut_17_value_set(v);
-            //    break;
-            //}
-            //case 17:
-            //{
-            //    this->frz_18_value_set(v);
-            //    break;
-            //}
-            //case 18:
-            //{
-            //    this->syc_19_value_set(v);
-            //    break;
-            //}
-            //case 19:
-            //{
-            //    this->tmp_20_value_set(v);
-            //    break;
-            //}
-            //case 20:
-            //{
-            //    this->rtm_21_value_set(v);
-            //    break;
-            //}
-            //default:
-            //    break;
-            //}
         }
 
         void processParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time) {
@@ -1145,55 +1029,7 @@ namespace RNBO {
         }
 
         ParameterValue getParameterValue(ParameterIndex index) {
-            
 			return paramvalues[index];
-
-            //switch (index) {
-            //case 0:
-            //    return this->den_01_value;
-            //case 1:
-            //    return this->cha_02_value;
-            //case 2:
-            //    return this->rdl_03_value;
-            //case 3:
-            //    return this->len_04_value;
-            //case 4:
-            //    return this->rle_05_value;
-            //case 5:
-            //    return this->psh_06_value;
-            //case 6:
-            //    return this->rpt_07_value;
-            //case 7:
-            //    return this->env_08_value;
-            //case 8:
-            //    return this->frp_09_value;
-            //case 9:
-            //    return this->cpo_10_value;
-            //case 10:
-            //    return this->drf_11_value;
-            //case 11:
-            //    return this->pwi_12_value;
-            //case 12:
-            //    return this->rvo_13_value;
-            //case 13:
-            //    return this->gai_14_value;
-            //case 14:
-            //    return this->fdb_15_value;
-            //case 15:
-            //    return this->wet_16_value;
-            //case 16:
-            //    return this->mut_17_value;
-            //case 17:
-            //    return this->frz_18_value;
-            //case 18:
-            //    return this->syc_19_value;
-            //case 19:
-            //    return this->tmp_20_value;
-            //case 20:
-            //    return this->rtm_21_value;
-            //default:
-            //    return 0;
-            //}
         }
 
         ParameterIndex getNumSignalInParameters() const {
@@ -1817,247 +1653,6 @@ namespace RNBO {
 			voiceStates[voiceindex] = voicestate;
         }
 
-   //     void den_01_value_set(number v) {
-   //         v = this->density_value_constrain(v);
-   //         this->den_01_value = v;
-   //         this->sendParameter(0, false);
-
-   //         if (this->den_01_value != this->den_01_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->den_01_lastValue = this->den_01_value;
-   //         }
-   //     }
-
-   //     void cha_02_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->cha_02_value = v;
-   //         this->sendParameter(1, false);
-
-   //         this->cha_02_norm_value = this->tonormalized(1, this->cha_02_value);
-
-   //         if (this->cha_02_value != this->cha_02_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->cha_02_lastValue = this->cha_02_value;
-   //         }
-   //     }
-
-   //     void rdl_03_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->rdl_03_value = v;
-   //         this->sendParameter(2, false);
-
-   //         this->rdl_03_norm_value = this->tonormalized(2, this->rdl_03_value);
-
-   //         if (this->rdl_03_value != this->rdl_03_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->rdl_03_lastValue = this->rdl_03_value;
-   //         }
-   //     }
-
-   //     void len_04_value_set(number v) {
-   //         v = this->length_value_constrain(v);
-   //         this->len_04_value = v;
-   //         this->sendParameter(3, false);
-
-   //         if (this->len_04_value != this->len_04_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->len_04_lastValue = this->len_04_value;
-   //         }
-   //     }
-
-   //     void rle_05_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->rle_05_value = v;
-   //         this->sendParameter(4, false);
-
-   //         if (this->rle_05_value != this->rle_05_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->rle_05_lastValue = this->rle_05_value;
-   //         }
-   //     }
-
-   //     void psh_06_value_set(number v) {
-   //         v = this->pitchshift_value_constrain(v);
-   //         this->psh_06_value = v;
-   //         this->sendParameter(5, false);
-
-   //         if (this->psh_06_value != this->psh_06_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->psh_06_lastValue = this->psh_06_value;
-   //         }
-   //     }
-
-   //     void rpt_07_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->rpt_07_value = v;
-   //         this->sendParameter(6, false);
-
-   //         if (this->rpt_07_value != this->rpt_07_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->rpt_07_lastValue = this->rpt_07_value;
-   //         }
-   //     }
-
-   //     void env_08_value_set(number v) {
-   //         v = this->envelope_value_constrain(v);
-   //         this->env_08_value = v;
-   //         this->sendParameter(7, false);
-
-   //         if (this->env_08_value != this->env_08_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->env_08_lastValue = this->env_08_value;
-   //         }
-   //     }
-
-   //     void frp_09_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->frp_09_value = v;
-   //         this->sendParameter(8, false);
-
-   //         if (this->frp_09_value != this->frp_09_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->frp_09_lastValue = this->frp_09_value;
-   //         }
-   //     }
-
-   //     void cpo_10_value_set(number v) {
-   //         v = this->normalized_value_constrain(v);
-   //         this->cpo_10_value = v;
-   //         this->sendParameter(9, false);
-
-   //         if (this->cpo_10_value != this->cpo_10_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->cpo_10_lastValue = this->cpo_10_value;
-   //         }
-   //     }
-
-   //     void drf_11_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->drf_11_value = v;
-   //         this->sendParameter(10, false);
-
-   //         if (this->drf_11_value != this->drf_11_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->drf_11_lastValue = this->drf_11_value;
-   //         }
-   //     }
-
-   //     void pwi_12_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->pwi_12_value = v;
-   //         this->sendParameter(11, false);
-
-   //         if (this->pwi_12_value != this->pwi_12_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->pwi_12_lastValue = this->pwi_12_value;
-   //         }
-   //     }
-
-   //     void rvo_13_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->rvo_13_value = v;
-   //         this->sendParameter(12, false);
-
-   //         if (this->rvo_13_value != this->rvo_13_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->rvo_13_lastValue = this->rvo_13_value;
-   //         }
-   //     }
-
-   //     void gai_14_value_set(number v) {
-   //         v = this->volume_value_constrain(v);
-   //         this->gai_14_value = v;
-   //         this->sendParameter(13, false);
-
-   //         if (this->gai_14_value != this->gai_14_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->gai_14_lastValue = this->gai_14_value;
-   //         }
-   //     }
-
-   //     void fdb_15_value_set(number v) {
-   //         v = this->percent_value_constrain(v);
-   //         this->fdb_15_value = v;
-   //         this->sendParameter(14, false);
-
-   //         this->fdb_15_norm_value = this->tonormalized(14, this->fdb_15_value);
-
-   //         if (this->fdb_15_value != this->fdb_15_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->fdb_15_lastValue = this->fdb_15_value;
-   //         }
-   //     }
-
-   //     void wet_16_value_set(number v) {
-   //         v = this->volume_value_constrain(v);
-   //         this->wet_16_value = v;
-   //         this->sendParameter(15, false);
-
-   //         if (this->wet_16_value != this->wet_16_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->wet_16_lastValue = this->wet_16_value;
-   //         }
-   //     }
-
-   //     void mut_17_value_set(number v) {
-   //         v = this->toggle_value_constrain(v);
-   //         this->mut_17_value = v;
-   //         this->sendParameter(16, false);
-
-   //         if (this->mut_17_value != this->mut_17_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->mut_17_lastValue = this->mut_17_value;
-   //         }
-   //     }
-
-   //     void frz_18_value_set(number v) {
-   //         v = this->toggle_value_constrain(v);
-   //         this->frz_18_value = v;
-   //         this->sendParameter(17, false);
-
-   //         if (this->frz_18_value != this->frz_18_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->frz_18_lastValue = this->frz_18_value;
-   //         }
-
-   //         this->scroll_value = (v == 0);
-			//if (this->scroll_value)
-   //             this->empty_audio_buffer();
-   //     }
-
-   //     void syc_19_value_set(number v) {
-   //         v = this->toggle_value_constrain(v);
-   //         this->syc_19_value = v;
-   //         this->sendParameter(18, false);
-
-   //         if (this->syc_19_value != this->syc_19_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->syc_19_lastValue = this->syc_19_value;
-   //         }
-   //     }
-
-   //     void tmp_20_value_set(number v) {
-   //         v = this->tmp_value_constrain(v);
-   //         this->tmp_20_value = v;
-   //         this->sendParameter(19, false);
-
-   //         if (this->tmp_20_value != this->tmp_20_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->tmp_20_lastValue = this->tmp_20_value;
-   //         }
-   //     }
-
-   //     void rtm_21_value_set(number v) {
-   //         v = this->rtm_value_constrain(v);
-   //         this->rtm_21_value = v;
-   //         this->sendParameter(20, false);
-
-   //         if (this->rtm_21_value != this->rtm_21_lastValue) {
-   //             this->getEngine()->presetTouched();
-   //             this->rtm_21_lastValue = this->rtm_21_value;
-   //         }
-   //     }
-
         number msToSamps(MillisecondTime ms, number sampleRate) {
             return ms * sampleRate * 0.001;
         }
@@ -2165,57 +1760,6 @@ namespace RNBO {
             this->processParamInitEvents();
         }
 
-        static number density_value_constrain(number v) {
-            v = (v > 1 ? 1 : (v < 0.04 ? 0.04 : v));
-            return v;
-        }
-
-        static number percent_value_constrain(number v) {
-            v = (v > 100 ? 100 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number length_value_constrain(number v) {
-            v = (v > 2000 ? 2000 : (v < 20 ? 20 : v));
-            return v;
-        }
-
-        static number pitchshift_value_constrain(number v) {
-            v = (v > 4 ? 4 : (v < 0.25 ? 0.25 : v));
-            return v;
-        }
-
-        static number envelope_value_constrain(number v) {
-            v = (v > 3 ? 3 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number normalized_value_constrain(number v) {
-            v = (v > 1 ? 1 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number volume_value_constrain(number v) {
-            v = (v > 1.5 ? 1.5 : (v < 0 ? 0 : v));
-            return v;
-        }
-
-        static number toggle_value_constrain(number v) {
-            return (v != 0);
-        }
-
-        static number tmp_value_constrain(number v) {
-            v = (v > 6 ? 6 : (v < 0 ? 0 : v));
-
-            return rnbo_fround(v);
-        }
-
-        static number rtm_value_constrain(number v) {
-            v = (v > 2 ? 2 : (v < 0 ? 0 : v));
-
-            return rnbo_fround(v);
-        }
-
         void empty_audio_buffer() {
             auto& buffer = this->bufferop_01_buffer;
             buffer->setZero();
@@ -2259,17 +1803,6 @@ namespace RNBO {
                 this->rtgrainvoice[target - 1]->initiateVoice(trigatindex, grainprops);
             }
         }
-
-    //    void ctlin_01_midihandler(int status, int channel, int port, ConstByteArray data, Index length) {
-    //        RNBO_UNUSED(length);
-    //        RNBO_UNUSED(port);
-
-    //        if (status == 0xB0 && (channel == this->ctlin_01_channel || this->ctlin_01_channel == -1) && (data[1] == this->ctlin_01_controller || this->ctlin_01_controller == -1)) {
-    //            //this->mut_17_value_set(this->fromnormalized(16, data[2] * 0.007874015748));
-				//this->setParameterValue(16, this->fromnormalized(16, data[2] * 0.007874015748), RNBOTimeNow);
-    //            this->ctlin_01_status = 0;
-    //        }
-    //    }
 
         void phasor_01_perform(number freq, SampleValue* out, Index n) {
             auto __phasor_01_lastLockedPhase = this->phasor_01_lastLockedPhase;
@@ -3122,12 +2655,10 @@ namespace RNBO {
 		}
 
 		void param_setPresetValue(PatcherStateInterface& preset, Index paramIndex, MillisecondTime time) {
-            auto& sub = getSubState(preset, getParameterId(paramIndex));
-
-			if ((bool)(stateIsEmpty(sub)))
+			if ((bool)(stateIsEmpty(preset)))
 				return;
 
-			this->setParameterValue(paramIndex, sub["value"], time);
+			this->setParameterValue(paramIndex, preset["value"], time);
 		}
 
         void phasor_01_dspsetup(bool force) {
@@ -3423,50 +2954,6 @@ namespace RNBO {
                 paramlastvalues[i] = 0;
             }
 
-           /* den_01_value = 0.52;
-            cha_02_value = 100;
-            rdl_03_value = 0;
-            len_04_value = 200;
-            rle_05_value = 0;
-            psh_06_value = 1;
-            rpt_07_value = 0;
-            env_08_value = 1;
-            frp_09_value = 0;
-            cpo_10_value = 0;
-            drf_11_value = 0;
-            pwi_12_value = 0;
-            rvo_13_value = 0;
-            gai_14_value = 1;
-            fdb_15_value = 0;
-            wet_16_value = 1;
-            mut_17_value = 0;
-            frz_18_value = 0;
-            syc_19_value = 0;
-            tmp_20_value = 3;
-            rtm_21_value = 0;
-
-            den_01_lastValue = 0;
-            cha_02_lastValue = 0;
-            rdl_03_lastValue = 0;
-            len_04_lastValue = 0;
-            rle_05_lastValue = 0;
-            psh_06_lastValue = 0;
-            rpt_07_lastValue = 0;
-            env_08_lastValue = 0;
-            frp_09_lastValue = 0;
-            cpo_10_lastValue = 0;
-            drf_11_lastValue = 0;
-            pwi_12_lastValue = 0;
-            rvo_13_lastValue = 0;
-            gai_14_lastValue = 0;
-            fdb_15_lastValue = 0;
-            wet_16_lastValue = 0;
-            mut_17_lastValue = 0;
-            frz_18_lastValue = 0;
-            syc_19_lastValue = 0;
-            tmp_20_lastValue = 0;
-            rtm_21_lastValue = 0;*/
-
             recordtilde_01_record = 0;
             recordtilde_01_begin = 0;
             recordtilde_01_end = -1;
@@ -3583,53 +3070,6 @@ namespace RNBO {
         number paramvalues[21];
 		number paramlastvalues[21];
 		number normalizedparamvalues[21];
-
-        //number den_01_value;          // number  
-        //number den_01_lastValue;      // number  
-        //number cha_02_value;          // Index  
-        //number cha_02_norm_value;     // number  
-        //number cha_02_lastValue;      // Index  
-        //number rdl_03_value;          // Index  
-        //number rdl_03_norm_value;     // number  
-        //number rdl_03_lastValue;      // Index  
-        //number len_04_value;          // number  
-        //number len_04_lastValue;      // number  
-        //number rle_05_value;          // Index  
-        //number rle_05_lastValue;      // Index  
-        //number psh_06_value;          // Index  
-        //number psh_06_lastValue;      // Index  
-        //number rpt_07_value;          // Index  
-        //number rpt_07_lastValue;      // Index  
-        //number env_08_value;          // number  
-        //number env_08_lastValue;      // number  
-        //number frp_09_value;          // Index  
-        //number frp_09_lastValue;      // Index  
-        //number cpo_10_value;          // number  
-        //number cpo_10_lastValue;      // number  
-        //number drf_11_value;          // number  
-        //number drf_11_lastValue;      // number  
-        //number pwi_12_value;          // Index  
-        //number pwi_12_lastValue;      // Index  
-        //number rvo_13_value;          // Index  
-        //number rvo_13_lastValue;      // Index  
-        //number gai_14_value;          // number  
-        //number gai_14_lastValue;      // number  
-        //number fdb_15_value;          // Index  
-        //number fdb_15_norm_value;     // number  
-        //number fdb_15_lastValue;      // Index  
-        //number wet_16_value;          // number  
-        //number wet_16_lastValue;      // number  
-        //number mut_17_value;          // bool  
-        //number mut_17_lastValue;      // bool  
-        //number frz_18_value;          // bool  
-        //number frz_18_lastValue;      // bool  
-        //number scroll_value;          // bool  
-        //number syc_19_value;          // bool  
-        //number syc_19_lastValue;      // bool  
-        //number tmp_20_value;          // Index  
-        //number tmp_20_lastValue;      // Index  
-        //number rtm_21_value;          // Index  
-        //number rtm_21_lastValue;      // Index
 
         number phasor_01_freq;
         number phasor_02_freq;
@@ -3756,4 +3196,3 @@ namespace RNBO {
     }
 
 } // end RNBO namespace
-
