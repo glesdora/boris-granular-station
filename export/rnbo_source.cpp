@@ -666,7 +666,15 @@ namespace RNBO {
 
         void processMidiEvent(MillisecondTime time, int port, ConstByteArray data, Index length) {
             this->updateTime(time);
-            this->ctlin_01_midihandler(data[0] & 240, (data[0] & 15) + 1, port, data, length);
+            //this->ctlin_01_midihandler(data[0] & 240, (data[0] & 15) + 1, port, data, length);
+
+			auto status = data[0] & 240;
+			auto channel = (data[0] & 15) + 1;
+
+            if (status == 0xB0 && (channel == this->ctlin_01_channel || this->ctlin_01_channel == -1) && (data[1] == this->ctlin_01_controller || this->ctlin_01_controller == -1)) {
+                this->setParameterValue(16, this->fromnormalized(16, data[2] * 0.007874015748), time);
+                this->ctlin_01_status = 0;
+            }
         }
 
         Index getNumMidiOutputPorts() const {
@@ -690,15 +698,32 @@ namespace RNBO {
             this->phasor_02_perform(this->phasor_02_freq, this->signals[1], n);
             this->phasor_03_perform(this->phasor_03_freq, this->signals[2], n);
 
+			auto mut = paramvalues[16];
+            auto len = paramvalues[3];
+			auto den = paramvalues[0];
+			auto cha = normalizedparamvalues[1];
+			auto rdl = normalizedparamvalues[2];
+			auto syc = paramvalues[18];
+			auto tmp = paramvalues[19];
+			auto rtm = paramvalues[20];
+
+            auto frz = paramvalues[17];
+            auto scroll = (frz == 0);
+
+            auto gai = paramvalues[13];
+			auto fdb = paramvalues[14];
+
+            auto wet = paramvalues[15];
+
             this->generate_triggers(
-                this->mut_17_value,
-                this->len_04_value,
-                this->den_01_value,
-                this->cha_02_norm_value,
-                this->rdl_03_norm_value,
-                this->syc_19_value,
-                this->tmp_20_value,
-                this->rtm_21_value,
+                mut,
+                len,
+				den,
+				cha,
+				rdl,
+				syc,
+				tmp,
+				rtm,
                 this->signals[0],
                 this->signals[1],
                 this->signals[2],
@@ -706,27 +731,27 @@ namespace RNBO {
             );
 
             this->delayRecStop(
-                this->len_04_value,
-                this->scroll_value,
+                len,
+                scroll,
                 this->signals[3],
                 n
             );
 
             //mixdown chans + gain
             for (Index i = 0; i < n; i++) {
-                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * this->gai_14_value;
+                this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * gai /*this->gai_14_value*/;
             }
 
             this->revoffsethandler(
-                this->frz_18_value,
-                this->len_04_value,
+                /*this->frz_18_value*/frz,
+                /*this->len_04_value*/len,
                 this->signals[1],
                 n
             );
 
             //feedback
             for (Index i = 0; i < n; i++) {
-                this->signals[0][i] = this->feedbackbuffer[i] * this->fdb_15_norm_value + this->signals[2][i];
+                this->signals[0][i] = this->feedbackbuffer[i] * fdb /*this->fdb_15_norm_value*/ + this->signals[2][i];
             }
 
             this->recordtilde_01_perform(
@@ -740,7 +765,7 @@ namespace RNBO {
 
             auto rp = this->recpointer_at_scroll;
             for (Index i = 0; i < n; i++) {
-                if (this->scroll_value)
+                if (/*this->scroll_value*/scroll)
                     rp = signals[4][i];
 
                 this->signals[2][i] = rp;
@@ -768,8 +793,8 @@ namespace RNBO {
 
             //volume
 			for (Index i = 0; i < n; i++) {
-                out2[i] = this->signals[1][i] * this->wet_16_value;
-				out1[i] = this->signals[2][i] * this->wet_16_value;
+                out2[i] = this->signals[1][i] * /*this->wet_16_value*/wet;
+				out1[i] = this->signals[2][i] * /*this->wet_16_value*/wet;
 			}
 
             this->recordtilde_02_perform(
@@ -957,10 +982,6 @@ namespace RNBO {
                 this->timevalue_01_sendValue();
 				this->timevalue_02_sendValue();
 				this->timevalue_03_sendValue();
-
-                //this->timevalue_01_onTempoChanged(tempo);
-                //this->timevalue_02_onTempoChanged(tempo);
-                //this->timevalue_03_onTempoChanged(tempo);
             }
         }
 
@@ -973,133 +994,142 @@ namespace RNBO {
         }
 
         void onSampleRateChanged(double samplerate) {
-            //this->timevalue_01_onSampleRateChanged(samplerate);
-            //this->timevalue_02_onSampleRateChanged(samplerate);
-            //this->timevalue_03_onSampleRateChanged(samplerate);
         }
 
         void processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator) {
             this->updateTime(time);
-
-            //if (this->globaltransport_setTimeSignature(this->_currentTime, numerator, denominator, false)) {
-            //    //this->timevalue_01_onTimeSignatureChanged(numerator, denominator);
-            //    //this->timevalue_02_onTimeSignatureChanged(numerator, denominator);
-            //    //this->timevalue_03_onTimeSignatureChanged(numerator, denominator);
-            //}
         }
 
         void setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime time) {
             this->updateTime(time);
 
-            switch (index) {
-            case 0:
-            {
-                this->den_01_value_set(v);
-                break;
+            ParameterInfo pinfo;
+			this->getParameterInfo(index, &pinfo);
+
+            v = (v < pinfo.min ? pinfo.min : (v > pinfo.max ? pinfo.max : v));
+
+			paramvalues[index] = v;
+			normalizedparamvalues[index] = this->tonormalized(index, v);
+
+            this->sendParameter(index, false);
+
+            if (v != paramlastvalues[index]) {
+                this->getEngine()->presetTouched();
+                this->paramlastvalues[index] = v;
             }
-            case 1:
-            {
-                this->cha_02_value_set(v);
-                break;
-            }
-            case 2:
-            {
-                this->rdl_03_value_set(v);
-                break;
-            }
-            case 3:
-            {
-                this->len_04_value_set(v);
-                break;
-            }
-            case 4:
-            {
-                this->rle_05_value_set(v);
-                break;
-            }
-            case 5:
-            {
-                this->psh_06_value_set(v);
-                break;
-            }
-            case 6:
-            {
-                this->rpt_07_value_set(v);
-                break;
-            }
-            case 7:
-            {
-                this->env_08_value_set(v);
-                break;
-            }
-            case 8:
-            {
-                this->frp_09_value_set(v);
-                break;
-            }
-            case 9:
-            {
-                this->cpo_10_value_set(v);
-                break;
-            }
-            case 10:
-            {
-                this->drf_11_value_set(v);
-                break;
-            }
-            case 11:
-            {
-                this->pwi_12_value_set(v);
-                break;
-            }
-            case 12:
-            {
-                this->rvo_13_value_set(v);
-                break;
-            }
-            case 13:
-            {
-                this->gai_14_value_set(v);
-                break;
-            }
-            case 14:
-            {
-                this->fdb_15_value_set(v);
-                break;
-            }
-            case 15:
-            {
-                this->wet_16_value_set(v);
-                break;
-            }
-            case 16:
-            {
-                this->mut_17_value_set(v);
-                break;
-            }
-            case 17:
-            {
-                this->frz_18_value_set(v);
-                break;
-            }
-            case 18:
-            {
-                this->syc_19_value_set(v);
-                break;
-            }
-            case 19:
-            {
-                this->tmp_20_value_set(v);
-                break;
-            }
-            case 20:
-            {
-                this->rtm_21_value_set(v);
-                break;
-            }
-            default:
-                break;
-            }
+
+            if (index == 17 && v == 0)
+                this->empty_audio_buffer();
+
+            //switch (index) {
+            //case 0:
+            //{
+            //    this->den_01_value_set(v);
+            //    break;
+            //}
+            //case 1:
+            //{
+            //    this->cha_02_value_set(v);
+            //    break;
+            //}
+            //case 2:
+            //{
+            //    this->rdl_03_value_set(v);
+            //    break;
+            //}
+            //case 3:
+            //{
+            //    this->len_04_value_set(v);
+            //    break;
+            //}
+            //case 4:
+            //{
+            //    this->rle_05_value_set(v);
+            //    break;
+            //}
+            //case 5:
+            //{
+            //    this->psh_06_value_set(v);
+            //    break;
+            //}
+            //case 6:
+            //{
+            //    this->rpt_07_value_set(v);
+            //    break;
+            //}
+            //case 7:
+            //{
+            //    this->env_08_value_set(v);
+            //    break;
+            //}
+            //case 8:
+            //{
+            //    this->frp_09_value_set(v);
+            //    break;
+            //}
+            //case 9:
+            //{
+            //    this->cpo_10_value_set(v);
+            //    break;
+            //}
+            //case 10:
+            //{
+            //    this->drf_11_value_set(v);
+            //    break;
+            //}
+            //case 11:
+            //{
+            //    this->pwi_12_value_set(v);
+            //    break;
+            //}
+            //case 12:
+            //{
+            //    this->rvo_13_value_set(v);
+            //    break;
+            //}
+            //case 13:
+            //{
+            //    this->gai_14_value_set(v);
+            //    break;
+            //}
+            //case 14:
+            //{
+            //    this->fdb_15_value_set(v);
+            //    break;
+            //}
+            //case 15:
+            //{
+            //    this->wet_16_value_set(v);
+            //    break;
+            //}
+            //case 16:
+            //{
+            //    this->mut_17_value_set(v);
+            //    break;
+            //}
+            //case 17:
+            //{
+            //    this->frz_18_value_set(v);
+            //    break;
+            //}
+            //case 18:
+            //{
+            //    this->syc_19_value_set(v);
+            //    break;
+            //}
+            //case 19:
+            //{
+            //    this->tmp_20_value_set(v);
+            //    break;
+            //}
+            //case 20:
+            //{
+            //    this->rtm_21_value_set(v);
+            //    break;
+            //}
+            //default:
+            //    break;
+            //}
         }
 
         void processParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time) {
@@ -1115,96 +1145,55 @@ namespace RNBO {
         }
 
         ParameterValue getParameterValue(ParameterIndex index) {
-            switch (index) {
-            case 0:
-            {
-                return this->den_01_value;
-            }
-            case 1:
-            {
-                return this->cha_02_value;
-            }
-            case 2:
-            {
-                return this->rdl_03_value;
-            }
-            case 3:
-            {
-                return this->len_04_value;
-            }
-            case 4:
-            {
-                return this->rle_05_value;
-            }
-            case 5:
-            {
-                return this->psh_06_value;
-            }
-            case 6:
-            {
-                return this->rpt_07_value;
-            }
-            case 7:
-            {
-                return this->env_08_value;
-            }
-            case 8:
-            {
-                return this->frp_09_value;
-            }
-            case 9:
-            {
-                return this->cpo_10_value;
-            }
-            case 10:
-            {
-                return this->drf_11_value;
-            }
-            case 11:
-            {
-                return this->pwi_12_value;
-            }
-            case 12:
-            {
-                return this->rvo_13_value;
-            }
-            case 13:
-            {
-                return this->gai_14_value;
-            }
-            case 14:
-            {
-                return this->fdb_15_value;
-            }
-            case 15:
-            {
-                return this->wet_16_value;
-            }
-            case 16:
-            {
-                return this->mut_17_value;
-            }
-            case 17:
-            {
-                return this->frz_18_value;
-            }
-            case 18:
-            {
-                return this->syc_19_value;
-            }
-            case 19:
-            {
-                return this->tmp_20_value;
-            }
-            case 20:
-            {
-                return this->rtm_21_value;
-            }
-            default:
-            {
-                return 0;
-            }
-            }
+            
+			return paramvalues[index];
+
+            //switch (index) {
+            //case 0:
+            //    return this->den_01_value;
+            //case 1:
+            //    return this->cha_02_value;
+            //case 2:
+            //    return this->rdl_03_value;
+            //case 3:
+            //    return this->len_04_value;
+            //case 4:
+            //    return this->rle_05_value;
+            //case 5:
+            //    return this->psh_06_value;
+            //case 6:
+            //    return this->rpt_07_value;
+            //case 7:
+            //    return this->env_08_value;
+            //case 8:
+            //    return this->frp_09_value;
+            //case 9:
+            //    return this->cpo_10_value;
+            //case 10:
+            //    return this->drf_11_value;
+            //case 11:
+            //    return this->pwi_12_value;
+            //case 12:
+            //    return this->rvo_13_value;
+            //case 13:
+            //    return this->gai_14_value;
+            //case 14:
+            //    return this->fdb_15_value;
+            //case 15:
+            //    return this->wet_16_value;
+            //case 16:
+            //    return this->mut_17_value;
+            //case 17:
+            //    return this->frz_18_value;
+            //case 18:
+            //    return this->syc_19_value;
+            //case 19:
+            //    return this->tmp_20_value;
+            //case 20:
+            //    return this->rtm_21_value;
+            //default:
+            //    return 0;
+            //}
         }
 
         ParameterIndex getNumSignalInParameters() const {
@@ -1670,23 +1659,20 @@ namespace RNBO {
             }
         }
 
-        ParameterValue applyJuceDenormalization(ParameterValue value, ParameterValue min, ParameterValue max, ParameterValue exp, int steps) const
+        ParameterValue applyJuceSkew(ParameterValue normalizedValue, ParameterValue exp) const
         {
-            auto interval = 1. / (steps - 1);
-            auto snap_val = round((value) / interval) * interval;
-
-            return min + (max - min) * (pow(2.718281828459045, log(snap_val) / exp));
+            return pow(2.718281828459045, log(normalizedValue) / exp);
         }
 
-        ParameterValue applyJuceNormalization(ParameterValue value, ParameterValue min, ParameterValue max, ParameterValue exp) const
+        ParameterValue applyJuceDeskew(ParameterValue normalizedValue, ParameterValue exp) const
         {
-            return std::pow(((value - min) / (max - min)), exp);
+            return std::pow(normalizedValue, exp);
         }
 
-        ParameterValue applyPitchDenormalization(ParameterValue value, ParameterValue min, ParameterValue max) const
+        ParameterValue applyPitchDenormalization(ParameterValue normalizedValue, ParameterValue min, ParameterValue max) const
         {
             auto semitoneRatio = std::pow(2.0, 1.0 / 12.0);
-            auto n = std::round(std::log(value) / std::log(semitoneRatio));
+            auto n = std::round(std::log(normalizedValue) / std::log(semitoneRatio));
 
             auto snap_val = std::pow(semitoneRatio, n);
             return min * std::pow(max / min, snap_val);
@@ -1719,142 +1705,45 @@ namespace RNBO {
         }
 
         ParameterValue convertToNormalizedParameterValue(ParameterIndex index, ParameterValue value) const {
-            switch (index) {
-            case 9:
-            {
-                return value;
-            }
-            case 16:
-            case 17:
-            case 18:
-            {
-                return this->applyStepsToNormalizedParameterValue(value, 2);
-            }
-            case 20:
-            {
-                return this->applyStepsToNormalizedParameterValue(value / 2., 3);
-            }
-            case 7:
-            {
-                return value / 3.;
-            }
-            case 19:
-            {
-                return this->applyStepsToNormalizedParameterValue(value / 6., 7);
-            }
-            case 1:
-            case 2:
-            case 4:
-            case 6:
-            case 8:
-            case 10:
-            case 11:
-            case 12:
-            case 14:
-            {
-                return value / 100.;
-            }
-            case 13:
-            case 15:
-            {
-                return value / 1.5;
-            }
-            case 3:
-            {
-                ParameterInfo pinfo;
-                this->getParameterInfo(3, &pinfo);
+			ParameterInfo pinfo;
+			this->getParameterInfo(index, &pinfo);
 
-                value = (value < pinfo.min ? pinfo.min : (value > pinfo.max ? pinfo.max : value));
+            if (index == 5)
+				value = this->applyPitchNormalization(value, pinfo.min, pinfo.max);
+            else if (index < this->getNumParameters()) {
+                value = (value - pinfo.min) / (pinfo.max - pinfo.min);
 
-                return this->applyJuceNormalization(value, pinfo.min, pinfo.max, pinfo.exponent);
-            }
-            case 0:
-            {
-                return (value - 0.04) / 0.96;
-            }
-            case 5:
-            {
-                ParameterInfo pinfo;
-                this->getParameterInfo(5, &pinfo);
+                if (pinfo.steps) {
+                    value = this->applyStepsToNormalizedParameterValue(value, pinfo.steps);
+                }
+                if (pinfo.exponent != 1) {
+                    value = this->applyJuceDeskew(value, pinfo.exponent);
+                }
+			}
 
-                value = (value < pinfo.min ? pinfo.min : (value > pinfo.max ? pinfo.max : value));
-
-                return this->applyPitchNormalization(value, pinfo.min, pinfo.max);
-            }
-            default:
-                return value;
-            }
+			return value;
         }
 
         ParameterValue convertFromNormalizedParameterValue(ParameterIndex index, ParameterValue value) const {
+            ParameterInfo pinfo;
+            this->getParameterInfo(index, &pinfo);
+
             value = (value < 0 ? 0 : (value > 1 ? 1 : value));
 
-            switch (index) {
-            case 9:
-            {
-                return value;
-            }
-            case 16:
-            case 17:
-            case 18:
-            {
-                return  this->applyStepsToNormalizedParameterValue(value, 2);
-            }
-            case 20:
-            {
-                value = this->applyStepsToNormalizedParameterValue(value, 3);
-                return 2 * value;
-            }
-            case 7:
-            {
-                return 3 * value;
-            }
-            case 19:
-            {
-                value = this->applyStepsToNormalizedParameterValue(value, 7);
-                return 6 * value;
-            }
-            case 1:
-            case 2:
-            case 4:
-            case 6:
-            case 8:
-            case 10:
-            case 11:
-            case 12:
-            case 14:
-            {
-                return round(value * 100);
-            }
-            case 13:
-            case 15:
-            {
-                return 1.5 * value;
-            }
-            case 3:
-            {
-                ParameterInfo pinfo;
-                this->getParameterInfo(3, &pinfo);
+            if (index == 5)
+                value = this->applyPitchDenormalization(value, pinfo.min, pinfo.max);
+            else if (index < this->getNumParameters()) {
+                if (pinfo.steps)
+                    value = this->applyStepsToNormalizedParameterValue(value, pinfo.steps);
+                if (pinfo.exponent != 1) {
+                    value = this->applyJuceSkew(value, pinfo.exponent);
+                }
 
-                return this->applyJuceDenormalization(value, pinfo.min, pinfo.max, pinfo.exponent, pinfo.steps);
-            }
-            case 0:
-            {
-                return 0.04 + value * 0.96;
-            }
-            case 5:
-            {
-                ParameterInfo pinfo;
-                this->getParameterInfo(5, &pinfo);
-
-                return this->applyPitchDenormalization(value, pinfo.min, pinfo.max);
-            }
-
-            default:
-                return value;
-
+                value = value * (pinfo.max - pinfo.min) + pinfo.min;
 
             }
+
+            return value;
         }
 
         void scheduleParamInit(ParameterIndex index, Index order) {
@@ -1928,246 +1817,246 @@ namespace RNBO {
 			voiceStates[voiceindex] = voicestate;
         }
 
-        void den_01_value_set(number v) {
-            v = this->density_value_constrain(v);
-            this->den_01_value = v;
-            this->sendParameter(0, false);
+   //     void den_01_value_set(number v) {
+   //         v = this->density_value_constrain(v);
+   //         this->den_01_value = v;
+   //         this->sendParameter(0, false);
 
-            if (this->den_01_value != this->den_01_lastValue) {
-                this->getEngine()->presetTouched();
-                this->den_01_lastValue = this->den_01_value;
-            }
-        }
+   //         if (this->den_01_value != this->den_01_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->den_01_lastValue = this->den_01_value;
+   //         }
+   //     }
 
-        void cha_02_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->cha_02_value = v;
-            this->sendParameter(1, false);
+   //     void cha_02_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->cha_02_value = v;
+   //         this->sendParameter(1, false);
 
-            this->cha_02_norm_value = this->tonormalized(1, this->cha_02_value);
+   //         this->cha_02_norm_value = this->tonormalized(1, this->cha_02_value);
 
-            if (this->cha_02_value != this->cha_02_lastValue) {
-                this->getEngine()->presetTouched();
-                this->cha_02_lastValue = this->cha_02_value;
-            }
-        }
+   //         if (this->cha_02_value != this->cha_02_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->cha_02_lastValue = this->cha_02_value;
+   //         }
+   //     }
 
-        void rdl_03_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->rdl_03_value = v;
-            this->sendParameter(2, false);
+   //     void rdl_03_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->rdl_03_value = v;
+   //         this->sendParameter(2, false);
 
-            this->rdl_03_norm_value = this->tonormalized(2, this->rdl_03_value);
+   //         this->rdl_03_norm_value = this->tonormalized(2, this->rdl_03_value);
 
-            if (this->rdl_03_value != this->rdl_03_lastValue) {
-                this->getEngine()->presetTouched();
-                this->rdl_03_lastValue = this->rdl_03_value;
-            }
-        }
+   //         if (this->rdl_03_value != this->rdl_03_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->rdl_03_lastValue = this->rdl_03_value;
+   //         }
+   //     }
 
-        void len_04_value_set(number v) {
-            v = this->length_value_constrain(v);
-            this->len_04_value = v;
-            this->sendParameter(3, false);
+   //     void len_04_value_set(number v) {
+   //         v = this->length_value_constrain(v);
+   //         this->len_04_value = v;
+   //         this->sendParameter(3, false);
 
-            if (this->len_04_value != this->len_04_lastValue) {
-                this->getEngine()->presetTouched();
-                this->len_04_lastValue = this->len_04_value;
-            }
-        }
+   //         if (this->len_04_value != this->len_04_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->len_04_lastValue = this->len_04_value;
+   //         }
+   //     }
 
-        void rle_05_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->rle_05_value = v;
-            this->sendParameter(4, false);
+   //     void rle_05_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->rle_05_value = v;
+   //         this->sendParameter(4, false);
 
-            if (this->rle_05_value != this->rle_05_lastValue) {
-                this->getEngine()->presetTouched();
-                this->rle_05_lastValue = this->rle_05_value;
-            }
-        }
+   //         if (this->rle_05_value != this->rle_05_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->rle_05_lastValue = this->rle_05_value;
+   //         }
+   //     }
 
-        void psh_06_value_set(number v) {
-            v = this->pitchshift_value_constrain(v);
-            this->psh_06_value = v;
-            this->sendParameter(5, false);
+   //     void psh_06_value_set(number v) {
+   //         v = this->pitchshift_value_constrain(v);
+   //         this->psh_06_value = v;
+   //         this->sendParameter(5, false);
 
-            if (this->psh_06_value != this->psh_06_lastValue) {
-                this->getEngine()->presetTouched();
-                this->psh_06_lastValue = this->psh_06_value;
-            }
-        }
+   //         if (this->psh_06_value != this->psh_06_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->psh_06_lastValue = this->psh_06_value;
+   //         }
+   //     }
 
-        void rpt_07_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->rpt_07_value = v;
-            this->sendParameter(6, false);
+   //     void rpt_07_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->rpt_07_value = v;
+   //         this->sendParameter(6, false);
 
-            if (this->rpt_07_value != this->rpt_07_lastValue) {
-                this->getEngine()->presetTouched();
-                this->rpt_07_lastValue = this->rpt_07_value;
-            }
-        }
+   //         if (this->rpt_07_value != this->rpt_07_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->rpt_07_lastValue = this->rpt_07_value;
+   //         }
+   //     }
 
-        void env_08_value_set(number v) {
-            v = this->envelope_value_constrain(v);
-            this->env_08_value = v;
-            this->sendParameter(7, false);
+   //     void env_08_value_set(number v) {
+   //         v = this->envelope_value_constrain(v);
+   //         this->env_08_value = v;
+   //         this->sendParameter(7, false);
 
-            if (this->env_08_value != this->env_08_lastValue) {
-                this->getEngine()->presetTouched();
-                this->env_08_lastValue = this->env_08_value;
-            }
-        }
+   //         if (this->env_08_value != this->env_08_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->env_08_lastValue = this->env_08_value;
+   //         }
+   //     }
 
-        void frp_09_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->frp_09_value = v;
-            this->sendParameter(8, false);
+   //     void frp_09_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->frp_09_value = v;
+   //         this->sendParameter(8, false);
 
-            if (this->frp_09_value != this->frp_09_lastValue) {
-                this->getEngine()->presetTouched();
-                this->frp_09_lastValue = this->frp_09_value;
-            }
-        }
+   //         if (this->frp_09_value != this->frp_09_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->frp_09_lastValue = this->frp_09_value;
+   //         }
+   //     }
 
-        void cpo_10_value_set(number v) {
-            v = this->normalized_value_constrain(v);
-            this->cpo_10_value = v;
-            this->sendParameter(9, false);
+   //     void cpo_10_value_set(number v) {
+   //         v = this->normalized_value_constrain(v);
+   //         this->cpo_10_value = v;
+   //         this->sendParameter(9, false);
 
-            if (this->cpo_10_value != this->cpo_10_lastValue) {
-                this->getEngine()->presetTouched();
-                this->cpo_10_lastValue = this->cpo_10_value;
-            }
-        }
+   //         if (this->cpo_10_value != this->cpo_10_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->cpo_10_lastValue = this->cpo_10_value;
+   //         }
+   //     }
 
-        void drf_11_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->drf_11_value = v;
-            this->sendParameter(10, false);
+   //     void drf_11_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->drf_11_value = v;
+   //         this->sendParameter(10, false);
 
-            if (this->drf_11_value != this->drf_11_lastValue) {
-                this->getEngine()->presetTouched();
-                this->drf_11_lastValue = this->drf_11_value;
-            }
-        }
+   //         if (this->drf_11_value != this->drf_11_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->drf_11_lastValue = this->drf_11_value;
+   //         }
+   //     }
 
-        void pwi_12_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->pwi_12_value = v;
-            this->sendParameter(11, false);
+   //     void pwi_12_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->pwi_12_value = v;
+   //         this->sendParameter(11, false);
 
-            if (this->pwi_12_value != this->pwi_12_lastValue) {
-                this->getEngine()->presetTouched();
-                this->pwi_12_lastValue = this->pwi_12_value;
-            }
-        }
+   //         if (this->pwi_12_value != this->pwi_12_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->pwi_12_lastValue = this->pwi_12_value;
+   //         }
+   //     }
 
-        void rvo_13_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->rvo_13_value = v;
-            this->sendParameter(12, false);
+   //     void rvo_13_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->rvo_13_value = v;
+   //         this->sendParameter(12, false);
 
-            if (this->rvo_13_value != this->rvo_13_lastValue) {
-                this->getEngine()->presetTouched();
-                this->rvo_13_lastValue = this->rvo_13_value;
-            }
-        }
+   //         if (this->rvo_13_value != this->rvo_13_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->rvo_13_lastValue = this->rvo_13_value;
+   //         }
+   //     }
 
-        void gai_14_value_set(number v) {
-            v = this->volume_value_constrain(v);
-            this->gai_14_value = v;
-            this->sendParameter(13, false);
+   //     void gai_14_value_set(number v) {
+   //         v = this->volume_value_constrain(v);
+   //         this->gai_14_value = v;
+   //         this->sendParameter(13, false);
 
-            if (this->gai_14_value != this->gai_14_lastValue) {
-                this->getEngine()->presetTouched();
-                this->gai_14_lastValue = this->gai_14_value;
-            }
-        }
+   //         if (this->gai_14_value != this->gai_14_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->gai_14_lastValue = this->gai_14_value;
+   //         }
+   //     }
 
-        void fdb_15_value_set(number v) {
-            v = this->percent_value_constrain(v);
-            this->fdb_15_value = v;
-            this->sendParameter(14, false);
+   //     void fdb_15_value_set(number v) {
+   //         v = this->percent_value_constrain(v);
+   //         this->fdb_15_value = v;
+   //         this->sendParameter(14, false);
 
-            this->fdb_15_norm_value = this->tonormalized(14, this->fdb_15_value);
+   //         this->fdb_15_norm_value = this->tonormalized(14, this->fdb_15_value);
 
-            if (this->fdb_15_value != this->fdb_15_lastValue) {
-                this->getEngine()->presetTouched();
-                this->fdb_15_lastValue = this->fdb_15_value;
-            }
-        }
+   //         if (this->fdb_15_value != this->fdb_15_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->fdb_15_lastValue = this->fdb_15_value;
+   //         }
+   //     }
 
-        void wet_16_value_set(number v) {
-            v = this->volume_value_constrain(v);
-            this->wet_16_value = v;
-            this->sendParameter(15, false);
+   //     void wet_16_value_set(number v) {
+   //         v = this->volume_value_constrain(v);
+   //         this->wet_16_value = v;
+   //         this->sendParameter(15, false);
 
-            if (this->wet_16_value != this->wet_16_lastValue) {
-                this->getEngine()->presetTouched();
-                this->wet_16_lastValue = this->wet_16_value;
-            }
-        }
+   //         if (this->wet_16_value != this->wet_16_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->wet_16_lastValue = this->wet_16_value;
+   //         }
+   //     }
 
-        void mut_17_value_set(number v) {
-            v = this->toggle_value_constrain(v);
-            this->mut_17_value = v;
-            this->sendParameter(16, false);
+   //     void mut_17_value_set(number v) {
+   //         v = this->toggle_value_constrain(v);
+   //         this->mut_17_value = v;
+   //         this->sendParameter(16, false);
 
-            if (this->mut_17_value != this->mut_17_lastValue) {
-                this->getEngine()->presetTouched();
-                this->mut_17_lastValue = this->mut_17_value;
-            }
-        }
+   //         if (this->mut_17_value != this->mut_17_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->mut_17_lastValue = this->mut_17_value;
+   //         }
+   //     }
 
-        void frz_18_value_set(number v) {
-            v = this->toggle_value_constrain(v);
-            this->frz_18_value = v;
-            this->sendParameter(17, false);
+   //     void frz_18_value_set(number v) {
+   //         v = this->toggle_value_constrain(v);
+   //         this->frz_18_value = v;
+   //         this->sendParameter(17, false);
 
-            if (this->frz_18_value != this->frz_18_lastValue) {
-                this->getEngine()->presetTouched();
-                this->frz_18_lastValue = this->frz_18_value;
-            }
+   //         if (this->frz_18_value != this->frz_18_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->frz_18_lastValue = this->frz_18_value;
+   //         }
 
-            this->scroll_value = (v == 0);
-			if (this->scroll_value)
-                this->empty_audio_buffer();
-        }
+   //         this->scroll_value = (v == 0);
+			//if (this->scroll_value)
+   //             this->empty_audio_buffer();
+   //     }
 
-        void syc_19_value_set(number v) {
-            v = this->toggle_value_constrain(v);
-            this->syc_19_value = v;
-            this->sendParameter(18, false);
+   //     void syc_19_value_set(number v) {
+   //         v = this->toggle_value_constrain(v);
+   //         this->syc_19_value = v;
+   //         this->sendParameter(18, false);
 
-            if (this->syc_19_value != this->syc_19_lastValue) {
-                this->getEngine()->presetTouched();
-                this->syc_19_lastValue = this->syc_19_value;
-            }
-        }
+   //         if (this->syc_19_value != this->syc_19_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->syc_19_lastValue = this->syc_19_value;
+   //         }
+   //     }
 
-        void tmp_20_value_set(number v) {
-            v = this->tmp_value_constrain(v);
-            this->tmp_20_value = v;
-            this->sendParameter(19, false);
+   //     void tmp_20_value_set(number v) {
+   //         v = this->tmp_value_constrain(v);
+   //         this->tmp_20_value = v;
+   //         this->sendParameter(19, false);
 
-            if (this->tmp_20_value != this->tmp_20_lastValue) {
-                this->getEngine()->presetTouched();
-                this->tmp_20_lastValue = this->tmp_20_value;
-            }
-        }
+   //         if (this->tmp_20_value != this->tmp_20_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->tmp_20_lastValue = this->tmp_20_value;
+   //         }
+   //     }
 
-        void rtm_21_value_set(number v) {
-            v = this->rtm_value_constrain(v);
-            this->rtm_21_value = v;
-            this->sendParameter(20, false);
+   //     void rtm_21_value_set(number v) {
+   //         v = this->rtm_value_constrain(v);
+   //         this->rtm_21_value = v;
+   //         this->sendParameter(20, false);
 
-            if (this->rtm_21_value != this->rtm_21_lastValue) {
-                this->getEngine()->presetTouched();
-                this->rtm_21_lastValue = this->rtm_21_value;
-            }
-        }
+   //         if (this->rtm_21_value != this->rtm_21_lastValue) {
+   //             this->getEngine()->presetTouched();
+   //             this->rtm_21_lastValue = this->rtm_21_value;
+   //         }
+   //     }
 
         number msToSamps(MillisecondTime ms, number sampleRate) {
             return ms * sampleRate * 0.001;
@@ -2371,15 +2260,16 @@ namespace RNBO {
             }
         }
 
-        void ctlin_01_midihandler(int status, int channel, int port, ConstByteArray data, Index length) {
-            RNBO_UNUSED(length);
-            RNBO_UNUSED(port);
+    //    void ctlin_01_midihandler(int status, int channel, int port, ConstByteArray data, Index length) {
+    //        RNBO_UNUSED(length);
+    //        RNBO_UNUSED(port);
 
-            if (status == 0xB0 && (channel == this->ctlin_01_channel || this->ctlin_01_channel == -1) && (data[1] == this->ctlin_01_controller || this->ctlin_01_controller == -1)) {
-                this->mut_17_value_set(this->fromnormalized(16, data[2] * 0.007874015748));
-                this->ctlin_01_status = 0;
-            }
-        }
+    //        if (status == 0xB0 && (channel == this->ctlin_01_channel || this->ctlin_01_channel == -1) && (data[1] == this->ctlin_01_controller || this->ctlin_01_controller == -1)) {
+    //            //this->mut_17_value_set(this->fromnormalized(16, data[2] * 0.007874015748));
+				//this->setParameterValue(16, this->fromnormalized(16, data[2] * 0.007874015748), RNBOTimeNow);
+    //            this->ctlin_01_status = 0;
+    //        }
+    //    }
 
         void phasor_01_perform(number freq, SampleValue* out, Index n) {
             auto __phasor_01_lastLockedPhase = this->phasor_01_lastLockedPhase;
@@ -3524,7 +3414,16 @@ namespace RNBO {
             limi_01_threshold_setter(limi_01_threshold);
             limi_01_release = 1000;
 
-            den_01_value = 0.52;
+            for (int i = 0; i < 21; i++) {
+                ParameterInfo pinfo;
+                this->getParameterInfo(i, &pinfo);
+
+				paramvalues[i] = pinfo.initialValue;
+				normalizedparamvalues[i] = tonormalized(i, paramvalues[i]);
+                paramlastvalues[i] = 0;
+            }
+
+           /* den_01_value = 0.52;
             cha_02_value = 100;
             rdl_03_value = 0;
             len_04_value = 200;
@@ -3566,7 +3465,7 @@ namespace RNBO {
             frz_18_lastValue = 0;
             syc_19_lastValue = 0;
             tmp_20_lastValue = 0;
-            rtm_21_lastValue = 0;
+            rtm_21_lastValue = 0;*/
 
             recordtilde_01_record = 0;
             recordtilde_01_begin = 0;
@@ -3681,52 +3580,56 @@ namespace RNBO {
         number limi_01_threshold;
         number limi_01_release;
 
-        number den_01_value;          // number  
-        number den_01_lastValue;      // number  
-        number cha_02_value;          // Index  
-        number cha_02_norm_value;     // number  
-        number cha_02_lastValue;      // Index  
-        number rdl_03_value;          // Index  
-        number rdl_03_norm_value;     // number  
-        number rdl_03_lastValue;      // Index  
-        number len_04_value;          // number  
-        number len_04_lastValue;      // number  
-        number rle_05_value;          // Index  
-        number rle_05_lastValue;      // Index  
-        number psh_06_value;          // Index  
-        number psh_06_lastValue;      // Index  
-        number rpt_07_value;          // Index  
-        number rpt_07_lastValue;      // Index  
-        number env_08_value;          // number  
-        number env_08_lastValue;      // number  
-        number frp_09_value;          // Index  
-        number frp_09_lastValue;      // Index  
-        number cpo_10_value;          // number  
-        number cpo_10_lastValue;      // number  
-        number drf_11_value;          // number  
-        number drf_11_lastValue;      // number  
-        number pwi_12_value;          // Index  
-        number pwi_12_lastValue;      // Index  
-        number rvo_13_value;          // Index  
-        number rvo_13_lastValue;      // Index  
-        number gai_14_value;          // number  
-        number gai_14_lastValue;      // number  
-        number fdb_15_value;          // Index  
-        number fdb_15_norm_value;     // number  
-        number fdb_15_lastValue;      // Index  
-        number wet_16_value;          // number  
-        number wet_16_lastValue;      // number  
-        number mut_17_value;          // bool  
-        number mut_17_lastValue;      // bool  
-        number frz_18_value;          // bool  
-        number frz_18_lastValue;      // bool  
-        number scroll_value;          // bool  
-        number syc_19_value;          // bool  
-        number syc_19_lastValue;      // bool  
-        number tmp_20_value;          // Index  
-        number tmp_20_lastValue;      // Index  
-        number rtm_21_value;          // Index  
-        number rtm_21_lastValue;      // Index
+        number paramvalues[21];
+		number paramlastvalues[21];
+		number normalizedparamvalues[21];
+
+        //number den_01_value;          // number  
+        //number den_01_lastValue;      // number  
+        //number cha_02_value;          // Index  
+        //number cha_02_norm_value;     // number  
+        //number cha_02_lastValue;      // Index  
+        //number rdl_03_value;          // Index  
+        //number rdl_03_norm_value;     // number  
+        //number rdl_03_lastValue;      // Index  
+        //number len_04_value;          // number  
+        //number len_04_lastValue;      // number  
+        //number rle_05_value;          // Index  
+        //number rle_05_lastValue;      // Index  
+        //number psh_06_value;          // Index  
+        //number psh_06_lastValue;      // Index  
+        //number rpt_07_value;          // Index  
+        //number rpt_07_lastValue;      // Index  
+        //number env_08_value;          // number  
+        //number env_08_lastValue;      // number  
+        //number frp_09_value;          // Index  
+        //number frp_09_lastValue;      // Index  
+        //number cpo_10_value;          // number  
+        //number cpo_10_lastValue;      // number  
+        //number drf_11_value;          // number  
+        //number drf_11_lastValue;      // number  
+        //number pwi_12_value;          // Index  
+        //number pwi_12_lastValue;      // Index  
+        //number rvo_13_value;          // Index  
+        //number rvo_13_lastValue;      // Index  
+        //number gai_14_value;          // number  
+        //number gai_14_lastValue;      // number  
+        //number fdb_15_value;          // Index  
+        //number fdb_15_norm_value;     // number  
+        //number fdb_15_lastValue;      // Index  
+        //number wet_16_value;          // number  
+        //number wet_16_lastValue;      // number  
+        //number mut_17_value;          // bool  
+        //number mut_17_lastValue;      // bool  
+        //number frz_18_value;          // bool  
+        //number frz_18_lastValue;      // bool  
+        //number scroll_value;          // bool  
+        //number syc_19_value;          // bool  
+        //number syc_19_lastValue;      // bool  
+        //number tmp_20_value;          // Index  
+        //number tmp_20_lastValue;      // Index  
+        //number rtm_21_value;          // Index  
+        //number rtm_21_lastValue;      // Index
 
         number phasor_01_freq;
         number phasor_02_freq;
