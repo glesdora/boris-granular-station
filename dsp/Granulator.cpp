@@ -12,48 +12,6 @@ Granulator::RTGrainVoice:: ~RTGrainVoice()
     free(dummyBuffer);
 }
 
-Granulator* Granulator::RTGrainVoice::getGrainMaster() const {
-    return _voiceOwner;
-}
-
-number Granulator::RTGrainVoice::wrap(number x, number low, number high) {
-    number lo;
-    number hi;
-
-    if (low == high)
-        return low;
-
-    if (low > high) {
-        hi = low;
-        lo = high;
-    }
-    else {
-        lo = low;
-        hi = high;
-    }
-
-    number range = hi - lo;
-
-    if (x >= lo && x < hi)
-        return x;
-
-    if (range <= 0.000000001)
-        return lo;
-
-    long numWraps = (long)(trunc((x - lo) / range));
-    numWraps = numWraps - ((x < lo ? 1 : 0));
-    number result = x - range * numWraps;
-
-    if (result >= hi)
-        return result - range;
-    else
-        return result;
-}
-
-Index Granulator::RTGrainVoice::voice() {
-    return this->_voiceIndex;
-}
-
 void Granulator::RTGrainVoice::process(
     const SampleValue* const* inputs,
     Index numInputs,
@@ -104,75 +62,6 @@ void Granulator::RTGrainVoice::process(
 
     this->signalaccum(this->realtime_grain_out[0], out1, n);
     this->signalaccum(this->realtime_grain_out[1], out2, n);
-}
-
-void Granulator::RTGrainVoice::prepareToProcess(number sampleRate, Index maxBlockSize, bool force) {
-    if (this->maxvs < maxBlockSize || !this->didAllocateSignals) {
-        Index i;
-
-        for (i = 0; i < 2; i++) {
-            this->realtime_grain_out[i] = resizeSignal(this->realtime_grain_out[i], this->maxvs, maxBlockSize);
-        }
-
-        this->zeroBuffer = resizeSignal(this->zeroBuffer, this->maxvs, maxBlockSize);
-        this->dummyBuffer = resizeSignal(this->dummyBuffer, this->maxvs, maxBlockSize);
-        this->didAllocateSignals = true;
-    }
-
-    const bool sampleRateChanged = sampleRate != this->sr;
-    const bool maxvsChanged = maxBlockSize != this->maxvs;
-    const bool forceDSPSetup = sampleRateChanged || maxvsChanged || force;
-
-    if (sampleRateChanged || maxvsChanged) {
-        this->vs = maxBlockSize;
-        this->maxvs = maxBlockSize;
-        this->sr = sampleRate;
-        this->invsr = 1 / sampleRate;
-    }
-}
-
-Index Granulator::RTGrainVoice::getIsMuted() {
-    return this->isMuted;
-}
-
-void Granulator::RTGrainVoice::setIsMuted(Index v) {
-    this->isMuted = v;
-}
-
-void Granulator::RTGrainVoice::processDataViewUpdate(DataRefIndex index, MillisecondTime time) {
-    if (index == 0) {
-        this->rtaudiobuf = new Float32Buffer(this->getGrainMaster()->getAudioBufferDataRef());
-    }
-
-    if (index == 1) {
-        this->intrpenvbuf = new Float32Buffer(this->getGrainMaster()->getEnvelopeBufferDataRef());
-    }
-}
-
-void Granulator::RTGrainVoice::initialize() {
-    for (int i = 0; i < 2; i++) {
-        realtime_grain_out[i] = nullptr;
-    }
-    this->rtaudiobuf = new Float32Buffer(this->getGrainMaster()->getAudioBufferDataRef());
-    this->intrpenvbuf = new Float32Buffer(this->getGrainMaster()->getEnvelopeBufferDataRef());
-}
-
-void Granulator::RTGrainVoice::allocateDataRefs() {                                                                               //mmmmmm
-    this->rtaudiobuf = this->rtaudiobuf->allocateIfNeeded();
-    this->intrpenvbuf = this->intrpenvbuf->allocateIfNeeded();
-}
-
-void Granulator::RTGrainVoice::initiateVoice(SampleIndex trigatindex, const list& v) {
-    if (v->length > 5) {
-        this->panning_value = v[5];
-        this->volume_value = v[4];
-        this->pishift_value = v[3];
-        this->direction_value = v[2];
-        this->grainsize_value = v[1];
-        this->position_value = v[0];
-    }
-
-    this->triggerindex = trigatindex;
 }
 
 void Granulator::RTGrainVoice::processBrain(
@@ -359,7 +248,111 @@ void Granulator::RTGrainVoice::processBrain(
 
     if (this->endOfGrain > 0)
         this->endOfGrain -= this->vs;
-    this->getGrainMaster()->updateVoiceState(this->voice(), { !getIsMuted(), this->hasGrainInQueue, this->endOfGrain });
+    this->getOwner()->updateVoiceState(this->voice(), { !getIsMuted(), this->hasGrainInQueue, this->endOfGrain });
+}
+
+void Granulator::RTGrainVoice::prepareToProcess(number sampleRate, Index maxBlockSize, bool force) {
+    if (this->maxvs < maxBlockSize || !this->didAllocateSignals) {
+        Index i;
+
+        for (i = 0; i < 2; i++) {
+            this->realtime_grain_out[i] = resizeSignal(this->realtime_grain_out[i], this->maxvs, maxBlockSize);
+        }
+
+        this->zeroBuffer = resizeSignal(this->zeroBuffer, this->maxvs, maxBlockSize);
+        this->dummyBuffer = resizeSignal(this->dummyBuffer, this->maxvs, maxBlockSize);
+        this->didAllocateSignals = true;
+    }
+
+    const bool sampleRateChanged = sampleRate != this->sr;
+    const bool maxvsChanged = maxBlockSize != this->maxvs;
+    const bool forceDSPSetup = sampleRateChanged || maxvsChanged || force;
+
+    if (sampleRateChanged || maxvsChanged) {
+        this->vs = maxBlockSize;
+        this->maxvs = maxBlockSize;
+        this->sr = sampleRate;
+        this->invsr = 1 / sampleRate;
+    }
+}
+
+
+void Granulator::RTGrainVoice::setupVoice(SampleIndex trigatindex, const list& v) {
+    if (v->length > 5) {
+        this->panning_value = v[5];
+        this->volume_value = v[4];
+        this->pishift_value = v[3];
+        this->direction_value = v[2];
+        this->grainsize_value = v[1];
+        this->position_value = v[0];
+    }
+
+    this->triggerindex = trigatindex;
+}
+
+Granulator* Granulator::RTGrainVoice::getOwner() const { return _voiceOwner; }
+
+Index Granulator::RTGrainVoice::voice() const { return this->_voiceIndex; }
+
+Index Granulator::RTGrainVoice::getIsMuted() const { return this->isMuted; }
+
+void Granulator::RTGrainVoice::setIsMuted(Index v) { this->isMuted = v; }
+
+void Granulator::RTGrainVoice::initialize() {
+    for (int i = 0; i < 2; i++) {
+        realtime_grain_out[i] = nullptr;
+    }
+    this->rtaudiobuf = new Float32Buffer(this->getOwner()->getAudioBufferDataRef());
+    this->intrpenvbuf = new Float32Buffer(this->getOwner()->getEnvelopeBufferDataRef());
+}
+
+void Granulator::RTGrainVoice::processDataViewUpdate(DataRefIndex index, MillisecondTime time) {
+    if (index == 0) {
+        this->rtaudiobuf = new Float32Buffer(this->getOwner()->getAudioBufferDataRef());
+    }
+
+    if (index == 1) {
+        this->intrpenvbuf = new Float32Buffer(this->getOwner()->getEnvelopeBufferDataRef());
+    }
+}
+
+void Granulator::RTGrainVoice::allocateDataRefs() {                                                                               //mmmmmm
+    this->rtaudiobuf = this->rtaudiobuf->allocateIfNeeded();
+    this->intrpenvbuf = this->intrpenvbuf->allocateIfNeeded();
+}
+
+number Granulator::RTGrainVoice::wrap(number x, number low, number high) {
+    number lo;
+    number hi;
+
+    if (low == high)
+        return low;
+
+    if (low > high) {
+        hi = low;
+        lo = high;
+    }
+    else {
+        lo = low;
+        hi = high;
+    }
+
+    number range = hi - lo;
+
+    if (x >= lo && x < hi)
+        return x;
+
+    if (range <= 0.000000001)
+        return lo;
+
+    long numWraps = (long)(trunc((x - lo) / range));
+    numWraps = numWraps - ((x < lo ? 1 : 0));
+    number result = x - range * numWraps;
+
+    if (result >= hi)
+        return result - range;
+    else
+        return result;
 }
 
 void Granulator::RTGrainVoice::signalaccum(
@@ -447,16 +440,14 @@ template <typename T> void Granulator::listswapelements(T& arr, Int a, Int b) {
     arr[(Index)b] = tmp;
 }
 
-number Granulator::samplerate() {
-    return this->sr;
-}
+number Granulator::clip(number v, number inf, number sup)
+{
+    if (v < inf)
+        v = inf;
+    else if (v > sup)
+        v = sup;
 
-Index Granulator::voice() {
-    return this->_voiceIndex;
-}
-
-number Granulator::mstosamps(MillisecondTime ms) {
-    return ms * this->sr * 0.001;
+    return v;
 }
 
 number Granulator::maximum(number x, number y) {
@@ -466,6 +457,12 @@ number Granulator::maximum(number x, number y) {
 inline number Granulator::safediv(number num, number denom) {
     return (denom == 0.0 ? 0.0 : num / denom);
 }
+
+number Granulator::samplerate() const { return this->sr; }
+
+Index Granulator::vectorsize() const { return this->vs; }
+
+number Granulator::mstosamps(MillisecondTime ms) const { return ms * this->sr * 0.001; }
 
 MillisecondTime Granulator::currenttime() {
     return this->_currentTime;
@@ -495,10 +492,6 @@ array<ListNum, 2> Granulator::listcompare(const list& input1, const list& input2
     }
 
     return tmp;
-}
-
-Index Granulator::vectorsize() {
-    return this->vs;
 }
 
 number Granulator::tempo() {
@@ -533,13 +526,9 @@ number Granulator::tickstohz(number ticks) {
     return (number)1 / (ticks / (number)480 * this->safediv(60, this->tempo()));
 }
 
-number Granulator::mstobeats(number ms) {
-    return ms * this->tempo() * 0.008 / (number)480;
-}
+number Granulator::mstobeats(number ms) { return ms * this->tempo() * 0.008 / (number)480; }
 
-MillisecondTime Granulator::sampstoms(number samps) {
-    return samps * 1000 / this->sr;
-}
+MillisecondTime Granulator::sampstoms(number samps) const { return samps * 1000 / this->sr; }
 
 Index Granulator::getNumMidiInputPorts() const {
     return 1;
@@ -573,9 +562,9 @@ void Granulator::process(
     SampleValue* out2 = (numOutputs >= 2 && outputs[1] ? outputs[1] : this->dummyBuffer);
     const SampleValue* in1 = (numInputs >= 1 && inputs[0] ? inputs[0] : this->zeroBuffer);
     const SampleValue* in2 = (numInputs >= 2 && inputs[1] ? inputs[1] : this->zeroBuffer);
-    this->phasor_01_perform(this->phasor_01_freq, this->signals[0], n);
-    this->phasor_02_perform(this->phasor_02_freq, this->signals[1], n);
-    this->phasor_03_perform(this->phasor_03_freq, this->signals[2], n);
+    this->phasor_n_sync_perform(this->phasor_01_freq, this->signals[0], n);
+    this->phasor_nd_sync_perform(this->phasor_02_freq, this->signals[1], n);
+    this->phasor_nt_sync_perform(this->phasor_03_freq, this->signals[2], n);
 
     auto mut = paramvalues[16];
     auto len = paramvalues[3];
@@ -594,39 +583,16 @@ void Granulator::process(
 
     auto wet = paramvalues[15];
 
-    this->generate_triggers(
-        mut,
-        len,
-        den,
-        cha,
-        rdl,
-        syc,
-        tmp,
-        rtm,
-        this->signals[0],
-        this->signals[1],
-        this->signals[2],
-        n
-    );
+    this->generate_triggers(mut, len, den, cha, rdl, syc, tmp, rtm, this->signals[0], this->signals[1], this->signals[2], n);
 
-    this->delayRecStop(
-        len,
-        scroll,
-        this->signals[3],
-        n
-    );
+    this->delayRecArrest(len, scroll, this->signals[3], n);
 
     //mixdown chans + gain
     for (Index i = 0; i < n; i++) {
         this->signals[2][i] = ((in1[i] + in2[i]) * 0.71) * gai;
     }
 
-    this->revoffsethandler(
-        frz,
-        len,
-        this->signals[1],
-        n
-    );
+    this->reverseOffsetHandler(frz, len, this->signals[1], n);
 
     //feedback
     for (Index i = 0; i < n; i++) {
@@ -720,10 +686,10 @@ void Granulator::prepareToProcess(number sampleRate, Index maxBlockSize, bool fo
         this->invsr = 1 / sampleRate;
     }
 
-    this->phasor_01_dspsetup(forceDSPSetup);
-    this->phasor_02_dspsetup(forceDSPSetup);
-    this->phasor_03_dspsetup(forceDSPSetup);
-    this->codebox_tilde_01_dspsetup(forceDSPSetup);
+    this->phasor_n_sync_dspsetup(forceDSPSetup);
+    this->phasor_nd_sync_dspsetup(forceDSPSetup);
+    this->phasor_nt_sync_dspsetup(forceDSPSetup);
+    this->freerunningphasor_dspsetup();
     this->dcblock_tilde_01_dspsetup(forceDSPSetup);
     this->limi_01_dspsetup(forceDSPSetup);
     this->globaltransport_dspsetup(forceDSPSetup);
@@ -1512,117 +1478,46 @@ void Granulator::updateVoiceState(int voice, voiceState voicestate) {
     voiceStates[voiceindex] = voicestate;
 }
 
-number Granulator::msToSamps(MillisecondTime ms, number sampleRate) {
-    return ms * sampleRate * 0.001;
-}
+Index Granulator::getMaxBlockSize() const { return this->maxvs; }
 
-MillisecondTime Granulator::sampsToMs(SampleIndex samps) {
-    return samps * (this->invsr * 1000);
-}
+number Granulator::getSampleRate() const { return this->sr; }
 
-Index Granulator::getMaxBlockSize() const {
-    return this->maxvs;
-}
+bool Granulator::hasFixedVectorSize() const { return false; }
 
-number Granulator::getSampleRate() const {
-    return this->sr;
-}
+Index Granulator::getNumInputChannels() const { return 2; }
 
-bool Granulator::hasFixedVectorSize() const {
-    return false;
-}
-
-Index Granulator::getNumInputChannels() const {
-    return 2;
-}
-
-Index Granulator::getNumOutputChannels() const {
-    return 2;
-}
-
-void Granulator::allocateDataRefs() {
-    for (Index i = 0; i < 24; i++) {
-        this->rtgrainvoice[i]->allocateDataRefs();
-    }
-
-    this->recordtilde_01_buffer->requestSize(this->mstosamps(20000), 1);
-    this->recordtilde_01_buffer->setSampleRate(this->sr);
-    this->recordtilde_01_buffer = this->recordtilde_01_buffer->allocateIfNeeded();
-    this->bufferop_01_buffer = this->bufferop_01_buffer->allocateIfNeeded();
-    this->recordtilde_02_buffer->requestSize(this->mstosamps(20000), 1);
-    this->recordtilde_02_buffer->setSampleRate(this->sr);
-    this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
-
-    if (this->borisinrnbo_v01_rtbuf->hasRequestedSize()) {
-        if (this->borisinrnbo_v01_rtbuf->wantsFill())
-            this->zeroDataRef(this->borisinrnbo_v01_rtbuf);
-
-        this->getEngine()->sendDataRefUpdated(0);
-    }
-
-
-    if (this->interpolated_envelope->hasRequestedSize()) {
-        if (this->interpolated_envelope->wantsFill())
-            this->zeroDataRef(this->interpolated_envelope);
-
-        this->getEngine()->sendDataRefUpdated(1);
-    }
-
-    this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
-
-    if (this->inter_databuf_01->hasRequestedSize()) {
-        if (this->inter_databuf_01->wantsFill())
-            this->zeroDataRef(this->inter_databuf_01);
-
-        this->getEngine()->sendDataRefUpdated(2);
-    }
-}
-
-void Granulator::sendOutlet(OutletIndex index, ParameterValue value) {
-    this->getEngine()->sendOutlet(this, index, value);
-}
-
-void Granulator::startup() {
-    this->updateTime(this->getEngine()->getCurrentTime());
-    for (Index i = 0; i < 24; i++) {
-        voiceStates[i].isActive = false;
-        voiceStates[i].hasGrainInQueue = false;
-        voiceStates[i].endOfGrain = 0;
-    }
-
-    this->timevalue_01_sendValue();
-    this->timevalue_02_sendValue();
-    this->timevalue_03_sendValue();
-
-    this->scheduleParamInit(0, 3);
-    this->scheduleParamInit(1, 2);
-    this->scheduleParamInit(2, 10);
-    this->scheduleParamInit(3, 5);
-    this->scheduleParamInit(4, 10);
-    this->scheduleParamInit(5, 9);
-    this->scheduleParamInit(6, 10);
-    this->scheduleParamInit(7, 11);
-    this->scheduleParamInit(8, 12);
-    this->scheduleParamInit(9, 7);
-    this->scheduleParamInit(10, 8);
-    this->scheduleParamInit(11, 14);
-    this->scheduleParamInit(12, 13);
-    this->scheduleParamInit(13, 0);
-    this->scheduleParamInit(14, 17);
-    this->scheduleParamInit(15, 19);
-    this->scheduleParamInit(16, 1);
-    this->scheduleParamInit(17, 16);
-    this->scheduleParamInit(18, 0);
-    this->scheduleParamInit(19, 0);
-    this->scheduleParamInit(20, 0);
-
-    this->processParamInitEvents();
-}
+Index Granulator::getNumOutputChannels() const { return 2; }
 
 void Granulator::empty_audio_buffer() {
     auto& buffer = this->bufferop_01_buffer;
     buffer->setZero();
     buffer->setTouched(true);
+}
+
+/*  � If a voice is muted, but in timer state, it is ignored.
+    � If a voice is unmuted, and eog is smaller then newtrig, it's good.
+    � If a voice is muted and not in timer state, it's good.
+    */
+
+int Granulator::pickTargetVoice(SampleIndex ti)     //VOICE MANAGER
+{
+    for (int i = 0; i < 24; i++) {
+        auto candidate_isActive = voiceStates[i].isActive;
+        auto candidate_hasGrainInQueue = voiceStates[i].hasGrainInQueue;
+        auto candidate_endOfGrain = voiceStates[i].endOfGrain;
+
+        if (candidate_hasGrainInQueue)
+            continue;
+
+        // the main class here only updates the hasGrainInQueue flag, while the active state and the eog are handled by the voice
+        if (!candidate_isActive || (candidate_isActive && candidate_endOfGrain < ti)) {
+            int target = i + 1;
+            voiceStates[i].hasGrainInQueue = true;
+            return target;
+        }
+    }
+
+    return -1;
 }
 
 void Granulator::setGrainProperties(SampleIndex trigatindex) {
@@ -1656,128 +1551,83 @@ void Granulator::setGrainProperties(SampleIndex trigatindex) {
         this->setGrainPan(pwi)
     };
 
-    int target = this->findtargetvoice(trigatindex);
+    int target = this->pickTargetVoice(trigatindex);
 
     if (target >= 0) {
-        this->rtgrainvoice[target - 1]->initiateVoice(trigatindex, grainprops);
+        this->rtgrainvoice[target - 1]->setupVoice(trigatindex, grainprops);
     }
 }
 
-void Granulator::phasor_01_perform(number freq, SampleValue* out, Index n) {
-    auto __phasor_01_lastLockedPhase = this->phasor_01_lastLockedPhase;
-    auto quantum = this->hztobeats(freq);
-    auto tempo = this->tempo();
-
-    if (quantum > 0 && tempo > 0) {
-        auto samplerate = this->samplerate();
-        auto beattime = this->beattimeatsample(0);
-        number offset = fmod(beattime, quantum);
-        number nextJump = quantum - offset;
-        number nextJumpInSamples = rnbo_fround(nextJump * 60 * samplerate / tempo * 1 / (number)1) * 1;
-        number inc = tempo / (number)60 / samplerate;
-        number oneoverquantum = (number)1 / quantum;
-
-        for (Index i = 0; i < n; i++) {
-            if ((bool)(this->transportatsample(i))) {
-                out[(Index)i] = __phasor_01_lastLockedPhase = offset * oneoverquantum;
-                offset += inc;
-                nextJumpInSamples--;
-
-                if (nextJumpInSamples <= 0) {
-                    offset -= quantum;
-                    nextJumpInSamples = rnbo_fround(quantum * 60 * samplerate / tempo * 1 / (number)1) * 1;
-                }
-            }
-            else {
-                out[(Index)i] = __phasor_01_lastLockedPhase;
-            }
-        }
-    }
-    else {
-        for (Index i = 0; i < n; i++) {
-            out[(Index)i] = 0;
-        }
-    }
-
-    this->phasor_01_lastLockedPhase = __phasor_01_lastLockedPhase;
+number Granulator::setGrainSize(number len, number rle)
+{
+    number newlen = (1 - rand01() * rle) * len;
+    newlen = this->clip(newlen, 1, len);        // sets 1 ms as the minimum length
+    return newlen;
 }
 
-void Granulator::phasor_02_perform(number freq, SampleValue* out, Index n) {
-    auto __phasor_02_lastLockedPhase = this->phasor_02_lastLockedPhase;
-    auto quantum = this->hztobeats(freq);
-    auto tempo = this->tempo();
+number Granulator::setGrainPosition(number posinsamps, number drfinsamps, number leninsamps, number psh, number rpt, number intelligent_offset)
+{
+    number r_marg = rnbo_ceil(this->clip(
+        leninsamps * (psh * (1 + rpt) - 1),
+        1,
+        3 * leninsamps
+    ));
 
-    if (quantum > 0 && tempo > 0) {
-        auto samplerate = this->samplerate();
-        auto beattime = this->beattimeatsample(0);
-        number offset = fmod(beattime, quantum);
-        number nextJump = quantum - offset;
-        number nextJumpInSamples = rnbo_fround(nextJump * 60 * samplerate / tempo * 1 / (number)1) * 1;
-        number inc = tempo / (number)60 / samplerate;
-        number oneoverquantum = (number)1 / quantum;
+    //maybe better: r_marg = std::max(1, leninsamps * (psh * (1 + rpt) - 1)); worst case, r_marg = leninsamps * (4 * (1 + 1) - 1) = 7 * leninsamps
+    //If length = 2 s, 14 s is a lot, but in theory inside the buffer. Need to test it. I'm talking about grains played at 8x speed. Can I really access the left half of the buffer?
+    //With the current limit at 3 * leninsamps, with psh = 4, rpt = 1 and len = 2 s, I should hear half of the grains glitching.
 
-        for (Index i = 0; i < n; i++) {
-            if ((bool)(this->transportatsample(i))) {
-                out[(Index)i] = __phasor_02_lastLockedPhase = offset * oneoverquantum;
-                offset += inc;
-                nextJumpInSamples--;
+    number pos = rnbo_ceil(this->clip(
+        posinsamps + rand01() * drfinsamps,
+        std::max(r_marg, leninsamps - intelligent_offset),
+        this->samplerate() * 10
+    ));
 
-                if (nextJumpInSamples <= 0) {
-                    offset -= quantum;
-                    nextJumpInSamples = rnbo_fround(quantum * 60 * samplerate / tempo * 1 / (number)1) * 1;
-                }
-            }
-            else {
-                out[(Index)i] = __phasor_02_lastLockedPhase;
-            }
-        }
-    }
-    else {
-        for (Index i = 0; i < n; i++) {
-            out[(Index)i] = 0;
-        }
-    }
+    //scale between 0 and 0.5, to cover the accessible half of the buffer
+    pos /= (this->samplerate() * 10. * 2.);
 
-    this->phasor_02_lastLockedPhase = __phasor_02_lastLockedPhase;
+    return pos;
 }
 
-void Granulator::phasor_03_perform(number freq, SampleValue* out, Index n) {
-    auto __phasor_03_lastLockedPhase = this->phasor_03_lastLockedPhase;
-    auto quantum = this->hztobeats(freq);
-    auto tempo = this->tempo();
+number Granulator::setGrainDirection(number frp) // return -1 or 1
+{
+    number r = rand01();
 
-    if (quantum > 0 && tempo > 0) {
-        auto samplerate = this->samplerate();
-        auto beattime = this->beattimeatsample(0);
-        number offset = fmod(beattime, quantum);
-        number nextJump = quantum - offset;
-        number nextJumpInSamples = rnbo_fround(nextJump * 60 * samplerate / tempo * 1 / (number)1) * 1;
-        number inc = tempo / (number)60 / samplerate;
-        number oneoverquantum = (number)1 / quantum;
+    number fr = 1;
+    if (frp)
+        fr = (r > frp) * 2 - 1;
 
-        for (Index i = 0; i < n; i++) {
-            if ((bool)(this->transportatsample(i))) {
-                out[(Index)i] = __phasor_03_lastLockedPhase = offset * oneoverquantum;
-                offset += inc;
-                nextJumpInSamples--;
+    return fr;
+}
 
-                if (nextJumpInSamples <= 0) {
-                    offset -= quantum;
-                    nextJumpInSamples = rnbo_fround(quantum * 60 * samplerate / tempo * 1 / (number)1) * 1;
-                }
-            }
-            else {
-                out[(Index)i] = __phasor_03_lastLockedPhase;
-            }
-        }
-    }
-    else {
-        for (Index i = 0; i < n; i++) {
-            out[(Index)i] = 0;
-        }
-    }
+number Granulator::setGrainPshift(number psh, number rpt)
+{
+    number ptc = rnbo_pow(2, rand01() * rpt) * psh;
+    return ptc;
+}
 
-    this->phasor_03_lastLockedPhase = __phasor_03_lastLockedPhase;
+number Granulator::setGrainVol(number rvo)
+{
+    number r = rand01();
+    number vol = 1. - r * rvo;
+    return vol;
+}
+
+number Granulator::setGrainPan(number pwi)
+{
+    number pan = 0.5 * (1 + rand01() * pwi);
+    return pan;
+}
+
+void Granulator::param_getPresetValue(PatcherStateInterface& preset, Index paramIndex) {
+    preset["value"] = this->getParameterValue(paramIndex);
+}
+
+void Granulator::param_setPresetValue(PatcherStateInterface& preset, Index paramIndex, MillisecondTime time) {
+    if ((bool)(stateIsEmpty(preset)))
+        return;
+
+    this->setParameterValue(paramIndex, preset["value"], time);
 }
 
 void Granulator::generate_triggers(
@@ -1807,7 +1657,7 @@ void Granulator::generate_triggers(
 
         if (sync == 0) {
             frq = (-0.60651 + 41.4268 * rnbo_exp(-0.001 * len)) * den * (1 - mut);
-            auto freerunphase = this->codebox_tilde_01_mphasor_next(frq, -1);
+            auto freerunphase = this->freerunningphasor_next(frq, -1);
 
             if (frq < ((2 * this->samplerate() == 0. ? 0. : (number)1 / (2 * this->samplerate())))) {
                 maxdelay = rdl * 2 * this->samplerate();
@@ -1878,7 +1728,7 @@ void Granulator::generate_triggers(
     this->gentrggs_syncphase_old = syncphase_old;
 }
 
-void Granulator::delayRecStop(number glength, bool scroll, SampleValue* out1, Index n) {
+void Granulator::delayRecArrest(number glength, bool scroll, SampleValue* out1, Index n) {
     auto delaysamps = this->delrecstop_delaysamps;
     auto record = this->delrecstop_record;
 
@@ -1910,7 +1760,7 @@ void Granulator::delayRecStop(number glength, bool scroll, SampleValue* out1, In
     this->delrecstop_delaysamps = delaysamps;
 }
 
-void Granulator::revoffsethandler(
+void Granulator::reverseOffsetHandler(
     bool frz,
     number len,
     SampleValue* out1,
@@ -1950,6 +1800,182 @@ void Granulator::revoffsethandler(
     this->revoffhndlr_hit = hit;
     this->revoffhndlr_offset = offset;
     this->revoffhndlr_frzhistory = frz;
+}
+
+void Granulator::phasor_n_sync_perform(number freq, SampleValue* out, Index n) {
+    auto __phasor_01_lastLockedPhase = this->phasor_01_lastLockedPhase;
+    auto quantum = this->hztobeats(freq);
+    auto tempo = this->tempo();
+
+    if (quantum > 0 && tempo > 0) {
+        auto samplerate = this->samplerate();
+        auto beattime = this->beattimeatsample(0);
+        number offset = fmod(beattime, quantum);
+        number nextJump = quantum - offset;
+        number nextJumpInSamples = rnbo_fround(nextJump * 60 * samplerate / tempo * 1 / (number)1) * 1;
+        number inc = tempo / (number)60 / samplerate;
+        number oneoverquantum = (number)1 / quantum;
+
+        for (Index i = 0; i < n; i++) {
+            if ((bool)(this->transportatsample(i))) {
+                out[(Index)i] = __phasor_01_lastLockedPhase = offset * oneoverquantum;
+                offset += inc;
+                nextJumpInSamples--;
+
+                if (nextJumpInSamples <= 0) {
+                    offset -= quantum;
+                    nextJumpInSamples = rnbo_fround(quantum * 60 * samplerate / tempo * 1 / (number)1) * 1;
+                }
+            }
+            else {
+                out[(Index)i] = __phasor_01_lastLockedPhase;
+            }
+        }
+    }
+    else {
+        for (Index i = 0; i < n; i++) {
+            out[(Index)i] = 0;
+        }
+    }
+
+    this->phasor_01_lastLockedPhase = __phasor_01_lastLockedPhase;
+}
+
+void Granulator::phasor_nd_sync_perform(number freq, SampleValue* out, Index n) {
+    auto __phasor_02_lastLockedPhase = this->phasor_02_lastLockedPhase;
+    auto quantum = this->hztobeats(freq);
+    auto tempo = this->tempo();
+
+    if (quantum > 0 && tempo > 0) {
+        auto samplerate = this->samplerate();
+        auto beattime = this->beattimeatsample(0);
+        number offset = fmod(beattime, quantum);
+        number nextJump = quantum - offset;
+        number nextJumpInSamples = rnbo_fround(nextJump * 60 * samplerate / tempo * 1 / (number)1) * 1;
+        number inc = tempo / (number)60 / samplerate;
+        number oneoverquantum = (number)1 / quantum;
+
+        for (Index i = 0; i < n; i++) {
+            if ((bool)(this->transportatsample(i))) {
+                out[(Index)i] = __phasor_02_lastLockedPhase = offset * oneoverquantum;
+                offset += inc;
+                nextJumpInSamples--;
+
+                if (nextJumpInSamples <= 0) {
+                    offset -= quantum;
+                    nextJumpInSamples = rnbo_fround(quantum * 60 * samplerate / tempo * 1 / (number)1) * 1;
+                }
+            }
+            else {
+                out[(Index)i] = __phasor_02_lastLockedPhase;
+            }
+        }
+    }
+    else {
+        for (Index i = 0; i < n; i++) {
+            out[(Index)i] = 0;
+        }
+    }
+
+    this->phasor_02_lastLockedPhase = __phasor_02_lastLockedPhase;
+}
+
+void Granulator::phasor_nt_sync_perform(number freq, SampleValue* out, Index n) {
+    auto __phasor_03_lastLockedPhase = this->phasor_03_lastLockedPhase;
+    auto quantum = this->hztobeats(freq);
+    auto tempo = this->tempo();
+
+    if (quantum > 0 && tempo > 0) {
+        auto samplerate = this->samplerate();
+        auto beattime = this->beattimeatsample(0);
+        number offset = fmod(beattime, quantum);
+        number nextJump = quantum - offset;
+        number nextJumpInSamples = rnbo_fround(nextJump * 60 * samplerate / tempo * 1 / (number)1) * 1;
+        number inc = tempo / (number)60 / samplerate;
+        number oneoverquantum = (number)1 / quantum;
+
+        for (Index i = 0; i < n; i++) {
+            if ((bool)(this->transportatsample(i))) {
+                out[(Index)i] = __phasor_03_lastLockedPhase = offset * oneoverquantum;
+                offset += inc;
+                nextJumpInSamples--;
+
+                if (nextJumpInSamples <= 0) {
+                    offset -= quantum;
+                    nextJumpInSamples = rnbo_fround(quantum * 60 * samplerate / tempo * 1 / (number)1) * 1;
+                }
+            }
+            else {
+                out[(Index)i] = __phasor_03_lastLockedPhase;
+            }
+        }
+    }
+    else {
+        for (Index i = 0; i < n; i++) {
+            out[(Index)i] = 0;
+        }
+    }
+
+    this->phasor_03_lastLockedPhase = __phasor_03_lastLockedPhase;
+}
+
+void Granulator::phasor_n_sync_dspsetup(bool force) {
+    if ((bool)(this->phasor_01_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->phasor_01_conv = (number)1 / this->samplerate();
+    this->phasor_01_setupDone = true;
+}
+
+void Granulator::phasor_nd_sync_dspsetup(bool force) {
+    if ((bool)(this->phasor_02_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->phasor_02_conv = (number)1 / this->samplerate();
+    this->phasor_02_setupDone = true;
+}
+
+void Granulator::phasor_nt_sync_dspsetup(bool force) {
+    if ((bool)(this->phasor_03_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->phasor_03_conv = (number)1 / this->samplerate();
+    this->phasor_03_setupDone = true;
+}
+
+void Granulator::timevalue_01_sendValue() { this->phasor_01_freq = this->tickstohz(1920); }
+
+void Granulator::timevalue_02_sendValue() { this->phasor_02_freq = this->tickstohz(2880); }
+
+void Granulator::timevalue_03_sendValue() { this->phasor_03_freq = this->tickstohz(1280); }
+
+number Granulator::freerunningphasor_next(number freq, number reset) {
+    {
+        {
+            if (reset >= 0.)
+                this->codebox_tilde_01_mphasor_currentPhase = reset;
+        }
+    }
+
+    number pincr = freq * this->codebox_tilde_01_mphasor_conv;
+
+    if (this->codebox_tilde_01_mphasor_currentPhase < 0.)
+        this->codebox_tilde_01_mphasor_currentPhase = 1. + this->codebox_tilde_01_mphasor_currentPhase;
+
+    if (this->codebox_tilde_01_mphasor_currentPhase > 1.)
+        this->codebox_tilde_01_mphasor_currentPhase = this->codebox_tilde_01_mphasor_currentPhase - 1.;
+
+    number tmp = this->codebox_tilde_01_mphasor_currentPhase;
+    this->codebox_tilde_01_mphasor_currentPhase += pincr;
+    return tmp;
+}
+
+void Granulator::freerunningphasor_reset() {
+    this->codebox_tilde_01_mphasor_currentPhase = 0;
+}
+
+void Granulator::freerunningphasor_dspsetup() {
+    this->codebox_tilde_01_mphasor_conv = (this->sr == 0. ? 0. : (number)1 / this->sr);
 }
 
 void Granulator::recordtilde_01_perform(
@@ -2023,23 +2049,97 @@ void Granulator::recordtilde_01_perform(
     this->recordtilde_01_wIndex = __recordtilde_01_wIndex;
 }
 
-void Granulator::dcblock_tilde_01_perform(const Sample* x, number gain, SampleValue* out1, Index n) {
-    RNBO_UNUSED(gain);
-    auto __dcblock_tilde_01_ym1 = this->dcblock_tilde_01_ym1;
-    auto __dcblock_tilde_01_xm1 = this->dcblock_tilde_01_xm1;
-    Index i;
+void Granulator::recordtilde_02_perform(
+    const Sample* record,
+    number begin,
+    number end,
+    const SampleValue* input1,
+    SampleValue* sync,
+    Index n
+) {
+    RNBO_UNUSED(input1);
+    RNBO_UNUSED(end);
+    RNBO_UNUSED(begin);
+    auto __recordtilde_02_loop = this->recordtilde_02_loop;
+    auto __recordtilde_02_wIndex = this->recordtilde_02_wIndex;
+    auto __recordtilde_02_lastRecord = this->recordtilde_02_lastRecord;
+    auto __recordtilde_02_buffer = this->recordtilde_02_buffer;
+    ConstSampleArray<1> input = { input1 };
+    number bufferSize = __recordtilde_02_buffer->getSize();
+    number srInv = (number)1 / this->samplerate();
 
-    for (i = 0; i < n; i++) {
-        number y = x[(Index)i] - __dcblock_tilde_01_xm1 + __dcblock_tilde_01_ym1 * 0.9997;
-        __dcblock_tilde_01_xm1 = x[(Index)i];
-        __dcblock_tilde_01_ym1 = y;
-        out1[(Index)i] = y;
+    /* recordtilde_02_perform records the input signal to the intermediate buffer, which i only use
+    * for visualisation (the AudioVisualiserComponent and its mirror_buffer, at every block read from this
+    * buffer).
+    * Therefore, I don't need the untouched signal, but I could downsample it for performance reasons.
+    */
+
+    /* I can try just by taking a samp every 16 or so, which should enable me to output between 8 (at 128)
+    * and 128 (at 2048) samples per block. The data buffer should be vecsize()/16. Should I also set the samplerate to
+    * samplerate()/16 or can I just ignore it?
+    */
+
+    if (bufferSize > 0) {
+        number maxChannel = __recordtilde_02_buffer->getChannels();
+        number touched = false;
+
+        for (Index i = 0; i < n; i++) {
+            number loopBegin = 0;
+            number loopEnd = bufferSize;
+
+            if (loopEnd > loopBegin) {
+                {
+                    if ((bool)(record[(Index)i]) && __recordtilde_02_lastRecord != record[(Index)i] && __recordtilde_02_wIndex >= loopEnd) {
+                        __recordtilde_02_wIndex = loopBegin;
+                    }
+                }
+
+                if (record[(Index)i] != 0 && __recordtilde_02_wIndex < loopEnd) {
+                    for (number channel = 0; channel < 1; channel++) {
+                        //int channel = 0;
+                        number effectiveChannel = channel + 0;
+
+                        if (effectiveChannel < maxChannel) {
+                            __recordtilde_02_buffer->setSample(channel, __recordtilde_02_wIndex, input[(Index)channel][(Index)i]);
+                            touched = true;
+                            //if (!__recordtilde_02_wIndex % 16) {
+                            //    recordtilde_02_buffer->setSample(0, __recordtilde_02_wIndex / 16, input[0][i]);
+                            //    touched = true;
+                            //}
+                        }
+                        else
+                            break;
+                    }
+
+                    __recordtilde_02_wIndex++;
+
+                    if ((bool)(__recordtilde_02_loop) && __recordtilde_02_wIndex >= loopEnd) {
+                        __recordtilde_02_wIndex = loopBegin;
+                    }
+                }
+                else {
+                    sync[(Index)i] = 0;
+                }
+            }
+        }
+
+        if ((bool)(touched)) {
+            __recordtilde_02_buffer->setTouched(true);
+            __recordtilde_02_buffer->setSampleRate(this->samplerate());
+        }
     }
 
-    this->dcblock_tilde_01_xm1 = __dcblock_tilde_01_xm1;
-    this->dcblock_tilde_01_ym1 = __dcblock_tilde_01_ym1;
+    this->recordtilde_02_wIndex = __recordtilde_02_wIndex;
 }
 
+void Granulator::stackprotect_perform(Index n) {
+    RNBO_UNUSED(n);
+    auto __stackprotect_count = this->stackprotect_count;
+    __stackprotect_count = 0;
+    this->stackprotect_count = __stackprotect_count;
+}
+
+//LIMITER
 void Granulator::limi_01_perform(
     const SampleValue* input1,
     const SampleValue* input2,
@@ -2146,96 +2246,6 @@ void Granulator::limi_01_perform(
     this->limi_01_last = __limi_01_last;
 }
 
-void Granulator::recordtilde_02_perform(
-    const Sample* record,
-    number begin,
-    number end,
-    const SampleValue* input1,
-    SampleValue* sync,
-    Index n
-) {
-    RNBO_UNUSED(input1);
-    RNBO_UNUSED(end);
-    RNBO_UNUSED(begin);
-    auto __recordtilde_02_loop = this->recordtilde_02_loop;
-    auto __recordtilde_02_wIndex = this->recordtilde_02_wIndex;
-    auto __recordtilde_02_lastRecord = this->recordtilde_02_lastRecord;
-    auto __recordtilde_02_buffer = this->recordtilde_02_buffer;
-    ConstSampleArray<1> input = { input1 };
-    number bufferSize = __recordtilde_02_buffer->getSize();
-    number srInv = (number)1 / this->samplerate();
-
-    /* recordtilde_02_perform records the input signal to the intermediate buffer, which i only use
-    * for visualisation (the AudioVisualiserComponent and its mirror_buffer, at every block read from this
-    * buffer).
-    * Therefore, I don't need the untouched signal, but I could downsample it for performance reasons.
-    */
-
-    /* I can try just by taking a samp every 16 or so, which should enable me to output between 8 (at 128)
-    * and 128 (at 2048) samples per block. The data buffer should be vecsize()/16. Should I also set the samplerate to
-    * samplerate()/16 or can I just ignore it?
-    */
-
-    if (bufferSize > 0) {
-        number maxChannel = __recordtilde_02_buffer->getChannels();
-        number touched = false;
-
-        for (Index i = 0; i < n; i++) {
-            number loopBegin = 0;
-            number loopEnd = bufferSize;
-
-            if (loopEnd > loopBegin) {
-                {
-                    if ((bool)(record[(Index)i]) && __recordtilde_02_lastRecord != record[(Index)i] && __recordtilde_02_wIndex >= loopEnd) {
-                        __recordtilde_02_wIndex = loopBegin;
-                    }
-                }
-
-                if (record[(Index)i] != 0 && __recordtilde_02_wIndex < loopEnd) {
-                    for (number channel = 0; channel < 1; channel++) {
-                        //int channel = 0;
-                        number effectiveChannel = channel + 0;
-
-                        if (effectiveChannel < maxChannel) {
-                            __recordtilde_02_buffer->setSample(channel, __recordtilde_02_wIndex, input[(Index)channel][(Index)i]);
-                            touched = true;
-                            //if (!__recordtilde_02_wIndex % 16) {
-                            //    recordtilde_02_buffer->setSample(0, __recordtilde_02_wIndex / 16, input[0][i]);
-                            //    touched = true;
-                            //}
-                        }
-                        else
-                            break;
-                    }
-
-                    __recordtilde_02_wIndex++;
-
-                    if ((bool)(__recordtilde_02_loop) && __recordtilde_02_wIndex >= loopEnd) {
-                        __recordtilde_02_wIndex = loopBegin;
-                    }
-                }
-                else {
-                    sync[(Index)i] = 0;
-                }
-            }
-        }
-
-        if ((bool)(touched)) {
-            __recordtilde_02_buffer->setTouched(true);
-            __recordtilde_02_buffer->setSampleRate(this->samplerate());
-        }
-    }
-
-    this->recordtilde_02_wIndex = __recordtilde_02_wIndex;
-}
-
-void Granulator::stackprotect_perform(Index n) {
-    RNBO_UNUSED(n);
-    auto __stackprotect_count = this->stackprotect_count;
-    __stackprotect_count = 0;
-    this->stackprotect_count = __stackprotect_count;
-}
-//LIMITER
 void Granulator::limi_01_lookahead_setter(number v) {
     this->limi_01_lookahead = (v > 128 ? 128 : (v < 0 ? 0 : v));
     this->limi_01_lookaheadInv = (number)1 / this->limi_01_lookahead;
@@ -2345,202 +2355,21 @@ void Granulator::limi_01_dspsetup(bool force) {
 }
 //~LIMITER
 
-number Granulator::codebox_01_mphasor_next(number freq, number reset) {
-    {
-        {
-            if (reset >= 0.)
-                this->codebox_01_mphasor_currentPhase = reset;
-        }
+void Granulator::dcblock_tilde_01_perform(const Sample* x, number gain, SampleValue* out1, Index n) {
+    RNBO_UNUSED(gain);
+    auto __dcblock_tilde_01_ym1 = this->dcblock_tilde_01_ym1;
+    auto __dcblock_tilde_01_xm1 = this->dcblock_tilde_01_xm1;
+    Index i;
+
+    for (i = 0; i < n; i++) {
+        number y = x[(Index)i] - __dcblock_tilde_01_xm1 + __dcblock_tilde_01_ym1 * 0.9997;
+        __dcblock_tilde_01_xm1 = x[(Index)i];
+        __dcblock_tilde_01_ym1 = y;
+        out1[(Index)i] = y;
     }
 
-    number pincr = freq * this->codebox_01_mphasor_conv;
-
-    if (this->codebox_01_mphasor_currentPhase < 0.)
-        this->codebox_01_mphasor_currentPhase = 1. + this->codebox_01_mphasor_currentPhase;
-
-    if (this->codebox_01_mphasor_currentPhase > 1.)
-        this->codebox_01_mphasor_currentPhase = this->codebox_01_mphasor_currentPhase - 1.;
-
-    number tmp = this->codebox_01_mphasor_currentPhase;
-    this->codebox_01_mphasor_currentPhase += pincr;
-    return tmp;
-}
-
-void Granulator::codebox_01_mphasor_reset() {
-    this->codebox_01_mphasor_currentPhase = 0;
-}
-
-void Granulator::codebox_01_mphasor_dspsetup() {
-    this->codebox_01_mphasor_conv = (this->sr == 0. ? 0. : (number)1 / this->sr);
-}
-
-number Granulator::setGrainSize(number len, number rle)
-{
-    number newlen = (1 - rand01() * rle) * len;
-    newlen = this->clip(newlen, 1, len);        // sets 1 ms as the minimum length
-    return newlen;
-}
-
-number Granulator::clip(number v, number inf, number sup)
-{
-    if (v < inf)
-        v = inf;
-    else if (v > sup)
-        v = sup;
-
-    return v;
-}
-
-number Granulator::setGrainPosition(number posinsamps, number drfinsamps, number leninsamps, number psh, number rpt, number intelligent_offset)
-{
-    number r_marg = rnbo_ceil(this->clip(
-        leninsamps * (psh * (1 + rpt) - 1),
-        1,
-        3 * leninsamps
-    ));
-
-    //maybe better: r_marg = std::max(1, leninsamps * (psh * (1 + rpt) - 1)); worst case, r_marg = leninsamps * (4 * (1 + 1) - 1) = 7 * leninsamps
-    //If length = 2 s, 14 s is a lot, but in theory inside the buffer. Need to test it. I'm talking about grains played at 8x speed. Can I really access the left half of the buffer?
-    //With the current limit at 3 * leninsamps, with psh = 4, rpt = 1 and len = 2 s, I should hear half of the grains glitching.
-
-    number pos = rnbo_ceil(this->clip(
-        posinsamps + rand01() * drfinsamps,
-        std::max(r_marg, leninsamps - intelligent_offset),
-        this->samplerate() * 10
-    ));
-
-    //scale between 0 and 0.5, to cover the accessible half of the buffer
-    pos /= (this->samplerate() * 10. * 2.);
-
-    return pos;
-}
-
-number Granulator::setGrainDirection(number frp) // return -1 or 1
-{
-    number r = rand01();
-
-    number fr = 1;
-    if (frp)
-        fr = (r > frp) * 2 - 1;
-
-    return fr;
-}
-
-number Granulator::setGrainPshift(number psh, number rpt)
-{
-    number ptc = rnbo_pow(2, rand01() * rpt) * psh;
-    return ptc;
-}
-
-number Granulator::setGrainVol(number rvo)
-{
-    number r = rand01();
-    number vol = 1. - r * rvo;
-    return vol;
-}
-
-number Granulator::setGrainPan(number pwi)
-{
-    number pan = 0.5 * (1 + rand01() * pwi);
-    return pan;
-}
-
-/*  � If a voice is muted, but in timer state, it is ignored.
-    � If a voice is unmuted, and eog is smaller then newtrig, it's good.
-    � If a voice is muted and not in timer state, it's good.
-    */
-
-int Granulator::findtargetvoice(SampleIndex ti)     //VOICE MANAGER
-{
-    for (int i = 0; i < 24; i++) {
-        auto candidate_isActive = voiceStates[i].isActive;
-        auto candidate_hasGrainInQueue = voiceStates[i].hasGrainInQueue;
-        auto candidate_endOfGrain = voiceStates[i].endOfGrain;
-
-        if (candidate_hasGrainInQueue)
-            continue;
-
-        // the main class here only updates the hasGrainInQueue flag, while the active state and the eog are handled by the voice
-        if (!candidate_isActive || (candidate_isActive && candidate_endOfGrain < ti)) {
-            int target = i + 1;
-            voiceStates[i].hasGrainInQueue = true;
-            return target;
-        }
-    }
-
-    return -1;
-}
-
-number Granulator::codebox_tilde_01_mphasor_next(number freq, number reset) {
-    {
-        {
-            if (reset >= 0.)
-                this->codebox_tilde_01_mphasor_currentPhase = reset;
-        }
-    }
-
-    number pincr = freq * this->codebox_tilde_01_mphasor_conv;
-
-    if (this->codebox_tilde_01_mphasor_currentPhase < 0.)
-        this->codebox_tilde_01_mphasor_currentPhase = 1. + this->codebox_tilde_01_mphasor_currentPhase;
-
-    if (this->codebox_tilde_01_mphasor_currentPhase > 1.)
-        this->codebox_tilde_01_mphasor_currentPhase = this->codebox_tilde_01_mphasor_currentPhase - 1.;
-
-    number tmp = this->codebox_tilde_01_mphasor_currentPhase;
-    this->codebox_tilde_01_mphasor_currentPhase += pincr;
-    return tmp;
-}
-
-void Granulator::codebox_tilde_01_mphasor_reset() {
-    this->codebox_tilde_01_mphasor_currentPhase = 0;
-}
-
-void Granulator::codebox_tilde_01_mphasor_dspsetup() {
-    this->codebox_tilde_01_mphasor_conv = (this->sr == 0. ? 0. : (number)1 / this->sr);
-}
-
-void Granulator::codebox_tilde_01_dspsetup(bool force) {
-    if ((bool)(this->codebox_tilde_01_setupDone) && (bool)(!(bool)(force)))
-        return;
-
-    this->codebox_tilde_01_setupDone = true;
-    this->codebox_tilde_01_mphasor_dspsetup();
-}
-
-void Granulator::param_getPresetValue(PatcherStateInterface& preset, Index paramIndex) {
-    preset["value"] = this->getParameterValue(paramIndex);
-}
-
-void Granulator::param_setPresetValue(PatcherStateInterface& preset, Index paramIndex, MillisecondTime time) {
-    if ((bool)(stateIsEmpty(preset)))
-        return;
-
-    this->setParameterValue(paramIndex, preset["value"], time);
-}
-
-void Granulator::phasor_01_dspsetup(bool force) {
-    if ((bool)(this->phasor_01_setupDone) && (bool)(!(bool)(force)))
-        return;
-
-    this->phasor_01_conv = (number)1 / this->samplerate();
-    this->phasor_01_setupDone = true;
-}
-
-void Granulator::phasor_02_dspsetup(bool force) {
-    if ((bool)(this->phasor_02_setupDone) && (bool)(!(bool)(force)))
-        return;
-
-    this->phasor_02_conv = (number)1 / this->samplerate();
-    this->phasor_02_setupDone = true;
-}
-
-void Granulator::phasor_03_dspsetup(bool force) {
-    if ((bool)(this->phasor_03_setupDone) && (bool)(!(bool)(force)))
-        return;
-
-    this->phasor_03_conv = (number)1 / this->samplerate();
-    this->phasor_03_setupDone = true;
+    this->dcblock_tilde_01_xm1 = __dcblock_tilde_01_xm1;
+    this->dcblock_tilde_01_ym1 = __dcblock_tilde_01_ym1;
 }
 
 void Granulator::dcblock_tilde_01_reset() {
@@ -2554,18 +2383,6 @@ void Granulator::dcblock_tilde_01_dspsetup(bool force) {
 
     this->dcblock_tilde_01_reset();
     this->dcblock_tilde_01_setupDone = true;
-}
-
-void Granulator::timevalue_01_sendValue() {
-    this->phasor_01_freq = this->tickstohz(1920);
-}
-
-void Granulator::timevalue_02_sendValue() {
-    this->phasor_02_freq = this->tickstohz(2880);
-}
-
-void Granulator::timevalue_03_sendValue() {
-    this->phasor_03_freq = this->tickstohz(1280);
 }
 
 Index Granulator::globaltransport_getSampleOffset(MillisecondTime time) {
@@ -2783,6 +2600,85 @@ bool Granulator::stackprotect_check() {
     }
 
     return false;
+}
+
+void Granulator::allocateDataRefs() {
+    for (Index i = 0; i < 24; i++) {
+        this->rtgrainvoice[i]->allocateDataRefs();
+    }
+
+    this->recordtilde_01_buffer->requestSize(this->mstosamps(20000), 1);
+    this->recordtilde_01_buffer->setSampleRate(this->sr);
+    this->recordtilde_01_buffer = this->recordtilde_01_buffer->allocateIfNeeded();
+    this->bufferop_01_buffer = this->bufferop_01_buffer->allocateIfNeeded();
+    this->recordtilde_02_buffer->requestSize(this->mstosamps(20000), 1);
+    this->recordtilde_02_buffer->setSampleRate(this->sr);
+    this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
+
+    if (this->borisinrnbo_v01_rtbuf->hasRequestedSize()) {
+        if (this->borisinrnbo_v01_rtbuf->wantsFill())
+            this->zeroDataRef(this->borisinrnbo_v01_rtbuf);
+
+        this->getEngine()->sendDataRefUpdated(0);
+    }
+
+
+    if (this->interpolated_envelope->hasRequestedSize()) {
+        if (this->interpolated_envelope->wantsFill())
+            this->zeroDataRef(this->interpolated_envelope);
+
+        this->getEngine()->sendDataRefUpdated(1);
+    }
+
+    this->recordtilde_02_buffer = this->recordtilde_02_buffer->allocateIfNeeded();
+
+    if (this->inter_databuf_01->hasRequestedSize()) {
+        if (this->inter_databuf_01->wantsFill())
+            this->zeroDataRef(this->inter_databuf_01);
+
+        this->getEngine()->sendDataRefUpdated(2);
+    }
+}
+
+void Granulator::sendOutlet(OutletIndex index, ParameterValue value) {
+    this->getEngine()->sendOutlet(this, index, value);
+}
+
+void Granulator::startup() {
+    this->updateTime(this->getEngine()->getCurrentTime());
+    for (Index i = 0; i < 24; i++) {
+        voiceStates[i].isActive = false;
+        voiceStates[i].hasGrainInQueue = false;
+        voiceStates[i].endOfGrain = 0;
+    }
+
+    this->timevalue_01_sendValue();
+    this->timevalue_02_sendValue();
+    this->timevalue_03_sendValue();
+
+    this->scheduleParamInit(0, 3);
+    this->scheduleParamInit(1, 2);
+    this->scheduleParamInit(2, 10);
+    this->scheduleParamInit(3, 5);
+    this->scheduleParamInit(4, 10);
+    this->scheduleParamInit(5, 9);
+    this->scheduleParamInit(6, 10);
+    this->scheduleParamInit(7, 11);
+    this->scheduleParamInit(8, 12);
+    this->scheduleParamInit(9, 7);
+    this->scheduleParamInit(10, 8);
+    this->scheduleParamInit(11, 14);
+    this->scheduleParamInit(12, 13);
+    this->scheduleParamInit(13, 0);
+    this->scheduleParamInit(14, 17);
+    this->scheduleParamInit(15, 19);
+    this->scheduleParamInit(16, 1);
+    this->scheduleParamInit(17, 16);
+    this->scheduleParamInit(18, 0);
+    this->scheduleParamInit(19, 0);
+    this->scheduleParamInit(20, 0);
+
+    this->processParamInitEvents();
 }
 
 void Granulator::updateTime(MillisecondTime time) {

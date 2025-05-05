@@ -90,35 +90,23 @@ public:
         RTGrainVoice(Granulator* voicesOwner, int voiceIndex);
         ~RTGrainVoice();
 
-        Granulator* getGrainMaster() const;
-
-        number wrap(number x, number low, number high);
-
-        Index voice();
-
-        void process(
-            const SampleValue* const* inputs,
-            Index numInputs,
-            SampleValue* const* outputs,
-            Index numOutputs,
-            Index n
-        );
-
+        void process(const SampleValue* const* inputs, Index numInputs, SampleValue* const* outputs, Index numOutputs, Index n);
         void prepareToProcess(number sampleRate, Index maxBlockSize, bool force);
 
-        Index getIsMuted();
+        void setupVoice(SampleIndex trigatindex, const list& v);
 
+        Granulator* getOwner() const;
+        Index voice() const;
+        Index getIsMuted() const;
         void setIsMuted(Index v);
 
-        void processDataViewUpdate(DataRefIndex index, MillisecondTime time);
-
         void initialize();
-
+        void processDataViewUpdate(DataRefIndex index, MillisecondTime time);
         void allocateDataRefs();
 
-        void initiateVoice(SampleIndex trigatindex, const list& v);
-
     protected:
+        number wrap(number x, number low, number high);
+
         void processBrain(
             const Sample in1,
             const Sample in2,
@@ -189,24 +177,7 @@ public:
     template <typename T> void listswapelements(T& arr, Int a, Int b);
     array<ListNum, 2> listcompare(const list& input1, const list& input2);
 
-    number samplerate();
-    Index vectorsize();
-    Index voice();
-    number mstosamps(MillisecondTime ms);
-    MillisecondTime sampstoms(number samps);
     MillisecondTime currenttime();
-    number tempo();
-    number beatstohz(number beattime);
-    number hztobeats(number hz);
-    number beattimeatsample(number offset);
-    number transportatsample(SampleIndex sampleOffset);
-    number tickstohz(number ticks);
-    number mstobeats(number ms);
-
-    number maximum(number x, number y);
-    inline number safediv(number num, number denom);
-
-    number __wrapped_op_round(number in1, number in2);
    
     ParameterValue tonormalized(ParameterIndex index, ParameterValue value);
     ParameterValue fromnormalized(ParameterIndex index, ParameterValue normalizedValue);
@@ -215,30 +186,17 @@ public:
     void processMidiEvent(MillisecondTime time, int port, ConstByteArray data, Index length);
     Index getNumMidiOutputPorts() const;
 
-    void process(
-        const SampleValue* const* inputs,
-        Index numInputs,
-        SampleValue* const* outputs,
-        Index numOutputs,
-        Index n
-    );
-
+    void process(const SampleValue* const* inputs, Index numInputs, SampleValue* const* outputs, Index numOutputs, Index n);
     void prepareToProcess(number sampleRate, Index maxBlockSize, bool force);
 
     void setProbingTarget(MessageTag id);
-
     void setProbingIndex(ProbingIndex);
-
     Index getProbingChannels(MessageTag outletId) const;
 
     DataRef* getDataRef(DataRefIndex index);
-
     DataRefIndex getNumDataRefs() const;
-
     void fillDataRef(DataRefIndex, DataRef&);
-
     void zeroDataRef(DataRef& ref);
-
     void processDataViewUpdate(DataRefIndex index, MillisecondTime time);
 
     void initialize();
@@ -246,222 +204,123 @@ public:
     Index getPatcherSerial() const;
 
     void getState(PatcherStateInterface&);
-
     void setState();
-
     void getPreset(PatcherStateInterface& preset);
-
     void setPreset(MillisecondTime time, PatcherStateInterface& preset);
 
     void processTempoEvent(MillisecondTime time, Tempo tempo);
-
     void processTransportEvent(MillisecondTime time, TransportState state);
-
     void processBeatTimeEvent(MillisecondTime time, BeatTime beattime);
+    void processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator);
 
     void onSampleRateChanged(double samplerate);
 
-    void processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator);
-
-    void setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime time);
-
     void processParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time);
-
     void processParameterBangEvent(ParameterIndex index, MillisecondTime time);
-
     void processNormalizedParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time);
-
+    
+    void setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime time);
     ParameterValue getParameterValue(ParameterIndex index);
-
-    ParameterIndex getNumSignalInParameters() const;
-
-    ParameterIndex getNumSignalOutParameters() const;
-
-    ParameterIndex getNumParameters() const;
-
     ConstCharPointer getParameterName(ParameterIndex index) const;
-
     ConstCharPointer getParameterId(ParameterIndex index) const;
-
     void getParameterInfo(ParameterIndex index, ParameterInfo* info) const;
 
     ParameterValue Granulator::applyJuceSkew(ParameterValue normalizedValue, ParameterValue exp) const;
     ParameterValue Granulator::applyJuceDeskew(ParameterValue normalizedValue, ParameterValue exp) const;
     ParameterValue applyPitchDenormalization(ParameterValue value, ParameterValue min, ParameterValue max) const;
     ParameterValue applyPitchNormalization(ParameterValue value, ParameterValue min, ParameterValue max) const;
-
-    void sendParameter(ParameterIndex index, bool ignoreValue);
-
-    ParameterIndex getParameterOffset(BaseInterface* subpatcher) const;
-
     ParameterValue applyStepsToNormalizedParameterValue(ParameterValue normalizedValue, int steps) const;
-
     ParameterValue convertToNormalizedParameterValue(ParameterIndex index, ParameterValue value) const;
-
     ParameterValue convertFromNormalizedParameterValue(ParameterIndex index, ParameterValue value) const;
 
+    ParameterIndex getNumSignalInParameters() const;
+    ParameterIndex getNumSignalOutParameters() const;
+    ParameterIndex getNumParameters() const;
+    ParameterIndex getParameterOffset(BaseInterface* subpatcher) const;
+
+    void sendParameter(ParameterIndex index, bool ignoreValue);
     void scheduleParamInit(ParameterIndex index, Index order);
 
     void processParamInitEvents();
-
     void processClockEvent(MillisecondTime time, ClockId index, bool hasValue, ParameterValue value);
-
     void processOutletAtCurrentTime(EngineLink*, OutletIndex, ParameterValue);
-
-    void processOutletEvent(
-        EngineLink* sender,
-        OutletIndex index,
-        ParameterValue value,
-        MillisecondTime time
-    );
-
+    void processOutletEvent(EngineLink* sender, OutletIndex index, ParameterValue value, MillisecondTime time);
     void processNumMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, number payload);
-
-    void processListMessage(
-        MessageTag tag,
-        MessageTag objectId,
-        MillisecondTime time,
-        const list& payload
-    );
-
+    void processListMessage(MessageTag tag,MessageTag objectId,MillisecondTime time,const list& payload);
     void processBangMessage(MessageTag tag, MessageTag objectId, MillisecondTime time);
 
     MessageTagInfo resolveTag(MessageTag tag) const;
-
     MessageIndex getNumMessages() const;
-
     const MessageInfo& getMessageInfo(MessageIndex index) const;
 
     DataRef& getAudioBufferDataRef();
-
     DataRef& getEnvelopeBufferDataRef();
 
     void updateVoiceState(int voice, voiceState voicestate);
 
 protected:
-    void den_01_value_set(number v);
-    void cha_02_value_set(number v);
-    void rdl_03_value_set(number v);
-    void len_04_value_set(number v);
-    void rle_05_value_set(number v);
-    void psh_06_value_set(number v);
-    void rpt_07_value_set(number v);
-    void env_08_value_set(number v);
-    void frp_09_value_set(number v);
-    void cpo_10_value_set(number v);
-    void drf_11_value_set(number v);
-    void pwi_12_value_set(number v);
-    void rvo_13_value_set(number v);
-    void gai_14_value_set(number v);
-    void fdb_15_value_set(number v);
-    void wet_16_value_set(number v);
-    void mut_17_value_set(number v);
-    void frz_18_value_set(number v);
-    void syc_19_value_set(number v);
-    void tmp_20_value_set(number v);
-    void rtm_21_value_set(number v);
+    number clip(number v, number inf, number sup);
+    number maximum(number x, number y);
+    inline number safediv(number num, number denom);
 
-    number msToSamps(MillisecondTime ms, number sampleRate);
-
-    MillisecondTime sampsToMs(SampleIndex samps);
+    number samplerate() const;
+    Index vectorsize() const;
+    number mstosamps(MillisecondTime ms) const;
+    MillisecondTime sampstoms(number samps)const;
+    number tempo();
+    number mstobeats(number ms);
+    number beatstohz(number beattime);
+    number hztobeats(number hz);
+    number tickstohz(number ticks);
+    number beattimeatsample(number offset);
+    number transportatsample(SampleIndex sampleOffset);
 
     Index getMaxBlockSize() const;
     number getSampleRate() const;
-
     bool hasFixedVectorSize() const;
-
     Index getNumInputChannels() const;
-
     Index getNumOutputChannels() const;
-
-    void allocateDataRefs();
-    void sendOutlet(OutletIndex index, ParameterValue value);
-
-    void startup();
-
-    static number density_value_constrain(number v);
-    static number percent_value_constrain(number v);
-    static number length_value_constrain(number v);
-    static number pitchshift_value_constrain(number v);
-    static number envelope_value_constrain(number v);
-    static number normalized_value_constrain(number v);
-    static number volume_value_constrain(number v);
-    static number toggle_value_constrain(number v);
-    static number tmp_value_constrain(number v);
-    static number rtm_value_constrain(number v);
 
     void empty_audio_buffer();
 
+    int pickTargetVoice(SampleIndex ti);
     void setGrainProperties(SampleIndex trigatindex);
 
-    void phasor_01_freq_set(number v);
-    void timevalue_01_out_set(number v);
-    void phasor_02_freq_set(number v);
-    void timevalue_02_out_set(number v);
-    void phasor_03_freq_set(number v);
-    void timevalue_03_out_set(number v);
-    void ctlin_01_outchannel_set(number);
-    void ctlin_01_outcontroller_set(number);
-    void fromnormalized_01_output_set(number v);
-    void fromnormalized_01_input_set(number v);
-    void expr_01_out1_set(number v);
-    void expr_01_in1_set(number in1);
-    void ctlin_01_value_set(number v);
-    void ctlin_01_midihandler(int status, int channel, int port, ConstByteArray data, Index length);
-    void phasor_01_perform(number freq, SampleValue* out, Index n);
+    number setGrainSize(number len, number rle);
+    number setGrainPosition(number posinsamps, number drfinsamps, number leninsamps, number psh, number rpt, number intelligent_offset);
+    number setGrainDirection(number frp);
+    number setGrainPshift(number psh, number rpt);
+    number setGrainVol(number rvo);
+    number setGrainPan(number pwi);
 
-    void phasor_02_perform(number freq, SampleValue* out, Index n);
+    void param_getPresetValue(PatcherStateInterface& preset, Index paramIndex);
+    void param_setPresetValue(PatcherStateInterface& preset, Index paramIndex, MillisecondTime time);
 
-    void phasor_03_perform(number freq, SampleValue* out, Index n);
+    void generate_triggers(bool mut, number len, number den, number cha, number rdl, bool sync, int notetempo, int noterythm,
+                            const Sample* sync_n_phasor, const Sample* sync_nd_phasor, const Sample* sync_nt_phasor, Index n);
+    void delayRecArrest(number glength, bool scroll, SampleValue* out1, Index n);
+    void reverseOffsetHandler(bool frz, number len, SampleValue* out1, Index n);
 
-    void generate_triggers(
-        bool mut,
-        number len,
-        number den,
-        number cha,
-        number rdl,
-        bool sync,
-        int notetempo,
-        int noterythm,
-        const Sample* sync_n_phasor,
-        const Sample* sync_nd_phasor,
-        const Sample* sync_nt_phasor,
-        Index n
-    );
+    void phasor_n_sync_perform(number freq, SampleValue* out, Index n);
+    void phasor_nd_sync_perform(number freq, SampleValue* out, Index n);
+    void phasor_nt_sync_perform(number freq, SampleValue* out, Index n);
+    void phasor_n_sync_dspsetup(bool force);
+    void phasor_nd_sync_dspsetup(bool force);
+    void phasor_nt_sync_dspsetup(bool force);
+    void timevalue_01_sendValue();
+    void timevalue_02_sendValue();
+    void timevalue_03_sendValue();
 
-    void delayRecStop(number glength, bool scroll, SampleValue* out1, Index n);
+    number freerunningphasor_next(number freq, number reset);
+    void freerunningphasor_reset();
+    void freerunningphasor_dspsetup();
 
-    void revoffsethandler(
-        bool frz,
-        number len,
-        SampleValue* out1,
-        Index n
-    );
-
-    void recordtilde_01_perform(
-        const Sample* record,
-        number begin,
-        number end,
-        const SampleValue* input1,
-        SampleValue* sync,
-        Index n
-    );
-
-    void dcblock_tilde_01_perform(const Sample* x, number gain, SampleValue* out1, Index n);
-
-    void recordtilde_02_perform(
-        const Sample* record,
-        number begin,
-        number end,
-        const SampleValue* input1,
-        SampleValue* sync,
-        Index n
-    );
+    void recordtilde_01_perform(const Sample* record, number begin, number end, const SampleValue* input1, SampleValue* sync, Index n);
+    void recordtilde_02_perform(const Sample* record, number begin, number end, const SampleValue* input1, SampleValue* sync, Index n);
 
     void stackprotect_perform(Index n);
     bool Granulator::stackprotect_check();
 
-    //LIMITER
     void limi_01_perform(const SampleValue* input1, const SampleValue* input2, SampleValue* output1, SampleValue* output2, Index n);
     void limi_01_lookahead_setter(number v);
     void limi_01_preamp_setter(number v);
@@ -478,49 +337,10 @@ protected:
     void limi_01_dc_dspsetup(Index i);
     void limi_01_reset();
     void limi_01_dspsetup(bool force);
-    //~LIMITER
 
-    number codebox_01_mphasor_next(number freq, number reset);
-    void codebox_01_mphasor_reset();
-    void codebox_01_mphasor_dspsetup();
-
-    number clip(number v, number inf, number sup);
-
-    number setGrainSize(number len, number rle);
-    number setGrainPosition(number posinsamps, number drfinsamps, number leninsamps, number psh, number rpt, number intelligent_offset);
-    number setGrainDirection(number frp);
-    number setGrainPshift(number psh, number rpt);
-    number setGrainVol(number rvo);
-    number setGrainPan(number pwi);
-
-    int findtargetvoice(SampleIndex ti);
-
-    number codebox_tilde_01_mphasor_next(number freq, number reset);
-    void codebox_tilde_01_mphasor_reset();
-    void codebox_tilde_01_mphasor_dspsetup();
-    void codebox_tilde_01_dspsetup(bool force);
-
-    void param_getPresetValue(PatcherStateInterface& preset, Index paramIndex);
-    void param_setPresetValue(PatcherStateInterface& preset, Index paramIndex, MillisecondTime time);
-
-    void phasor_01_dspsetup(bool force);
-    void phasor_02_dspsetup(bool force);
-    void phasor_03_dspsetup(bool force);
-
+    void dcblock_tilde_01_perform(const Sample* x, number gain, SampleValue* out1, Index n);
     void dcblock_tilde_01_reset();
     void dcblock_tilde_01_dspsetup(bool force);
-    void timevalue_01_sendValue();
-    void timevalue_01_onTempoChanged(number tempo);
-    void timevalue_01_onSampleRateChanged(number);
-    void timevalue_01_onTimeSignatureChanged(number, number);
-    void timevalue_02_sendValue();
-    void timevalue_02_onTempoChanged(number tempo);
-    void timevalue_02_onSampleRateChanged(number);
-    void timevalue_02_onTimeSignatureChanged(number, number);
-    void timevalue_03_sendValue();
-    void timevalue_03_onTempoChanged(number tempo);
-    void timevalue_03_onSampleRateChanged(number);
-    void timevalue_03_onTimeSignatureChanged(number, number);
 
     Index globaltransport_getSampleOffset(MillisecondTime time);
     number globaltransport_getTempoAtSample(SampleIndex sampleOffset);
@@ -538,11 +358,11 @@ protected:
     void globaltransport_advance();
     void globaltransport_dspsetup(bool force);
 
+    void allocateDataRefs();
+    void sendOutlet(OutletIndex index, ParameterValue value);
+    void startup();
     void updateTime(MillisecondTime time);
-
     void assign_defaults();
-
-    // member variables
 
     number limi_01_bypass;
     number limi_01_dcblock;
