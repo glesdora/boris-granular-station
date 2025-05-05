@@ -828,10 +828,14 @@ void Granulator::processTempoEvent(MillisecondTime time, Tempo tempo) {
 
 void Granulator::processTransportEvent(MillisecondTime time, TransportState state) {
     this->updateTime(time);
+
+    this->globaltransport_setState(this->_currentTime, state, false);
 }
 
 void Granulator::processBeatTimeEvent(MillisecondTime time, BeatTime beattime) {
     this->updateTime(time);
+
+    this->globaltransport_setBeatTime(this->_currentTime, beattime, false);
 }
 
 void Granulator::onSampleRateChanged(double samplerate) {
@@ -839,6 +843,8 @@ void Granulator::onSampleRateChanged(double samplerate) {
 
 void Granulator::processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator) {
     this->updateTime(time);
+
+    this->globaltransport_setTimeSignature(this->_currentTime, numerator, denominator, false);
 }
 
 void Granulator::setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime time) {
