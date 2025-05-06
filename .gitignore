@@ -8,5 +8,6 @@ juce
 notes.txt
 delayrecstop_notes.txt
 export
+publishing
 dsp/RTGrainVoice.cpp
 dsp/RTGrainVoice.h

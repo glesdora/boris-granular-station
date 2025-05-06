@@ -24,6 +24,7 @@ public:
         g.setFont(font);
         g.drawText("BORIS", topArea, Justification::centredTop);
         g.setFont(24.0f);
+        //g.setColour(Colours::lightpink);
         g.drawText("GRANULAR STATION", bottomArea, Justification::centredTop);
     }
 

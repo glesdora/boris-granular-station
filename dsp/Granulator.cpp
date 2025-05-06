@@ -180,7 +180,7 @@ void Granulator::RTGrainVoice::processBrain(
 
         number playstart = (isforw ? this->rel_start_pos_history : rel_end_of_grain);
         number playend = (isforw ? rel_end_of_grain : this->rel_start_pos_history);
-
+         
         SampleIndex play_counter_count = 0;
         bool play_counter_hit = 0;
 
@@ -579,7 +579,7 @@ void Granulator::process(
     auto scroll = (frz == 0);
 
     auto gai = paramvalues[13];
-    auto fdb = paramvalues[14];
+    auto fdb = normalizedparamvalues[14];
 
     auto wet = paramvalues[15];
 
