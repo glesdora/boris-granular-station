@@ -61,8 +61,6 @@ Details of the GPLv3 license can be found at: https://www.gnu.org/licenses/gpl-3
 #include "RNBO_Common.h"
 #include "RNBO_AudioSignal.h"
 
-//#include "RTGrainVoice.h"
-
 namespace RNBO {
 
 #define trunc(x) ((Int)(x))

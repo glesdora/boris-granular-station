@@ -1,6 +1,6 @@
 # BORIS Granular Station
 
-![BORIS Granular screenshot](images/screenshot0.png)
+<img src='./images/screenshot0.png.jpg' width=50% height=50%>
 
 **BORIS Granular Station** is a lightweight real-time granulator. It lets you zoom in into the details of sound, and explore its temporal dimension while its flowing. But honestly, do whatever you want with it.
 
@@ -12,3 +12,5 @@ Features:
 - The envelope selector uses a custom interpolation to swap shape smoothly
 - Freeze the audio input at any time
 - Play with Feedback but be careful: since the output of the plugin can vary so much, it’s hard to come out with  feedback limations
+
+## Installation

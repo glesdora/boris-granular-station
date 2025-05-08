@@ -50,7 +50,6 @@ target_sources(BorisGranularStation
   ui/MoonjellyKnob/MoonJKnob.cpp
   ui/MoonjellyKnob/MoonJDisplay.cpp
   dsp/Granulator.cpp
- # dsp/RTGrainVoice.cpp
 
  # ${RNBO_CLASS_FILE}
 

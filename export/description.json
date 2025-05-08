@@ -503,7 +503,7 @@
   "meta": {
     "architecture": "x64",
     "filename": "BORIS_IN_RAINBOW_v0.4.maxpat",
-    "rnboobjname": "rnbomatic",
+    "rnboobjname": "Granulator",
     "maxversion": "8.6.2",
     "rnboversion": "1.2.6",
     "name": "realtime_grains"

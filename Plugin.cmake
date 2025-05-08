@@ -56,7 +56,6 @@ target_sources(BorisGranularPlugin PRIVATE
   "${RNBO_CPP_DIR}/adapters/juce/RNBO_JuceAudioProcessor.cpp"
   "${RNBO_CPP_DIR}/adapters/juce/RNBO_JuceAudioProcessorEditor.cpp"
   "${RNBO_CPP_DIR}/RNBO.cpp"
- # ${RNBO_CLASS_FILE}
   src/Plugin.cpp
   src/MainComponent.cpp
   src/CustomAudioEditor.cpp
@@ -73,7 +72,6 @@ target_sources(BorisGranularPlugin PRIVATE
   ui/MoonjellyKnob/MoonJKnob.cpp
   ui/MoonjellyKnob/MoonJDisplay.cpp
   dsp/Granulator.cpp
-#  dsp/RTGrainVoice.cpp 
 )
 
 if (EXISTS ${RNBO_BINARY_DATA_FILE})
