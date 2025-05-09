@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-# set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: Debug Release")
-
 project(BORIS_GRANULAR VERSION 1.0.0)
 
 set(CMAKE_GENERATOR_PLATFORM x64)
