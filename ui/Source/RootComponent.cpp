@@ -317,10 +317,6 @@ void RootComponent::sliderValueChanged (juce::Slider* sliderThatWasMoved)
     if (sliderThatWasMoved == dynamic_cast<Slider*>(components[7].component.get())) {
          processor->interpolate(static_cast<float>(movedSliderValue));
          envelopeEncoderComponent->updateShapePath();
-    } else if (sliderThatWasMoved == dynamic_cast<Slider*>(components[16].component.get())) {
-        if (auto* bdial = dynamic_cast<BorisDial*>(components[3].component.get()); bdial != nullptr) {
-            // bdial->updateBlueLeds(movedSliderValue, 0.0f);
-        }
     } else if (sliderThatWasMoved == dynamic_cast<Slider*>(components[19].component.get())) {
         juce::MessageManager::callAsync([this] {
 			recalculateMaxGrainLength();

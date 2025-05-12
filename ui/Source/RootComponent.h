@@ -46,7 +46,6 @@ public:
     void timerCallback() override;
 private:
     CustomAudioProcessor *processor = nullptr;
-    //HashMap<int, Component *> componentsByParameterIndex; // used to map parameter index to slider we want to control
 
     Rectangle<float> waveDisplay;
     Rectangle<float> upLeftCtrlArea;
@@ -65,14 +64,12 @@ private:
 
     //==============================================================================
 
-    // Holds both the component and its panel for easy access
     struct ComponentEntry {
         std::shared_ptr<juce::Component> component;
         std::shared_ptr<ComponentPanel> panel;
     };
     std::vector<ComponentEntry> components;
 
-    // Define component configuration (type, name, label)
     struct ComponentConfig {
         std::string type;
         std::string name;

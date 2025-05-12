@@ -320,7 +320,9 @@ BorisPtcDial::BorisPtcDial(const String& componentName) : BorisDial(componentNam
 
 double BorisPtcDial::snapValue(double value, DragMode)
 {
-    double semitoneRatio = std::pow(2.0, 1.0 / 12.0);
+    int subs = 4;
+
+    double semitoneRatio = std::pow(2.0, 1.0 / (12.0 * subs));
     double n = std::round(std::log(value) / std::log(semitoneRatio));
 
     return std::pow(semitoneRatio, n);

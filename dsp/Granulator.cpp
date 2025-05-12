@@ -579,7 +579,7 @@ void Granulator::process(
     auto scroll = (frz == 0);
 
     auto gai = paramvalues[13];
-    auto fdb = normalizedparamvalues[14];
+    auto fdb = paramvalues[14] * 0.01;
 
     auto wet = paramvalues[15];
 
@@ -1182,9 +1182,9 @@ void Granulator::getParameterInfo(ParameterIndex index, ParameterInfo* info) con
             info->type = ParameterTypeNumber;
             info->initialValue = 0;
             info->min = 0;
-            info->max = 100;
+            info->max = 90;
             info->exponent = 1;
-            info->steps = 101;
+            info->steps = 91;
             info->debug = false;
             info->saveable = true;
             info->transmittable = true;
@@ -1340,16 +1340,23 @@ ParameterValue Granulator::applyJuceDeskew(ParameterValue normalizedValue, Param
 
 ParameterValue Granulator::applyPitchDenormalization(ParameterValue normalizedValue, ParameterValue min, ParameterValue max) const
 {
-    auto semitoneRatio = std::pow(2.0, 1.0 / 12.0);
-    auto n = std::round(std::log(normalizedValue) / std::log(semitoneRatio));
+    int subs = 4;
 
-    auto snap_val = std::pow(semitoneRatio, n);
-    return min * std::pow(max / min, snap_val);
+    auto octv_range = std::log2(max / min);
+    auto totalsteps = octv_range * 12.0 * subs;
+
+    auto semitoneRatio = std::pow(2.0, 1.0 / (12.0 * subs));
+
+    auto denrm = min * std::pow(max / min, normalizedValue);
+
+    auto n = std::round(std::log(denrm) / std::log(semitoneRatio));
+
+    return std::pow(semitoneRatio, n);
 }
 
 ParameterValue Granulator::applyPitchNormalization(ParameterValue value, ParameterValue min, ParameterValue max) const
 {
-    return (std::log(value / min)) / (std::log(max / min));
+    return std::log(value / min) / std::log(max / min);
 }
 
 void Granulator::sendParameter(ParameterIndex index, bool ignoreValue) {
@@ -1366,7 +1373,7 @@ ParameterValue Granulator::applyStepsToNormalizedParameterValue(ParameterValue n
     }
     else {
         ParameterValue oneStep = (number)1. / (steps - 1);
-        ParameterValue numberOfSteps = rnbo_fround(normalizedValue / oneStep * 1 / (number)1) * (number)1;
+        ParameterValue numberOfSteps = rnbo_fround(normalizedValue / oneStep);
         normalizedValue = numberOfSteps * oneStep;
     }
 
