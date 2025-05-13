@@ -6,7 +6,6 @@
 #include <rnbo_description.h>
 #endif
 
-//create an instance of our custom plugin, optionally set description, presets and binary data (datarefs)
 CustomAudioProcessor* CustomAudioProcessor::CreateDefault() {
 	nlohmann::json patcher_desc, presets;
 
@@ -105,8 +104,6 @@ void CustomAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 
 void CustomAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-	//juce::int64 startTime = juce::Time::getHighResolutionTicks();
-
 	if (auto posInfo = getPlayHead()->getPosition()) {
 		if (auto bpmFromHost = posInfo->getBpm())
             if (bpmFromHost != bpm) {
@@ -119,17 +116,10 @@ void CustomAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 
     RNBO::JuceAudioProcessor::processBlock(buffer, midiMessages);
     _waveVisualiser->pushBlock(vectorToDisplay, blocksize);
-
-	//juce::int64 endTime = juce::Time::getHighResolutionTicks();
-	//double elapsedMs = juce::Time::highResolutionTicksToSeconds(endTime - startTime) * 1000.0;
-	//DBG("processBlock1 took: " << elapsedMs << " ms");
 }
 
 void CustomAudioProcessor::processBlock (juce::AudioBuffer<double>& buffer, juce::MidiBuffer& midiMessages)
 {
-    //juce::int64 startTime = juce::Time::getHighResolutionTicks();
-
-
      //Convert inputs from double to float
     auto numChannels = buffer.getNumChannels();
     auto n = buffer.getNumSamples();
@@ -147,15 +137,12 @@ void CustomAudioProcessor::processBlock (juce::AudioBuffer<double>& buffer, juce
 
     RNBO::JuceAudioProcessor::processBlock(buffer, midiMessages);
 
-	//juce::int64 endTime = juce::Time::getHighResolutionTicks();
- //   double elapsedMs = juce::Time::highResolutionTicksToSeconds(endTime - startTime) * 1000.0;
- //   DBG("processBlock2 took: " << elapsedMs << " ms");
 }
 
 void CustomAudioProcessor::interpolate(float s)
 {
      auto& inactiveBuffer = envelopeDB->getInactiveBuffer();
-	 envint->interpolate(s, inactiveBuffer);                        //MAKES ABLETON CRASH (SOMETIMES??)
+	 envint->interpolate(s, inactiveBuffer);
      envelopeDB->swapBuffers();
 }
 
