@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BORIS Granular Station</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* RESET */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-width: 1500px;
+      height: 100%;
+      min-height: 700px;
+      overflow: auto;
+      font-family: 'Carlito', sans-serif;
+      /* background: #00000000 url('images/BLUE.jpg') no-repeat center center;
+      background-size: cover; */
+      color: #000000;
+    }
+
+    .background-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('images/BLUE.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -2;
+    }
+
+    .background-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(255, 255, 255, 0.286); /* adjust opacity to taste */
+      z-index: -1;
+    }
+
+    .layout {
+      display: grid;
+      height: 100vh;
+      padding: 10vh 5vw;
+      gap: 0 4vw;
+      grid-template-areas:
+        "text image"
+        "buttons image";
+      grid-template-columns: 1fr 1.5fr;
+      grid-template-rows: 2fr 1fr;
+    }
+
+    /* MOBILE LAYOUT */
+    @media only screen and (max-width: 768px) and (pointer: coarse) {
+      html, body {
+        width: 100%;
+        min-width: 320px;
+        height: 100%;
+        min-height: 480px;
+        overflow: auto;
+      }
+
+      .layout {
+        grid-template-areas:
+          "image"
+          "text"
+          "buttons";
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        padding: 5vh 5vw 10vh;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .image {
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 5vh;
+      }
+    }
+
+    /* AREA ASSIGNMENTS */
+    .image {
+      grid-area: image;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+
+    }
+
+    .text {
+      grid-area: text;
+      text-align: left;
+      margin: 0 3%;
+      font-size: 16px;
+    }
+
+    .buttons {
+      grid-area: buttons;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 5% 0;
+      gap: 18%;
+    }
+
+    /* CONTENT STYLES */
+    .hero-image {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .text h1 {
+      font-size: 3em;
+      margin-bottom: 0.5em;
+    }
+
+    .text .tagline {
+      font-size: 1.15em;
+      line-height: 1.5;
+      color: #000000;
+    }
+
+    .text a {
+      color: #35128e;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .text a:hover {
+      color: #6d3474;
+    }
+
+    .button {
+      background-color: #333;
+      color: #fff;
+      padding: 0.8em 1.2em;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+      height: auto;
+    }
+
+    .button:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="background-image"></div>
+  <div class="background-overlay"></div>
+
+  <div class="layout">
+
+    <!-- Image -->
+    <div class="image">
+      <img src="images/screen4k.png" alt="BORIS plugin screenshot" class="hero-image">
+    </div>
+
+    <!-- Title + Description -->
+    <div class="text">
+      <h1>BORIS Granular Station</h1>
+      <p class="tagline">BORIS is a lightweight, real-time granulator for live input. It lets you zoom into the fine details of 
+                          sound and slide through its timeline as it plays. Grain generation is sample-accurate and adds no 
+                          latency, so it fits smoothly into your effects chain. Thanks to its low CPU usage, you can run 
+                          multiple instances to build rich, layered textures on the fly.<br><br>
+                         BORIS includes a custom envelope system for morphing between shapes, a tempo sync mode that follows 
+                          your DAW, and a feedback control—all packed into a straightforward, easy-to-use interface.<br><br>
+                         It's open source, built with <a href="https://juce.com" target="_blank" rel="noopener">JUCE</a> and 
+                         <a href="https://rnbo.cycling74.com/" target="_blank" rel="noopener">RNBO</a>, and available as a VST3 
+                         plugin.
+</p>
+    </div>
+    <!-- Links -->
+    <div class="buttons">
+      <a class="button" href="downloads/BorisGranular.vst3" download="BorisGranularStation.vst3">Download VST3</a>
+      <a class="button" href="https://github.com/glesdora/boris-granular-station">View on GitHub</a>
+    </div>
+  </div>
+</body>
+</html>

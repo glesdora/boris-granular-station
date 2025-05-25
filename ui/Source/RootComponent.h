@@ -52,7 +52,9 @@ private:
     Rectangle<float> upRightCtrlArea;
     Rectangle<float> downRightCtrlArea;
 
-    BorisLogo logo;
+
+    Image notALogo;
+	std::unique_ptr<BorisLogo> logo;
 
     BorisSplitSubPanel timePanel;
     BorisSubPanel pitchPanel;

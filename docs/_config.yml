@@ -1,0 +1,6 @@
+description: >- # this means to ignore newlines until "baseurl:"
+  BORIS Granular Station is a lightweight real-time granulator for live audio input.
+  It lets you zoom in on the details of sound and explore its temporal dimension as it flows.
+
+plugins:
+  - jekyll-feed

@@ -5,9 +5,9 @@
 
 #include <juce_graphics/juce_graphics.h>
 
-#define LTEXTSIZE 24
-#define MTEXTSIZE 18
-#define STEXTSIZE 14
+#define LTEXTSIZE 2*24
+#define MTEXTSIZE 2*18
+#define STEXTSIZE 2*14
 
 enum Palette  { active,
                 inactive,
@@ -32,7 +32,7 @@ const juce::Colour borisPalette[] = {
 	juce::Colours::aliceblue,					// led
 	juce::Colours::darkslategrey.darker(1.8F),  // offled
 	juce::Colours::darkslategrey.darker(1.8F),	// back
-	juce::Colours::darkslateblue.darker(1.8F),	// ground
+	juce::Colours::black,	                    // ground
 	juce::Colours::darkslateblue,	            // border
     juce::Colours::transparentBlack,			// ledsband
     juce::Colours::aliceblue,					// pointer

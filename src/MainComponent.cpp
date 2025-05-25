@@ -16,8 +16,8 @@
 #include <cstdlib>
 #include <crtdbg.h>
 
-#define WIDTH 600
-#define HEIGHT 400
+#define WIDTH 2*600
+#define HEIGHT 2*400
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -41,8 +41,6 @@ public:
     {	
 		//_CrtSetBreakAlloc(15532);
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
-		DBG("About to load RNBO Audio Processor");
 
 		loadRNBOAudioProcessor();
 

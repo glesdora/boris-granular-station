@@ -6,6 +6,8 @@ RootComponent::RootComponent (std::shared_ptr<WaveVisualiserComponent> _wvc) : t
                                   wavectrlsPanel(borisPalette[inactive].withAlpha(0.2f), BorisSubPanel::SubPanelShape::Plain)
 {
 
+	notALogo = juce::ImageCache::getFromMemory(BinaryData::birds_png, BinaryData::birds_png_Size);
+
     std::unique_ptr<XmlElement> snowflakeXml(XmlDocument::parse(String::fromUTF8(reinterpret_cast<const char*>(BinaryData::snowflake_svg), BinaryData::snowflake_svg_Size)));
 	std::unique_ptr<XmlElement> muteXml(XmlDocument::parse(String::fromUTF8(reinterpret_cast<const char*>(BinaryData::mute_svg), BinaryData::mute_svg_Size)));
 	std::unique_ptr<XmlElement> metronomeXml(XmlDocument::parse(String::fromUTF8(reinterpret_cast<const char*>(BinaryData::metronome_svg), BinaryData::metronome_svg_Size)));
@@ -122,14 +124,15 @@ RootComponent::RootComponent (std::shared_ptr<WaveVisualiserComponent> _wvc) : t
     envelopeEncoderComponent = dynamic_cast<BorisMoonJKnobWrapper*>(components[7].component.get());
     envelopeEncoderComponent->setNumberOfShapes(3);
 
-    addAndMakeVisible(logo);
+	logo.reset(new BorisLogo(notALogo));
+    addAndMakeVisible(logo.get());
 
     addAndMakeVisible(timePanel);
     addAndMakeVisible(pitchPanel);
     addAndMakeVisible(shapePanel);
     addAndMakeVisible(wavectrlsPanel);
     
-    setSize (600, 400);
+	setSize(2*600, 2*400);
 }
 
 RootComponent::~RootComponent()
@@ -236,7 +239,7 @@ void RootComponent::resized()
 
     // logo
 
-    logo.setBounds(logoArea.toNearestInt());
+    logo->setBounds(logoArea.toNearestInt());
 	//components[18].panel->setBounds(logoArea.removeFromTop(logoArea.getHeight()*0.5f).toNearestInt(), buttonwidth);    // LOGO
     
     // Area 2: right of the logo
