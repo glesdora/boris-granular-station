@@ -132,7 +132,7 @@ RootComponent::RootComponent (std::shared_ptr<WaveVisualiserComponent> _wvc) : t
     addAndMakeVisible(shapePanel);
     addAndMakeVisible(wavectrlsPanel);
     
-	setSize(2*600, 2*400);
+	setSize(600, 400);
 }
 
 RootComponent::~RootComponent()

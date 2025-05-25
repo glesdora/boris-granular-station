@@ -5,9 +5,9 @@
 
 #include <juce_graphics/juce_graphics.h>
 
-#define LTEXTSIZE 2*24
-#define MTEXTSIZE 2*18
-#define STEXTSIZE 2*14
+#define LTEXTSIZE 24
+#define MTEXTSIZE 18
+#define STEXTSIZE 14
 
 enum Palette  { active,
                 inactive,
