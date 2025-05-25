@@ -1,10 +1,10 @@
 # BORIS Granular Station
 
-<img src='./images/screenshot0.png' width="70%" height="70%">
+<img src='./images/screenshot.png' width="70%" height="70%">
 
 **BORIS Granular Station** is a lightweight real-time granulator for **live audio input**. It lets you zoom in on the details of sound and explore its temporal dimension as it flows.
 
-BORIS is **fast** and **precise**: it’s always sample-accurate and adds no extra latency to your FX chain.
+BORIS is **fast** and **precise**: itï¿½s always sample-accurate and adds no extra latency to your FX chain.
 
 ### Features
 
@@ -13,7 +13,7 @@ BORIS is **fast** and **precise**: it’s always sample-accurate and adds no extra
 - Shift the pitch of the grains with a resolution of 1/4th of a semitone
 - Use the custom envelope control to smoothly morph between different shapes
 - Freeze the incoming audio at any time
-- Play with feedback — but be warned: since the granuator output can vary drastically, results may be unpredictable :)
+- Play with feedback ï¿½ but be warned: since the granuator output can vary drastically, results may be unpredictable :)
 
 ### Coming soon
 
@@ -32,12 +32,12 @@ https://youtu.be/WWlFgpCR7Ug
 **Download prebuilt binaries from the `install/` folder**:
 
 - **VST3 Plugin**  
-  Copy the file `BORIS_Granular_Station.vst3` into your system’s VST3 plugin directory:
+  Copy the file `BORIS_Granular_Station.vst3` into your systemï¿½s VST3 plugin directory:
   - **Windows:** `C:\Program Files\Common Files\VST3\`
   - **macOS:** `/Library/Audio/Plug-Ins/VST3/`
   
 - **Standalone Application**  
-  Simply run the `BorisGranularStation.exe` from the same folder — no installation needed.
+  Simply run the `BorisGranularStation.exe` from the same folder ï¿½ no installation needed.
 
 ---
 
