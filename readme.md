@@ -29,15 +29,19 @@ https://youtu.be/WWlFgpCR7Ug
 
 ## Installation
 
-**Download prebuilt binaries from the `install/` folder**:
+You’ve got two options:
 
-- **VST3 Plugin**  
-  Copy the file `BORIS_Granular_Station.vst3` into your system's VST3 plugin directory:
-  - **Windows:** `C:\Program Files\Common Files\VST3\`
-  - **macOS:** `/Library/Audio/Plug-Ins/VST3/`
-  
-- **Standalone Application**  
-  Simply run the `BorisGranularStation.exe` from the same folder - no installation needed.
+1. **Download the VST from the [webpage!](https://glesdora.github.io/boris-granular-station/)**:
+
+2. **Download prebuilt binaries from the `install/` folder**:
+
+   - **VST3 Plugin**  
+     Copy the file `BORIS_Granular_Station.vst3` into your system's VST3 plugin directory:
+     - **Windows:** `C:\Program Files\Common Files\VST3\`
+     - **macOS:** `/Library/Audio/Plug-Ins/VST3/`
+    
+   - **Standalone Application**  
+     Simply run the `BorisGranularStation.exe` from the same folder - no installation needed.
 
 ---
 
