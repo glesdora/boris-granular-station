@@ -31,7 +31,7 @@ https://youtu.be/WWlFgpCR7Ug
 
 You’ve got two options:
 
-1. **Download the VST from the [webpage!](https://glesdora.github.io/boris-granular-station/)**:
+1. **Download the VST from the [webpage!](https://glesdora.github.io/boris-granular-station/)**
 
 2. **Download prebuilt binaries from the `install/` folder**:
 
