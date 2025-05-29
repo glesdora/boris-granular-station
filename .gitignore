@@ -1,6 +1,5 @@
 .vs
 .vscode
-thirdparty
 build
 include
 juce
