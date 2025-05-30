@@ -41,14 +41,16 @@ public:
 			ledig.fillEllipse(fbounds);
 		}
 
-		Image glowim = ledim.createCopy();
-		Graphics glowig(glowim);
+		g.drawImage(ledim, fbounds);
 
-		GlowEffect glow;
-		glow.setGlowProperties(glowradius * alpha, borisPalette[led].withAlpha(alpha));
-		glow.applyEffect(ledim, glowig, 1.0f, 1.0f);
+		//Image glowim = ledim.createCopy();
+		//Graphics glowig(glowim);
 
-		g.drawImage(glowim, fbounds);
+		//GlowEffect glow;
+		//glow.setGlowProperties(glowradius * alpha, borisPalette[led].withAlpha(alpha));
+		//glow.applyEffect(ledim, glowig, 1.0f, 1.0f);
+
+		//g.drawImage(glowim, fbounds);
 	}
 
 	void setBrightness(float a)

@@ -154,7 +154,7 @@ BorisDial::BorisDial(const String& componentName, int numberOfLeds) : BorisSlide
 void BorisDial::paint(Graphics& g)
 {
     auto bounds = getLocalBounds();
-    auto center = bounds.getCentre();
+    auto center = bounds.toFloat().getCentre();
     center.addXY(0, leds_to_in_rad * 0.5f);
 
 	g.drawEllipse(center.x - 1, center.y - 1, 2, 2, 2.0f);
@@ -179,25 +179,51 @@ void BorisDial::paint(Graphics& g)
         center.y + std::cos(toAngle) * cursorArcRadius * (-1.0f)
     );
 
-    float zoom = 1.0f;
+	g.setColour(borisPalette[led]);
+	g.fillEllipse(indicatorPos.x - arrowheight * 0.5f, indicatorPos.y - arrowheight * 0.5f, arrowheight, arrowheight);
 
-    Rectangle<float> arrowBounds(-arrowheight, -arrowheight, arrowheight * 2.0f, arrowheight * 2.0f);
-    Image arrowImage = Image(Image::ARGB, arrowheight * zoom * 2.0f, arrowheight * zoom * 2.0f, true);
-    Graphics arrowGraphics(arrowImage);
-    AffineTransform transform = AffineTransform::rotation(toAngle).translated(arrowheight * zoom, arrowheight * zoom);
+    //float zoom = 1.0f;
 
-    arrowGraphics.setColour(borisPalette[led]);
-    arrowGraphics.fillPath(arrowPath, transform);
+    //Rectangle<float> arrowBounds(-arrowheight, -arrowheight, arrowheight * 2.0f, arrowheight * 2.0f);
+    //Image arrowImage = Image(Image::ARGB, arrowheight * zoom * 2.0f, arrowheight * zoom * 2.0f, true);
+    //Graphics arrowGraphics(arrowImage);
+    //AffineTransform transform = AffineTransform::rotation(toAngle).translated(arrowheight * zoom, arrowheight * zoom);
+
+    //arrowGraphics.setColour(borisPalette[led]);
+    //arrowGraphics.fillPath(arrowPath, transform);
+
+    //Colour glowColour = borisPalette[led].withAlpha(0.1f); // adjust alpha for intensity
+    //float glowRadius = 1.5f * arrowheight; // glow size relative to arrow
+
+    //g.setColour(glowColour);
+
+    //// Draw multiple concentric ellipses to simulate blur
+    //for (int i = 4; i >= 1; --i)
+    //{
+    //    float scale = i / 4.0f; // from 0.25 to 1.0
+    //    float alpha = 0.08f * i; // fade out edges
+    //    g.setColour(glowColour.withAlpha(alpha));
+
+    //    float size = glowRadius * scale;
+    //    g.fillEllipse(
+    //        indicatorPos.x - size * 0.5f,
+    //        indicatorPos.y - size * 0.5f,
+    //        size,
+    //        size
+    //    );
+    //}
+
+    //g.drawImage(arrowImage, arrowBounds.translated(indicatorPos.x, indicatorPos.y), RectanglePlacement::stretchToFit);
 
     // glow effect
-    float glowradius = 0.1f * arrowheight * zoom;
-    GlowEffect glow;
-    glow.setGlowProperties(glowradius, borisPalette[led]);
-    Image glowedImage = arrowImage.createCopy();
-    Graphics glowGraphics(glowedImage);
+    //float glowradius = 0.1f * arrowheight * zoom;
+    //GlowEffect glow;
+    //glow.setGlowProperties(glowradius, borisPalette[led]);
+    //Image glowedImage = arrowImage.createCopy();
+    //Graphics glowGraphics(glowedImage);
 
-    glow.applyEffect(arrowImage, glowGraphics, 1.0f, 1.0f);
-    g.drawImage(glowedImage, arrowBounds.translated(indicatorPos.x, indicatorPos.y), RectanglePlacement::stretchToFit);
+    //glow.applyEffect(arrowImage, glowGraphics, 1.0f, 1.0f);
+    //g.drawImage(glowedImage, arrowBounds.translated(indicatorPos.x, indicatorPos.y), RectanglePlacement::stretchToFit);
 
 	litupLeds(sliderPos);
 }

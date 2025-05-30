@@ -13,30 +13,31 @@ void MoonJDisplay::paint(Graphics& g)
 {
 	if (_dbuf == nullptr) return;
 
-    auto bounds = getLocalBounds();
-	float linethickness = _curvesize * 0.05f;
-	float glowradius = linethickness * 0.5f;
-	float margin = linethickness + glowradius;
-	auto displayarea = bounds.reduced(margin);
-	auto w = displayarea.getWidth();
-	auto h = displayarea.getHeight();
+	const auto bounds = getLocalBounds().toFloat();
+	const int W = static_cast<int>(bounds.getWidth());
+	const int H = static_cast<int>(bounds.getHeight());
+	const float thickness = 3.f;
 
-    g.setColour(borisPalette[back]);
-    g.fillRect(displayarea);
+	const int sourceSize = _curvesize;
+	const float glowRadius = thickness;
 
-    offscreenImage = Image(Image::ARGB, _curvesize + 2 * margin, _curvesize + 2 * margin, true);
-    Graphics offscreenG(offscreenImage);
-    offscreenG.addTransform(juce::AffineTransform::translation(margin, margin));
+	Image maskImage(Image::ARGB, sourceSize, sourceSize, true);
+	Graphics maskG(maskImage);
 
-    offscreenG.setColour(borisPalette[led]);
-    offscreenG.strokePath(shape, juce::PathStrokeType(linethickness, PathStrokeType::mitered, PathStrokeType::rounded));
+	DropShadow shadow;
+	shadow.colour = borisPalette[led]/*.withAlpha(0.6f)*/;
+	shadow.radius = (int)glowRadius * 0.5;
+	shadow.offset = { 0, 0 }; // No offset for glow effect
+	shadow.drawForPath(maskG, shape);
+	Path shorterShape = shape;
+	shorterShape.applyTransform(AffineTransform::scale(1.0f, 0.9f));
+	shorterShape.applyTransform(AffineTransform::translation(0, 0.15f * sourceSize));
+	shadow.colour = borisPalette[back];
+	shadow.radius = (int)glowRadius;
+	shadow.offset = { 0, 0 }; // No offset for glow effect
+	shadow.drawForPath(maskG, shorterShape);
 
-    glow.setGlowProperties(glowradius, borisPalette[led]);
-    glowedImage = offscreenImage.createCopy();
-    Graphics glowedGraphics(glowedImage);
-    glow.applyEffect(offscreenImage, glowedGraphics, 1.0f, 1.0f);
-
-    g.drawImage(glowedImage, bounds.toFloat(), juce::RectanglePlacement::stretchToFit);
+	g.drawImage(maskImage, bounds.toFloat(), RectanglePlacement::stretchToFit, false);
 }
 
 void MoonJDisplay::resized()
@@ -77,4 +78,30 @@ void MoonJDisplay::updatePath() {
 void MoonJDisplay::setData(DoubleBuffer& dbuf) {
 	_dbuf = &dbuf;
 	_curvesize = _dbuf->getActiveBuffer().size();
+}
+
+void MoonJDisplay::drawBlurredPathGlow(Graphics& g, const Path& shape, const Colour& glowColour,
+    float lineThickness, float glowRadius, Rectangle<int> bounds)
+{
+    float glowScale = 0.5f; // 1/4 resolution
+    int glowW = static_cast<int>(_curvesize * glowScale);
+    int glowH = static_cast<int>(_curvesize * glowScale);
+
+    if (glowW <= 0 || glowH <= 0) return;
+
+    // Step 1: Create low-res glow image
+    Image glowImage(Image::ARGB, glowW, glowH, true);
+    Graphics glowG(glowImage);
+
+    glowG.addTransform(AffineTransform::scale(glowScale)); // draw shape scaled down
+    glowG.setColour(glowColour.withAlpha(0.6f));           // semi-transparent glow color
+    glowG.strokePath(shape, PathStrokeType(lineThickness));
+
+    // Step 2: Scale up and draw as glow
+    g.drawImage(glowImage, bounds.toFloat());
+
+    // Step 3: Draw sharp main shape on top
+    //g.setColour(borisPalette[led]);
+    //g.strokePath(shape, PathStrokeType(lineThickness));
+
 }

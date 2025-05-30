@@ -19,6 +19,9 @@ public:
 	void setData(DoubleBuffer& dbuf);
 
 private:
+	void drawBlurredPathGlow(Graphics& g, const Path& shape, const Colour& glowColour,
+							 float lineThickness, float glowRadius, Rectangle<int> bounds);
+
 	DoubleBuffer* _dbuf = nullptr;
 	int _curvesize;
 	Path shape;

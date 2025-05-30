@@ -26,8 +26,8 @@ void MoonJKnob::paint(Graphics& g)
     g.setColour(borisPalette[back]);
     g.fillEllipse(center.x - innerBorderRadius, center.y - innerBorderRadius, innerBorderRadius * 2, innerBorderRadius * 2);
 
-	g.setColour(borisPalette[border]);
-	g.strokePath(borderBand, PathStrokeType(innerBorderWidth));
+	/*g.setColour(borisPalette[border]);
+	g.strokePath(borderBand, PathStrokeType(innerBorderWidth));*/
     
     g.setColour(borisPalette[back]);
     g.strokePath(arrowBand, PathStrokeType(cursorBandWidth));
@@ -46,25 +46,34 @@ void MoonJKnob::paint(Graphics& g)
         center.y + std::cos(toAngle) * cursorArcRadius * (-1.0f)
     );
 
-    float zoom = 1.0f;
+	g.setColour(borisPalette[led]);
+	g.fillEllipse(
+		indicatorPos.x - ledSize * 0.5f,
+		indicatorPos.y - ledSize * 0.5f,
+		ledSize, ledSize
+	);
 
-	Rectangle<float> arrowBounds(-arrowheight, -arrowheight, arrowheight * 2.0f, arrowheight * 2.0f);
-	Image arrowImage = Image(Image::ARGB, arrowheight * zoom * 2.0f, arrowheight * zoom * 2.0f, true);
-    Graphics arrowGraphics(arrowImage);
-    AffineTransform transform = AffineTransform::rotation(toAngle).translated(arrowheight * zoom, arrowheight * zoom);
+ //   float zoom = 1.0f;
 
-	arrowGraphics.setColour(borisPalette[led]);
-	arrowGraphics.fillPath(arrowPath, transform);
+	//Rectangle<float> arrowBounds(-arrowheight, -arrowheight, arrowheight * 2.0f, arrowheight * 2.0f);
+	//Image arrowImage = Image(Image::ARGB, arrowheight * zoom * 2.0f, arrowheight * zoom * 2.0f, true);
+ //   Graphics arrowGraphics(arrowImage);
+ //   AffineTransform transform = AffineTransform::rotation(toAngle).translated(arrowheight * zoom, arrowheight * zoom);
+
+	//arrowGraphics.setColour(borisPalette[led]);
+	//arrowGraphics.fillPath(arrowPath, transform);
 
     // glow effect
-    float glowradius = 0.1f * arrowheight * zoom;
-    GlowEffect glow;
-    glow.setGlowProperties(glowradius, borisPalette[led]);
-    Image glowedImage = arrowImage.createCopy();
-    Graphics glowGraphics(glowedImage);
+    //float glowradius = 0.1f * arrowheight * zoom;
+    //GlowEffect glow;
+    //glow.setGlowProperties(glowradius, borisPalette[led]);
+    //Image glowedImage = arrowImage.createCopy();
+    //Graphics glowGraphics(glowedImage);
 
-    glow.applyEffect(arrowImage, glowGraphics, 1.0f, 1.0f);
-    g.drawImage(glowedImage, arrowBounds.translated(indicatorPos.x, indicatorPos.y), RectanglePlacement::stretchToFit);
+    //glow.applyEffect(arrowImage, glowGraphics, 1.0f, 1.0f);
+    //g.drawImage(glowedImage, arrowBounds.translated(indicatorPos.x, indicatorPos.y), RectanglePlacement::stretchToFit);
+
+	//g.drawImage(arrowImage, arrowBounds.translated(indicatorPos.x, indicatorPos.y), RectanglePlacement::stretchToFit);
 
     // leds brightness
     if (numberOfShapes) {
