@@ -2,10 +2,10 @@
 .vscode
 build
 include
-juce
 *.vcxproj
 *.filters
 notes.txt
 delayrecstop_notes.txt
 dsp/RTGrainVoice.cpp
 dsp/RTGrainVoice.h
+/juce/
