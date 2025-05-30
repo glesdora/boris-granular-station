@@ -39,11 +39,8 @@ add_subdirectory(
   EXCLUDE_FROM_ALL #don't build examples etc, also don't install
 )
 
-# add_subdirectory(modules/melatonin_inspector)
-
 # Or, instead, use Conan to get JUCE, should speed up clean builds
 # include(${RNBO_CPP_DIR}/cmake/RNBOJuce.cmake)
-
 
 # Optionally, enable ccache, should speed up builds
 include(${RNBO_CPP_DIR}/cmake/CCache.cmake)
