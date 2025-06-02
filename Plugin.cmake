@@ -129,5 +129,6 @@ target_link_libraries(BorisGranularPlugin
   juce::juce_recommended_warning_flags
   )
 
-install(TARGETS BorisGranularPlugin
-        DESTINATION  ".")
+install(FILES
+    "${CMAKE_BINARY_DIR}/BorisGranularPlugin_artefacts/Release/VST3/BorisGranular.vst3/Contents/x86_64-win/BorisGranular.vst3"
+    DESTINATION ".")

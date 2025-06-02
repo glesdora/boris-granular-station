@@ -130,4 +130,4 @@ target_link_libraries(BorisGranularPlugin
   )
 
 install(TARGETS BorisGranularPlugin
-        LIBRARY DESTINATION  ".")
+        DESTINATION  ".")
