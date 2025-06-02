@@ -56,7 +56,6 @@ target_sources(BorisGranularPlugin PRIVATE
   "${RNBO_CPP_DIR}/adapters/juce/RNBO_JuceAudioProcessor.cpp"
   "${RNBO_CPP_DIR}/adapters/juce/RNBO_JuceAudioProcessorEditor.cpp"
   "${RNBO_CPP_DIR}/RNBO.cpp"
-  ${RNBO_CLASS_FILE}
   src/Plugin.cpp
   src/MainComponent.cpp
   src/CustomAudioEditor.cpp
@@ -71,13 +70,15 @@ target_sources(BorisGranularPlugin PRIVATE
   ui/Source/guicomponents/BorisToggle.cpp
   ui/Source/guicomponents/ComponentPanel.cpp
   ui/MoonjellyKnob/MoonJKnob.cpp
-  ui/MoonjellyKnob/MoonJDisplay.cpp)
+  ui/MoonjellyKnob/MoonJDisplay.cpp
+  dsp/Granulator.cpp
+)
 
 if (EXISTS ${RNBO_BINARY_DATA_FILE})
   target_sources(BorisGranularPlugin PRIVATE ${RNBO_BINARY_DATA_FILE})
 endif()
 
-target_include_directories(BorisGranularStation
+target_include_directories(BorisGranularPlugin
   PRIVATE
   ${RNBO_CPP_DIR}/
   ${RNBO_CPP_DIR}/src
@@ -88,6 +89,7 @@ target_include_directories(BorisGranularStation
   ui/Source
   ui/Source/guicomponents
   ui/MoonjellyKnob
+  dsp
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -102,7 +104,7 @@ if (NOT PLUGIN_PARAM_DEFAULT_NOTIFY)
 	set(RNBO_JUCE_PARAM_DEFAULT_NOTIFY 0)
 endif()
 
-target_compile_definitions(BorisGranularStation
+target_compile_definitions(BorisGranularPlugin
   PUBLIC
   # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
   JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
@@ -126,3 +128,6 @@ target_link_libraries(BorisGranularPlugin
   juce::juce_recommended_lto_flags
   juce::juce_recommended_warning_flags
   )
+
+install(TARGETS BorisGranularPlugin
+        LIBRARY DESTINATION  ".")

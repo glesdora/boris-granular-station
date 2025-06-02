@@ -100,7 +100,7 @@ void Granulator::RTGrainVoice::processBrain(
 
         number __pan = (in7 > 1 ? 1 : in7 < 0 ? 0 : in7);
         number __vol = (in6 > 1 ? 1 : (in6 < 0 ? 0 : in6));
-        number __trgt_samps = std::max(in3, 0.);
+        number __trgt_samps = std::fmax(in3, 0.);
         number __pitch = (in5 > 4 ? 4 : (in5 < 0.25 ? 0.25 : in5));
         number g_samps = __trgt_samps / __pitch;
 
@@ -1592,7 +1592,7 @@ number Granulator::setGrainPosition(number posinsamps, number drfinsamps, number
 
     number pos = rnbo_ceil(this->clip(
         posinsamps + rand01() * drfinsamps,
-        std::max(r_marg, leninsamps - intelligent_offset),
+        std::fmax(r_marg, leninsamps - intelligent_offset),
         this->samplerate() * 10
     ));
 

@@ -223,8 +223,8 @@ public:
     ConstCharPointer getParameterId(ParameterIndex index) const;
     void getParameterInfo(ParameterIndex index, ParameterInfo* info) const;
 
-    ParameterValue Granulator::applyJuceSkew(ParameterValue normalizedValue, ParameterValue exp) const;
-    ParameterValue Granulator::applyJuceDeskew(ParameterValue normalizedValue, ParameterValue exp) const;
+    ParameterValue applyJuceSkew(ParameterValue normalizedValue, ParameterValue exp) const;
+    ParameterValue applyJuceDeskew(ParameterValue normalizedValue, ParameterValue exp) const;
     ParameterValue applyPitchDenormalization(ParameterValue value, ParameterValue min, ParameterValue max) const;
     ParameterValue applyPitchNormalization(ParameterValue value, ParameterValue min, ParameterValue max) const;
     ParameterValue applyStepsToNormalizedParameterValue(ParameterValue normalizedValue, int steps) const;
@@ -317,7 +317,7 @@ protected:
     void recordtilde_02_perform(const Sample* record, number begin, number end, const SampleValue* input1, SampleValue* sync, Index n);
 
     void stackprotect_perform(Index n);
-    bool Granulator::stackprotect_check();
+    bool stackprotect_check();
 
     void limi_01_perform(const SampleValue* input1, const SampleValue* input2, SampleValue* output1, SampleValue* output2, Index n);
     void limi_01_lookahead_setter(number v);

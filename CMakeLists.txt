@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(BORIS_GRANULAR VERSION 1.0.0)
 
-set(CMAKE_GENERATOR_PLATFORM x64)
+# set(CMAKE_GENERATOR_PLATFORM x64)
 
 set(CMAKE_CXX_STANDARD 14) #JUCE requires 14
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,7 +35,6 @@ endif()
 # Include the JUCE submodule, needed for JUCE-based CMake definitions
 add_subdirectory(
   ${CMAKE_CURRENT_LIST_DIR}/thirdparty/juce
-  ${CMAKE_BINARY_DIR}/juce
   EXCLUDE_FROM_ALL #don't build examples etc, also don't install
 )
 
@@ -56,6 +55,8 @@ add_compile_definitions(COMMON_BUILD)
 # Use custom definitions for standalone and VST3 builds
 set(STANDALONE_DEFINITION "-DSTANDALONE_BUILD")
 set(VST3_DEFINITION "-DVST3_BUILD")
+
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install" CACHE PATH "Install path" FORCE)
 
 # setup your application, you can remove this include if you don't want to build applications
 include(${CMAKE_CURRENT_LIST_DIR}/App.cmake)

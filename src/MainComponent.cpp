@@ -12,9 +12,9 @@
 
 #include <array>
 
-#define _CRTDBG_MAP_ALLOC
+//#define _CRTDBG_MAP_ALLOC
 #include <cstdlib>
-#include <crtdbg.h>
+//#include <crtdbg.h>
 
 #define WIDTH 600
 #define HEIGHT 400
@@ -39,8 +39,10 @@ public:
 		false, // treat channels as stereo pairs
 		false) // hide advanced options
     {	
+#ifdef _CRTDBG_MAP_ALLOC
 		//_CrtSetBreakAlloc(15532);
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
 
 		loadRNBOAudioProcessor();
 

@@ -2,11 +2,9 @@
 #include "RNBO_UnitTests.h"
 #include "RNBO.h"
 
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
+//#define _CRTDBG_MAP_ALLOC
+//#include <crtdbg.h>
 #include <stdlib.h>
-
-#include <Windows.h>
 
 Component* createMainContentComponent();
 

@@ -103,5 +103,3 @@ target_link_libraries(BorisGranularStation
   juce::juce_recommended_lto_flags
   juce::juce_recommended_warning_flags)
 
-install(TARGETS BorisGranularStation
-        RUNTIME DESTINATION ".")
