@@ -234,9 +234,10 @@ void RootComponent::resized()
 
     components[3].panel->setBounds(ul_a1_TR.toNearestInt(), dialwidth);    // LEN
 
-    components[2].panel->setBounds(ul_a1_BR.removeFromBottom(ul_a1_BR.getHeight() * 0.5f).reduced(2).toNearestInt(), numboxwidth);   // RDL
+    auto rdl_bounds = ul_a1_BR.removeFromBottom(ul_a1_BR.getHeight() * 0.5f).withTrimmedBottom(3);
+    components[2].panel->setBounds(rdl_bounds.toNearestInt(), numboxwidth);   // RDL
 
-    auto rle_bounds = ul_a1_BR.withTrimmedBottom(3);
+    auto rle_bounds = ul_a1_BR;
     components[4].panel->setBounds(rle_bounds.toNearestInt(), numboxwidth);    // RLE
 
     auto cha_bounds = ul_a1_BL.withTrimmedBottom(3);
@@ -253,7 +254,9 @@ void RootComponent::resized()
     Rectangle<float> ul_a2_bottom = ulArea2;
 
     components[5].panel->setBounds(ul_a2_top.toNearestInt());    // CPT
-    components[6].panel->setBounds(ul_a2_bottom.reduced(2).toNearestInt(), numboxwidth);    // RPT
+
+    auto rpt_bounds = ul_a2_bottom.withTrimmedBottom(3);
+    components[6].panel->setBounds(rpt_bounds.toNearestInt(), numboxwidth);    // RPT
 
     // Upper right area
     float tr_h_prop = 0.8f;

@@ -108,7 +108,7 @@ void BorisNumberBoxSlider::paint(Graphics& g)
     auto cornersize = bounds.getWidth() * 0.05f;
 
     Path roundedRect;
-    roundedRect.addRoundedRectangle(bounds, cornersize);
+    roundedRect.addRoundedRectangle(bounds.reduced(1), cornersize);
 
     g.setColour(borisPalette[back]);
     g.fillPath(roundedRect);
@@ -123,7 +123,7 @@ void BorisNumberBoxSlider::paint(Graphics& g)
     // g.restoreState();
 
     g.setColour(borisPalette[border]);
-    g.strokePath(roundedRect, PathStrokeType(1.5f));
+    g.strokePath(roundedRect, PathStrokeType(1.f));
 
     // g.setColour(borisPalette[led]);
     // g.drawText(String(getValue(), 2), bounds, Justification::centred);
