@@ -129,5 +129,14 @@ target_link_libraries(BorisGranularPlugin
   juce::juce_recommended_warning_flags
   )
 
-install(TARGETS BorisGranularPlugin
-        DESTINATION  ".")
+# # if(WIN32)
+	install(FILES
+		"${CMAKE_BINARY_DIR}/BorisGranularPlugin_artefacts/Release/VST3/BorisGranular.vst3/Contents/x86_64-win/BorisGranular.vst3"
+		DESTINATION "."
+		)
+# elseif(APPLE)
+	# install(
+		# FILES
+		# "${CMAKE_BINARY_DIR}/BorisGranularPlugin_artefacts/Release/AU/BorisGranular.component"
+		# DESTINATION ~/Library/Audio/Plug-Ins/Components/
+		# )

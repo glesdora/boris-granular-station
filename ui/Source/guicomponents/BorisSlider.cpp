@@ -39,7 +39,7 @@ void BorisVerticalSlider::paint(Graphics& g)
     Path roundedRect;
     roundedRect.addRoundedRectangle(bounds, cornersize);
 
-    g.setColour(borisPalette[inactive]);        // Or replace with colour1
+    g.setColour(borisPalette[inactive]);
     g.fillPath(roundedRect);
 
     Path activePath;
@@ -123,7 +123,7 @@ void BorisNumberBoxSlider::paint(Graphics& g)
     // g.restoreState();
 
     g.setColour(borisPalette[border]);
-    g.strokePath(roundedRect, PathStrokeType(1.0f));
+    g.strokePath(roundedRect, PathStrokeType(1.5f));
 
     // g.setColour(borisPalette[led]);
     // g.drawText(String(getValue(), 2), bounds, Justification::centred);
@@ -167,6 +167,7 @@ void BorisDial::paint(Graphics& g)
 
     g.setColour(borisPalette[border]);
     g.strokePath(borderBand, PathStrokeType(innerBorderWidth));
+
 
     g.setColour(borisPalette[back].darker());
     g.strokePath(outline, PathStrokeType(outerBorderWidth));

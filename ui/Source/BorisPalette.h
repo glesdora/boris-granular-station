@@ -44,4 +44,11 @@ const juce::Colour borisPalette[] = {
     juce::Colour::fromRGB(240, 166, 66)            // mute
 };
 
+//enum Palette2 {
+//    backg,
+//    frame,
+//    redbird,
+//
+//};
+
 #endif // BORISPALETTE_H

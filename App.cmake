@@ -74,6 +74,7 @@ target_include_directories(BorisGranularStation
   ui/Source/guicomponents
   ui/MoonjellyKnob
   dsp
+  ${DESCRIPTION_INCLUDE_DIR}
 )
 
 target_compile_definitions(BorisGranularStation

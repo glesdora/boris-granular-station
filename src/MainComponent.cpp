@@ -16,8 +16,8 @@
 #include <cstdlib>
 //#include <crtdbg.h>
 
-#define WIDTH 600
-#define HEIGHT 400
+#define WIDTH 630
+#define HEIGHT 420
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all

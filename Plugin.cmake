@@ -90,6 +90,7 @@ target_include_directories(BorisGranularPlugin
   ui/Source/guicomponents
   ui/MoonjellyKnob
   dsp
+  ${DESCRIPTION_INCLUDE_DIR}
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -129,6 +130,14 @@ target_link_libraries(BorisGranularPlugin
   juce::juce_recommended_warning_flags
   )
 
-install(FILES
-    "${CMAKE_BINARY_DIR}/BorisGranularPlugin_artefacts/Release/VST3/BorisGranular.vst3/Contents/x86_64-win/BorisGranular.vst3"
-    DESTINATION ".")
+# # if(WIN32)
+	install(FILES
+		"${CMAKE_BINARY_DIR}/BorisGranularPlugin_artefacts/Release/VST3/BorisGranular.vst3/Contents/x86_64-win/BorisGranular.vst3"
+		DESTINATION "."
+		)
+# elseif(APPLE)
+	# install(
+		# FILES
+		# "${CMAKE_BINARY_DIR}/BorisGranularPlugin_artefacts/Release/AU/BorisGranular.component"
+		# DESTINATION ~/Library/Audio/Plug-Ins/Components/
+		# )

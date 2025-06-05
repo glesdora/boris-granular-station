@@ -180,7 +180,7 @@ void Granulator::RTGrainVoice::processBrain(
 
         number playstart = (isforw ? this->rel_start_pos_history : rel_end_of_grain);
         number playend = (isforw ? rel_end_of_grain : this->rel_start_pos_history);
-         
+
         SampleIndex play_counter_count = 0;
         bool play_counter_hit = 0;
 
@@ -396,11 +396,11 @@ Granulator* Granulator::getTopLevelPatcher() {
 }
 
 DataRef& Granulator::getAudioBufferDataRef() {
-	return this->borisinrnbo_v01_rtbuf;
+    return this->borisinrnbo_v01_rtbuf;
 }
 
-DataRef& Granulator:: getEnvelopeBufferDataRef() {
-	return this->interpolated_envelope;
+DataRef& Granulator::getEnvelopeBufferDataRef() {
+    return this->interpolated_envelope;
 }
 
 void Granulator::cancelClockEvents() {}
@@ -2319,8 +2319,6 @@ number Granulator::limi_01_dc_next(Index i, number x, number gain) {
         return this->limi_01_dc2_next(x, gain);
     }
     }
-
-    return 0;
 }
 
 void Granulator::limi_01_dc_reset(Index i) {
