@@ -10,6 +10,13 @@ ComponentPanel::ComponentPanel(Component* c, const char* text, int textsize, int
         valueLabel.reset(new ValueLabel2(dynamic_cast<BorisGUIComp*>(component), slider->getValueObject(), decimalplaces, unityofmeasure));
         addAndMakeVisible(*valueLabel.get());
     }
+
+    static auto typeface = Typeface::createSystemTypefaceFor(BinaryData::Carlito_Bold_SUBSET_ttf, BinaryData::Carlito_Bold_SUBSET_ttf_Size);
+
+    if (typeface != nullptr) {
+        font.reset(new Font(typeface));
+        font->setHeight(textsize);
+    }
 }
 
 void ComponentPanel::paint(Graphics& g) {      
@@ -22,7 +29,7 @@ void ComponentPanel::paint(Graphics& g) {
 	//g.setColour(Colours::gold);
 	//g.drawRect(value_area, 3);
 
-    g.setFont(font);
+    g.setFont(*font);
     g.setFont(textsize);
     g.setColour(Colours::aliceblue.withAlpha(0.7f));
 

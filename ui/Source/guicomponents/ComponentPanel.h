@@ -4,6 +4,7 @@
 #include <BorisPalette.h>
 #include "BorisGUIComp.h"
 #include "BorisSlider.h"
+#include "BinaryData.h"
 
 enum CompPanelStyle
 {
@@ -21,6 +22,8 @@ class ComponentPanel : public Component
 {
 public:
     ComponentPanel(Component* c, const char* text, int textsize, int lines, String unityofmeasure, int decimalplaces, CompPanelStyle style);
+    ComponentPanel(Component* c, const char* text, int textsize, int lines, String unityofmeasure, int decimalplaces, CompPanelStyle style, const Image& labelimage);
+
 
     void paint(Graphics& g);
     void resized();
@@ -34,14 +37,14 @@ private:
     Rectangle<int> value_area;
     const char* text;
     String name;
-    Font font{ "Carlito Bold", 16.0f, 0 };
+
+	std::unique_ptr<Font> font;
 
     int compw;
     String unityofmeasure = "";
     int decimalplaces = 2;
     Rectangle<int> comp_area;
 
-    //std::unique_ptr<ValueLabel> valueLabel;
     std::unique_ptr<ValueLabel2> valueLabel;
     int textsize;
     int lines;
