@@ -151,6 +151,11 @@ RootComponent::~RootComponent()
     processor->removeStateRecallListener(this);
 }
 
+void RootComponent::paint(Graphics& g)
+{
+    g.fillAll(borisPalette[ground]);
+}
+
 void RootComponent::resized()
 {
     Rectangle<int> bounds = getLocalBounds().reduced(2);

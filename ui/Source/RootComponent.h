@@ -35,6 +35,7 @@ public:
 
     void loadState();
 
+	void paint(Graphics&) override;
     void resized() override;
 
     void sliderValueChanged (juce::Slider* sliderThatWasMoved) override;
@@ -51,7 +52,6 @@ private:
     Rectangle<float> upLeftCtrlArea;
     Rectangle<float> upRightCtrlArea;
     Rectangle<float> downRightCtrlArea;
-
 
     Image notALogo;
 	std::unique_ptr<BorisLogo> logo;
