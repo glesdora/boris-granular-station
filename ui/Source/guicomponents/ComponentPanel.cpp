@@ -35,8 +35,10 @@ void ComponentPanel::paint(Graphics& g) {
 
     if (style == LeftTextNumBox)
         g.drawFittedText(name, text_area, Justification::centredRight, 2, 1.0f);
-    else
+    else {
+        DBG(name);
         g.drawFittedText(name, text_area, Justification::centredTop, 2, 1.0f);
+    }
 }
 
 void ComponentPanel::resized() {

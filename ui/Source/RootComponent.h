@@ -90,7 +90,7 @@ private:
         {"BorisNumberBoxSlider",    "rdl",  "rdm delay",        STEXTSIZE, 1, " %",  0, TextNumBox },               //2
         {"BorisLenDial",            "len",  "SIZE",             MTEXTSIZE, 1, " ms", 1, TextDialValue },          //3
         {"BorisNumberBoxSlider",    "rle",  "rdm size",         STEXTSIZE, 1, " %",  0, TextNumBox },               //4
-        {"BorisPtcDial",            "psh",  "PITCH\nSHIFT",     MTEXTSIZE, 2, "",    2, TextDialValue},          //5
+        {"BorisPtcDial",            "psh",  "  PITCH    SHIFT  ",MTEXTSIZE, 2, "",    2, TextDialValue},          //5
         {"BorisNumberBoxSlider",    "rpt",  "rdm shift",        STEXTSIZE, 1, " %",  0, TextNumBox },               //6
         {"BorisMoonJKnobWrapper",   "env",  "ENVELOPE",         MTEXTSIZE, 1, "",    0, TextDial },               //7
         {"BorisNumberBoxSlider",    "frp",  "reverse←",         STEXTSIZE, 1, " %",  0, LeftTextNumBox },           //8
